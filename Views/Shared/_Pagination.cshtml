@@ -1,6 +1,7 @@
-﻿@model NewsPortalPro.Helpers.PaginationHelper
+﻿@using NewsPortalPro.Helpers
+@model PaginationHelper
 
-@if (Model.TotalPages > 1)
+@if (Model != null && Model.TotalPages > 1)
 {
     <nav aria-label="পৃষ্ঠা নেভিগেশন" class="mt-4">
         <ul class="pagination justify-content-center flex-wrap gap-1">
@@ -10,6 +11,7 @@
                 <li class="page-item">
                     <a class="page-link" href="?page=@Model.PreviousPage">
                         <i class="bi bi-chevron-right"></i>
+                        পূর্ববর্তী
                     </a>
                 </li>
             }
@@ -25,6 +27,7 @@
             {
                 <li class="page-item">
                     <a class="page-link" href="?page=@Model.NextPage">
+                        পরবর্তী
                         <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
