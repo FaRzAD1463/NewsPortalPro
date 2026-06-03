@@ -12,7 +12,8 @@ namespace NewsPortalPro.Services
 
         public SearchService(ApplicationDbContext db) => _db = db;
 
-        public async Task<SearchResultDto> SearchAsync(string query, int page = 1, int pageSize = 20)
+        public async Task<SearchResultDto> SearchAsync(
+            string query, int page = 1, int pageSize = 20)
         {
             if (string.IsNullOrWhiteSpace(query))
                 return new SearchResultDto { Query = query };
@@ -31,7 +32,10 @@ namespace NewsPortalPro.Services
                 .OrderByDescending(n => n.PublishedAt);
 
             var total = await dbQuery.CountAsync();
-            var items = await dbQuery.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            var items = await dbQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return new SearchResultDto
             {
@@ -48,21 +52,26 @@ namespace NewsPortalPro.Services
                     FeaturedImage = n.FeaturedImage,
                     CategoryName = n.Category?.Name ?? "",
                     CategorySlug = n.Category?.Slug ?? "",
+                    CategoryColor = n.Category?.ColorCode,
                     AuthorName = n.Author?.FullName ?? "",
+                    AuthorId = n.AuthorId,
                     PublishedAt = n.PublishedAt,
                     ViewCount = n.ViewCount,
                     ReadTimeMinutes = n.ReadTimeMinutes,
-                    Tags = n.NewsTags?.Select(nt => nt.Tag.Name).ToList() ?? []
+                    Tags = n.NewsTags?
+                        .Select(nt => nt.Tag.Name).ToList() ?? []
                 }).ToList()
             };
         }
 
-        public async Task<List<string>> GetSuggestionsAsync(string query, int count = 8)
+        public async Task<List<string>> GetSuggestionsAsync(
+            string query, int count = 8)
         {
             if (string.IsNullOrWhiteSpace(query)) return [];
 
             return await _db.News
-                .Where(n => n.Status == NewsStatus.Published && n.Title.Contains(query))
+                .Where(n => n.Status == NewsStatus.Published
+                    && n.Title.Contains(query))
                 .OrderByDescending(n => n.ViewCount)
                 .Take(count)
                 .Select(n => n.Title)

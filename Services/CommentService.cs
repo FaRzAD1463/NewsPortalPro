@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Ganss.Xss;
+using Microsoft.EntityFrameworkCore;
 using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
@@ -10,6 +11,7 @@ namespace NewsPortalPro.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly ISettingsService _settings;
+        private static readonly HtmlSanitizer Sanitizer = new();
 
         public CommentService(ApplicationDbContext db, ISettingsService settings)
         {
@@ -17,20 +19,21 @@ namespace NewsPortalPro.Services
             _settings = settings;
         }
 
-        public async Task<List<CommentDto>> GetByNewsIdAsync(int newsId)
-        {
-            var comments = await _db.Comments
-                .Where(c => c.NewsId == newsId && c.Status == CommentStatus.Approved && c.ParentId == null)
+        public async Task<List<CommentDto>> GetByNewsIdAsync(int newsId) =>
+            await _db.Comments
+                .Where(c => c.NewsId == newsId
+                    && c.Status == CommentStatus.Approved
+                    && c.ParentId == null)
                 .Include(c => c.User)
-                .Include(c => c.Replies.Where(r => r.Status == CommentStatus.Approved))
+                .Include(c => c.Replies
+                    .Where(r => r.Status == CommentStatus.Approved))
                     .ThenInclude(r => r.User)
                 .OrderByDescending(c => c.CreatedAt)
+                .Select(c => MapToDto(c))
                 .ToListAsync();
 
-            return comments.Select(MapToDto).ToList();
-        }
-
-        public async Task<PagedResult<CommentDto>> GetPendingAsync(int page, int pageSize)
+        public async Task<PagedResult<CommentDto>> GetPendingAsync(
+            int page, int pageSize)
         {
             var query = _db.Comments
                 .Where(c => c.Status == CommentStatus.Pending)
@@ -39,7 +42,10 @@ namespace NewsPortalPro.Services
                 .OrderByDescending(c => c.CreatedAt);
 
             var total = await query.CountAsync();
-            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             return new PagedResult<CommentDto>
             {
@@ -50,14 +56,17 @@ namespace NewsPortalPro.Services
             };
         }
 
-        public async Task<int> AddAsync(CreateCommentDto dto, string userId, string ip)
+        public async Task<int> AddAsync(
+            CreateCommentDto dto, string userId, string ip)
         {
             var moderation = await _settings.GetAsync("CommentModeration") ?? "true";
-            var status = moderation == "true" ? CommentStatus.Pending : CommentStatus.Approved;
+            var status = moderation == "true"
+                ? CommentStatus.Pending
+                : CommentStatus.Approved;
 
             var comment = new Comment
             {
-                Content = Ganss.Xss.HtmlSanitizer.Default.Sanitize(dto.Content),
+                Content = Sanitizer.Sanitize(dto.Content),
                 NewsId = dto.NewsId,
                 UserId = userId,
                 ParentId = dto.ParentId,
@@ -69,7 +78,8 @@ namespace NewsPortalPro.Services
 
             if (status == CommentStatus.Approved)
                 await _db.Database.ExecuteSqlRawAsync(
-                    "UPDATE News SET CommentCount = CommentCount + 1 WHERE Id = {0}", dto.NewsId);
+                    "UPDATE News SET CommentCount = CommentCount + 1 WHERE Id = {0}",
+                    dto.NewsId);
 
             await _db.SaveChangesAsync();
             return comment.Id;
@@ -82,7 +92,8 @@ namespace NewsPortalPro.Services
             comment.Status = CommentStatus.Approved;
             comment.UpdatedAt = DateTime.UtcNow;
             await _db.Database.ExecuteSqlRawAsync(
-                "UPDATE News SET CommentCount = CommentCount + 1 WHERE Id = {0}", comment.NewsId);
+                "UPDATE News SET CommentCount = CommentCount + 1 WHERE Id = {0}",
+                comment.NewsId);
             await _db.SaveChangesAsync();
             return true;
         }
@@ -102,15 +113,13 @@ namespace NewsPortalPro.Services
             var comment = await _db.Comments.FindAsync(id);
             if (comment == null) return false;
             comment.IsDeleted = true;
-            if (comment.Status == CommentStatus.Approved)
-                await _db.Database.ExecuteSqlRawAsync(
-                    "UPDATE News SET CommentCount = GREATEST(CommentCount - 1, 0) WHERE Id = {0}", comment.NewsId);
             await _db.SaveChangesAsync();
             return true;
         }
 
         public async Task<int> GetPendingCountAsync() =>
-            await _db.Comments.CountAsync(c => c.Status == CommentStatus.Pending);
+            await _db.Comments
+                .CountAsync(c => c.Status == CommentStatus.Pending);
 
         private static CommentDto MapToDto(Comment c) => new()
         {
@@ -125,7 +134,8 @@ namespace NewsPortalPro.Services
             ParentId = c.ParentId,
             Status = c.Status,
             CreatedAt = c.CreatedAt,
-            Replies = c.Replies?.Where(r => r.Status == CommentStatus.Approved)
+            Replies = c.Replies?
+                .Where(r => r.Status == CommentStatus.Approved)
                 .Select(r => new CommentDto
                 {
                     Id = r.Id,

@@ -12,14 +12,17 @@ namespace NewsPortalPro.Services
 
         public AdsService(ApplicationDbContext db) => _db = db;
 
-        public async Task<List<AdvertisementDto>> GetByPositionAsync(AdPosition position, int? categoryId = null)
+        public async Task<List<AdvertisementDto>> GetByPositionAsync(
+            AdPosition position, int? categoryId = null)
         {
             var now = DateTime.UtcNow;
             return await _db.Advertisements
-                .Where(a => a.Position == position && a.Status == AdStatus.Active &&
-                            (a.StartDate == null || a.StartDate <= now) &&
-                            (a.EndDate == null || a.EndDate >= now) &&
-                            (a.CategoryId == null || a.CategoryId == categoryId))
+                .Where(a => a.Position == position
+                    && a.Status == AdStatus.Active
+                    && !a.IsDeleted
+                    && (a.StartDate == null || a.StartDate <= now)
+                    && (a.EndDate == null || a.EndDate >= now)
+                    && (a.CategoryId == null || a.CategoryId == categoryId))
                 .OrderBy(a => a.DisplayOrder)
                 .Select(a => new AdvertisementDto
                 {
@@ -38,15 +41,16 @@ namespace NewsPortalPro.Services
 
         public async Task TrackImpressionAsync(int adId) =>
             await _db.Database.ExecuteSqlRawAsync(
-                "UPDATE Advertisements SET ImpressionCount = ImpressionCount + 1 WHERE Id = {0}", adId);
+                "UPDATE Advertisements SET ImpressionCount = ImpressionCount + 1 WHERE Id = {0}",
+                adId);
 
         public async Task TrackClickAsync(int adId) =>
             await _db.Database.ExecuteSqlRawAsync(
-                "UPDATE Advertisements SET ClickCount = ClickCount + 1 WHERE Id = {0}", adId);
+                "UPDATE Advertisements SET ClickCount = ClickCount + 1 WHERE Id = {0}",
+                adId);
 
         public async Task<List<AdvertisementDto>> GetAllForAdminAsync() =>
             await _db.Advertisements
-                .IgnoreQueryFilters()
                 .Where(a => !a.IsDeleted)
                 .OrderByDescending(a => a.CreatedAt)
                 .Select(a => new AdvertisementDto
@@ -55,6 +59,7 @@ namespace NewsPortalPro.Services
                     Title = a.Title,
                     ImageUrl = a.ImageUrl,
                     TargetUrl = a.TargetUrl,
+                    HtmlCode = a.HtmlCode,
                     Position = a.Position,
                     Status = a.Status,
                     ImpressionCount = a.ImpressionCount,

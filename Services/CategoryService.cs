@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Caching.Distributed;
 using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
-using NewsPortalPro.Helpers;
 using NewsPortalPro.Interfaces;
 using NewsPortalPro.Models;
 using Newtonsoft.Json;
@@ -24,8 +23,13 @@ namespace NewsPortalPro.Services
 
         public async Task<List<CategoryDto>> GetAllActiveAsync()
         {
-            var cached = await _cache.GetStringAsync(CacheKey);
-            if (cached != null) return JsonConvert.DeserializeObject<List<CategoryDto>>(cached)!;
+            try
+            {
+                var cached = await _cache.GetStringAsync(CacheKey);
+                if (cached != null)
+                    return JsonConvert.DeserializeObject<List<CategoryDto>>(cached)!;
+            }
+            catch { }
 
             var cats = await _db.Categories
                 .Where(c => c.IsActive && c.ParentId == null)
@@ -34,8 +38,17 @@ namespace NewsPortalPro.Services
                 .ToListAsync();
 
             var dtos = cats.Select(MapToDto).ToList();
-            await _cache.SetStringAsync(CacheKey, JsonConvert.SerializeObject(dtos),
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1) });
+
+            try
+            {
+                await _cache.SetStringAsync(CacheKey,
+                    JsonConvert.SerializeObject(dtos),
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+                    });
+            }
+            catch { }
 
             return dtos;
         }
@@ -65,8 +78,15 @@ namespace NewsPortalPro.Services
             var helper = new SlugHelper();
             var slug = helper.GenerateSlug(dto.Name);
 
-            var exists = await _db.Categories.AnyAsync(c => c.Slug == slug);
-            if (exists) slug += $"-{DateTime.UtcNow.Ticks % 1000}";
+            if (string.IsNullOrEmpty(slug))
+                slug = $"category-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+
+            var exists = await _db.Categories
+                .IgnoreQueryFilters()
+                .AnyAsync(c => c.Slug == slug);
+
+            if (exists)
+                slug += $"-{DateTimeOffset.UtcNow.ToUnixTimeSeconds() % 1000}";
 
             var cat = new Category
             {
@@ -84,7 +104,9 @@ namespace NewsPortalPro.Services
 
             _db.Categories.Add(cat);
             await _db.SaveChangesAsync();
-            await _cache.RemoveAsync(CacheKey);
+
+            try { await _cache.RemoveAsync(CacheKey); } catch { }
+
             return cat.Id;
         }
 
@@ -106,7 +128,7 @@ namespace NewsPortalPro.Services
             cat.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
-            await _cache.RemoveAsync(CacheKey);
+            try { await _cache.RemoveAsync(CacheKey); } catch { }
             return true;
         }
 
@@ -117,13 +139,12 @@ namespace NewsPortalPro.Services
             cat.IsDeleted = true;
             cat.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
-            await _cache.RemoveAsync(CacheKey);
+            try { await _cache.RemoveAsync(CacheKey); } catch { }
             return true;
         }
 
-        public async Task<List<CategoryWithCountDto>> GetWithNewsCountAsync()
-        {
-            return await _db.Categories
+        public async Task<List<CategoryWithCountDto>> GetWithNewsCountAsync() =>
+            await _db.Categories
                 .Where(c => c.IsActive)
                 .Select(c => new CategoryWithCountDto
                 {
@@ -131,11 +152,14 @@ namespace NewsPortalPro.Services
                     Name = c.Name,
                     Slug = c.Slug,
                     ColorCode = c.ColorCode,
+                    IsActive = c.IsActive,
+                    ShowInMenu = c.ShowInMenu,
+                    DisplayOrder = c.DisplayOrder,
+                    ParentId = c.ParentId,
                     NewsCount = c.News.Count(n => n.Status == NewsStatus.Published)
                 })
-                .OrderByDescending(c => c.NewsCount)
+                .OrderBy(c => c.DisplayOrder)
                 .ToListAsync();
-        }
 
         private static CategoryDto MapToDto(Category c) => new()
         {

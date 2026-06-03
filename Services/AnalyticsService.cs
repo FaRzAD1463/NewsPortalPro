@@ -2,6 +2,7 @@
 using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
+using NewsPortalPro.Models;
 
 namespace NewsPortalPro.Services
 {
@@ -16,16 +17,25 @@ namespace NewsPortalPro.Services
             var today = DateTime.UtcNow.Date;
             return new DashboardStatsDto
             {
-                TotalNews = await _db.News.IgnoreQueryFilters().CountAsync(n => !n.IsDeleted),
-                PublishedNews = await _db.News.CountAsync(n => n.Status == Models.NewsStatus.Published),
-                DraftNews = await _db.News.CountAsync(n => n.Status == Models.NewsStatus.Draft),
-                TotalUsers = await _db.Users.CountAsync(u => !u.IsDeleted),
+                TotalNews = await _db.News
+                    .IgnoreQueryFilters()
+                    .CountAsync(n => !n.IsDeleted),
+                PublishedNews = await _db.News
+                    .CountAsync(n => n.Status == NewsStatus.Published),
+                DraftNews = await _db.News
+                    .CountAsync(n => n.Status == NewsStatus.Draft),
+                TotalUsers = await _db.Users
+                    .CountAsync(u => !u.IsDeleted),
                 TotalComments = await _db.Comments.CountAsync(),
-                PendingComments = await _db.Comments.CountAsync(c => c.Status == Models.CommentStatus.Pending),
-                TotalViews = await _db.NewsViews.CountAsync(),
-                TodayViews = await _db.NewsViews.CountAsync(v => v.ViewedAt.Date == today),
-                TotalSubscribers = await _db.Subscribers.CountAsync(s => s.IsActive),
-                ActiveAds = await _db.Advertisements.CountAsync(a => a.Status == Models.AdStatus.Active)
+                PendingComments = await _db.Comments
+                    .CountAsync(c => c.Status == CommentStatus.Pending),
+                TotalViews = await _db.NewsViews.LongCountAsync(),
+                TodayViews = await _db.NewsViews
+                    .CountAsync(v => v.ViewedAt.Date == today),
+                TotalSubscribers = await _db.Subscribers
+                    .CountAsync(s => s.IsActive),
+                ActiveAds = await _db.Advertisements
+                    .CountAsync(a => a.Status == AdStatus.Active)
             };
         }
 
@@ -35,16 +45,22 @@ namespace NewsPortalPro.Services
             return await _db.NewsViews
                 .Where(v => v.ViewedAt.Date >= from)
                 .GroupBy(v => v.ViewedAt.Date)
-                .Select(g => new DailyViewsDto { Date = g.Key, Views = g.Count() })
+                .Select(g => new DailyViewsDto
+                {
+                    Date = g.Key,
+                    Views = g.Count()
+                })
                 .OrderBy(x => x.Date)
                 .ToListAsync();
         }
 
-        public async Task<List<TopNewsDto>> GetTopNewsAsync(int count = 10, int days = 7)
+        public async Task<List<TopNewsDto>> GetTopNewsAsync(
+            int count = 10, int days = 7)
         {
             var from = DateTime.UtcNow.AddDays(-days);
             return await _db.News
-                .Where(n => n.Status == Models.NewsStatus.Published && n.PublishedAt >= from)
+                .Where(n => n.Status == NewsStatus.Published
+                    && n.PublishedAt >= from)
                 .OrderByDescending(n => n.ViewCount)
                 .Take(count)
                 .Select(n => new TopNewsDto
@@ -65,14 +81,16 @@ namespace NewsPortalPro.Services
                 {
                     Name = c.Name,
                     ColorCode = c.ColorCode,
-                    NewsCount = c.News.Count(n => n.Status == Models.NewsStatus.Published)
+                    NewsCount = c.News
+                        .Count(n => n.Status == NewsStatus.Published)
                 })
                 .OrderByDescending(c => c.NewsCount)
                 .ToListAsync();
 
-        public async Task RecordVisitAsync(string page, string? userId, string ip, string userAgent, string? referrer)
+        public async Task RecordVisitAsync(string page, string? userId,
+            string ip, string userAgent, string? referrer)
         {
-            _db.VisitorAnalytics.Add(new Models.VisitorAnalytics
+            _db.VisitorAnalytics.Add(new VisitorAnalytics
             {
                 Page = page,
                 UserId = userId,
@@ -89,23 +107,29 @@ namespace NewsPortalPro.Services
         public async Task<VisitorStatsDto> GetVisitorStatsAsync(int days = 30)
         {
             var from = DateTime.UtcNow.AddDays(-days);
-            var visits = await _db.VisitorAnalytics.Where(v => v.VisitedAt >= from).ToListAsync();
+            var visits = await _db.VisitorAnalytics
+                .Where(v => v.VisitedAt >= from)
+                .ToListAsync();
 
             return new VisitorStatsDto
             {
                 TotalVisitors = visits.Count,
-                UniqueVisitors = visits.Select(v => v.IpAddress).Distinct().Count(),
-                DeviceBreakdown = visits.GroupBy(v => v.Device ?? "Unknown")
+                UniqueVisitors = visits
+                    .Select(v => v.IpAddress)
+                    .Distinct()
+                    .Count(),
+                DeviceBreakdown = visits
+                    .GroupBy(v => v.Device ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count()),
-                BrowserBreakdown = visits.GroupBy(v => v.Browser ?? "Unknown")
+                BrowserBreakdown = visits
+                    .GroupBy(v => v.Browser ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count())
             };
         }
 
-        // Hangfire job
         public async Task AggregateAsync()
         {
-            var cutoff = DateTime.UtcNow.AddDays(-7);
+            var cutoff = DateTime.UtcNow.AddDays(-90);
             await _db.Database.ExecuteSqlRawAsync(
                 "DELETE FROM VisitorAnalytics WHERE VisitedAt < {0}", cutoff);
         }
@@ -113,18 +137,24 @@ namespace NewsPortalPro.Services
         private static string DetectDevice(string? ua)
         {
             if (string.IsNullOrEmpty(ua)) return "Unknown";
-            if (ua.Contains("Mobile", StringComparison.OrdinalIgnoreCase)) return "Mobile";
-            if (ua.Contains("Tablet", StringComparison.OrdinalIgnoreCase)) return "Tablet";
+            if (ua.Contains("Mobile", StringComparison.OrdinalIgnoreCase))
+                return "Mobile";
+            if (ua.Contains("Tablet", StringComparison.OrdinalIgnoreCase))
+                return "Tablet";
             return "Desktop";
         }
 
         private static string DetectBrowser(string? ua)
         {
             if (string.IsNullOrEmpty(ua)) return "Unknown";
-            if (ua.Contains("Chrome", StringComparison.OrdinalIgnoreCase)) return "Chrome";
-            if (ua.Contains("Firefox", StringComparison.OrdinalIgnoreCase)) return "Firefox";
-            if (ua.Contains("Safari", StringComparison.OrdinalIgnoreCase)) return "Safari";
-            if (ua.Contains("Edge", StringComparison.OrdinalIgnoreCase)) return "Edge";
+            if (ua.Contains("Chrome", StringComparison.OrdinalIgnoreCase))
+                return "Chrome";
+            if (ua.Contains("Firefox", StringComparison.OrdinalIgnoreCase))
+                return "Firefox";
+            if (ua.Contains("Safari", StringComparison.OrdinalIgnoreCase))
+                return "Safari";
+            if (ua.Contains("Edge", StringComparison.OrdinalIgnoreCase))
+                return "Edge";
             return "Other";
         }
     }

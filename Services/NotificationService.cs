@@ -13,15 +13,17 @@ namespace NewsPortalPro.Services
         private readonly ApplicationDbContext _db;
         private readonly IHubContext<NewsHub> _hub;
 
-        public NotificationService(ApplicationDbContext db, IHubContext<NewsHub> hub)
+        public NotificationService(
+            ApplicationDbContext db,
+            IHubContext<NewsHub> hub)
         {
             _db = db;
             _hub = hub;
         }
 
-        public async Task<List<NotificationDto>> GetUserNotificationsAsync(string userId, int count = 20)
-        {
-            return await _db.Notifications
+        public async Task<List<NotificationDto>> GetUserNotificationsAsync(
+            string userId, int count = 20) =>
+            await _db.Notifications
                 .Where(n => n.UserId == userId)
                 .OrderByDescending(n => n.CreatedAt)
                 .Take(count)
@@ -36,34 +38,30 @@ namespace NewsPortalPro.Services
                     CreatedAt = n.CreatedAt
                 })
                 .ToListAsync();
-        }
 
         public async Task<int> GetUnreadCountAsync(string userId) =>
-            await _db.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead);
+            await _db.Notifications
+                .CountAsync(n => n.UserId == userId && !n.IsRead);
 
         public async Task MarkAsReadAsync(int id, string userId)
         {
             var notification = await _db.Notifications
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
-            if (notification != null)
-            {
-                notification.IsRead = true;
-                notification.ReadAt = DateTime.UtcNow;
-                await _db.SaveChangesAsync();
-            }
+            if (notification == null) return;
+            notification.IsRead = true;
+            notification.ReadAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
         }
 
-        public async Task MarkAllAsReadAsync(string userId)
-        {
+        public async Task MarkAllAsReadAsync(string userId) =>
             await _db.Notifications
                 .Where(n => n.UserId == userId && !n.IsRead)
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(n => n.IsRead, true)
                     .SetProperty(n => n.ReadAt, DateTime.UtcNow));
-        }
 
-        public async Task SendToUserAsync(string userId, string title, string message,
-            NotificationType type, string? link = null)
+        public async Task SendToUserAsync(string userId, string title,
+            string message, NotificationType type, string? link = null)
         {
             var notification = new Notification
             {
@@ -88,9 +86,13 @@ namespace NewsPortalPro.Services
             });
         }
 
-        public async Task BroadcastAsync(string title, string message, NotificationType type, string? link = null)
+        public async Task BroadcastAsync(string title, string message,
+            NotificationType type, string? link = null)
         {
-            var users = await _db.Users.Where(u => u.IsActive).Select(u => u.Id).ToListAsync();
+            var users = await _db.Users
+                .Where(u => u.IsActive)
+                .Select(u => u.Id)
+                .ToListAsync();
 
             var notifications = users.Select(userId => new Notification
             {
@@ -104,11 +106,12 @@ namespace NewsPortalPro.Services
             _db.Notifications.AddRange(notifications);
             await _db.SaveChangesAsync();
 
-            await _hub.Clients.All.SendAsync("ReceiveBroadcast", new { title, message, link });
+            await _hub.Clients.All.SendAsync("ReceiveBroadcast",
+                new { title, message, link });
         }
 
-        public async Task SendBreakingNewsAlertAsync(int newsId, string title, string slug)
-        {
+        public async Task SendBreakingNewsAlertAsync(
+            int newsId, string title, string slug) =>
             await _hub.Clients.All.SendAsync("BreakingNews", new
             {
                 newsId,
@@ -116,6 +119,5 @@ namespace NewsPortalPro.Services
                 link = $"/news/{slug}",
                 timestamp = DateTime.UtcNow
             });
-        }
     }
 }
