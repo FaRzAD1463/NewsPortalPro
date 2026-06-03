@@ -1,0 +1,209 @@
+﻿@{
+    ViewData["Title"] = "ড্যাশবোর্ড";
+    var stats = ViewBag.Stats as DashboardStatsDto;
+    var dailyViews = ViewBag.DailyViews as List<DailyViewsDto>;
+    var topNews = ViewBag.TopNews as List<TopNewsDto>;
+    var catStats = ViewBag.CategoryStats as List<CategoryStatsDto>;
+}
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-primary-soft text-primary rounded-circle p-3">
+                    <i class="bi bi-newspaper fs-4"></i>
+                </div>
+                <div>
+                    <div class="stat-number fw-bold fs-3">@stats?.TotalNews</div>
+                    <div class="stat-label text-muted small">মোট সংবাদ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-success-soft text-success rounded-circle p-3">
+                    <i class="bi bi-eye fs-4"></i>
+                </div>
+                <div>
+                    <div class="stat-number fw-bold fs-3">@stats?.TotalViews.ToString("N0")</div>
+                    <div class="stat-label text-muted small">মোট ভিউ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-warning-soft text-warning rounded-circle p-3">
+                    <i class="bi bi-people fs-4"></i>
+                </div>
+                <div>
+                    <div class="stat-number fw-bold fs-3">@stats?.TotalUsers</div>
+                    <div class="stat-label text-muted small">ব্যবহারকারী</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-danger-soft text-danger rounded-circle p-3">
+                    <i class="bi bi-chat-dots fs-4"></i>
+                </div>
+                <div>
+                    <div class="stat-number fw-bold fs-3">@stats?.PendingComments</div>
+                    <div class="stat-label text-muted small">অপেক্ষারত মন্তব্য</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">দৈনিক ভিউ (শেষ ৩০ দিন)</h5>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="viewsChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold mb-0">বিভাগ অনুযায়ী</h5>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top News -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between">
+                <h5 class="fw-bold mb-0">সর্বাধিক পঠিত (৭ দিন)</h5>
+                <a href="/Admin/Analytics" class="btn btn-sm btn-link">বিস্তারিত</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th>#</th><th>শিরোনাম</th><th>ভিউ</th></tr></thead>
+                        <tbody>
+                            @if (topNews != null)
+                            {
+                                @foreach (var (news, i) in topNews.Select((n, i) => (n, i + 1)))
+                                {
+                                    <tr>
+                                        <td class="text-muted">@i</td>
+                                        <td>
+                                            <a href="/news/@news.Slug" target="_blank"
+                                               class="text-dark text-decoration-none small">
+                                                @news.Title[..Math.Min(50, news.Title.Length)]...
+                                            </a>
+                                        </td>
+                                        <td><span class="badge bg-primary">@news.ViewCount</span></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between">
+                <h5 class="fw-bold mb-0">দ্রুত অ্যাকশন</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="/Admin/News/Create" class="btn btn-primary w-100 py-3">
+                            <i class="bi bi-plus-circle d-block fs-4 mb-1"></i>
+                            নতুন সংবাদ
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/Admin/Comment" class="btn btn-warning w-100 py-3">
+                            <i class="bi bi-chat-dots d-block fs-4 mb-1"></i>
+                            মন্তব্য পর্যালোচনা
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/Admin/Media" class="btn btn-info text-white w-100 py-3">
+                            <i class="bi bi-images d-block fs-4 mb-1"></i>
+                            মিডিয়া লাইব্রেরি
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/Admin/Settings" class="btn btn-secondary w-100 py-3">
+                            <i class="bi bi-gear d-block fs-4 mb-1"></i>
+                            সেটিংস
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+        // Views Chart
+        const viewsCtx = document.getElementById('viewsChart');
+        const viewsData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(dailyViews ?? new List<DailyViewsDto>()));
+
+        new Chart(viewsCtx, {
+            type: 'line',
+            data: {
+                labels: viewsData.map(d => new Date(d.date).toLocaleDateString('bn-BD', { month: 'short', day: 'numeric' })),
+                datasets: [{
+                    label: 'ভিউ',
+                    data: viewsData.map(d => d.views),
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13,110,253,0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // Category Doughnut
+        const catCtx = document.getElementById('categoryChart');
+        const catData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(catStats ?? new List<CategoryStatsDto>()));
+
+        new Chart(catCtx, {
+            type: 'doughnut',
+            data: {
+                labels: catData.map(c => c.name),
+                datasets: [{
+                    data: catData.map(c => c.newsCount),
+                    backgroundColor: catData.map(c => c.colorCode || '#6c757d')
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,127 @@
+﻿@model PagedResult<NewsListDto>
+@{
+    var category = ViewBag.Category as CategoryDto;
+    ViewData["Title"] = $"{category?.Name} - নিউজপোর্টাল প্রো";
+}
+
+<div class="category-page mt-4">
+    <div class="container-fluid px-4">
+
+        <!-- Category Header -->
+        <div class="category-header mb-4 p-4 rounded"
+             style="border-left: 5px solid @(category?.ColorCode ?? "#e74c3c");background:#f8f9fa">
+            <h1 class="h2 mb-1">@category?.Name</h1>
+            @if (!string.IsNullOrEmpty(category?.Description))
+            {
+                <p class="text-muted mb-0">@category.Description</p>
+            }
+        </div>
+
+        <div class="row g-4">
+            <!-- News Grid -->
+            <div class="col-lg-9">
+
+                <!-- Filter Bar -->
+                <div class="filter-bar d-flex gap-2 mb-4 flex-wrap">
+                    <button class="btn btn-sm btn-primary active" onclick="filterNews('latest', this)">সর্বশেষ</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="filterNews('popular', this)">জনপ্রিয়</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="filterNews('comments', this)">আলোচিত</button>
+                </div>
+
+                <div class="row g-3" id="news-grid">
+                    @foreach (var news in Model.Items)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            @await Html.PartialAsync("_NewsCard", news)
+                        </div>
+                    }
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            @if (Model.HasPreviousPage)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="/category/@category?.Slug/@(Model.Page - 1)">পূর্ববর্তী</a>
+                                </li>
+                            }
+                            @for (int i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+                            {
+                                <li class="page-item @(i == Model.Page ? "active" : "")">
+                                    <a class="page-link" href="/category/@category?.Slug/@i">@i</a>
+                                </li>
+                            }
+                            @if (Model.HasNextPage)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="/category/@category?.Slug/@(Model.Page + 1)">পরবর্তী</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <div class="sticky-sidebar">
+                    @foreach (var ad in (List<AdvertisementDto>)ViewBag.SidebarAds ?? new())
+                    {
+                        <div class="sidebar-widget ad-widget mb-4">
+                            @if (!string.IsNullOrEmpty(ad.ImageUrl))
+                            {
+                                <a href="@ad.TargetUrl" target="_blank">
+                                    <img src="@ad.ImageUrl" alt="@ad.Title" class="img-fluid rounded" />
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function filterNews(sort, btn) {
+            document.querySelectorAll('.filter-bar .btn').forEach(b => {
+                b.classList.remove('btn-primary', 'active');
+                b.classList.add('btn-outline-primary');
+            });
+            btn.classList.remove('btn-outline-primary');
+            btn.classList.add('btn-primary', 'active');
+
+            const cat = '@category?.Slug';
+            const res = await fetch(`/api/news?categorySlug=${cat}&sort=${sort}&pageSize=12`);
+            const data = await res.json();
+
+            const grid = document.getElementById('news-grid');
+            grid.innerHTML = '';
+
+            data.items.forEach(n => {
+                grid.innerHTML += `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="news-card card h-100 border-0 shadow-sm">
+                            <a href="/news/${n.slug}">
+                                <img src="${n.featuredImage || '/images/placeholder.jpg'}"
+                                     class="card-img-top" alt="${n.title}" loading="lazy" />
+                            </a>
+                            <div class="card-body p-3">
+                                <h6 class="card-title">
+                                    <a href="/news/${n.slug}" class="text-dark text-decoration-none">${n.title}</a>
+                                </h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-eye me-1"></i>${n.viewCount}
+                                </small>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+    </script>
+}

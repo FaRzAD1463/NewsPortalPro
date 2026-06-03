@@ -1,0 +1,53 @@
+﻿@model ContactFormDto
+@{
+    ViewData["Title"] = "যোগাযোগ";
+}
+
+<div class="container mt-4" style="max-width:700px">
+    <h2 class="fw-bold mb-1">যোগাযোগ করুন</h2>
+    <p class="text-muted mb-4">আমাদের সাথে যোগাযোগ করতে নিচের ফর্মটি পূরণ করুন।</p>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form asp-action="Index" asp-controller="Contact" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">নাম <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control" placeholder="আপনার নাম" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">ইমেইল <span class="text-danger">*</span></label>
+                        <input asp-for="Email" type="email" class="form-control"
+                               placeholder="name@example.com" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">ফোন</label>
+                        <input asp-for="Phone" class="form-control" placeholder="+880..." />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">বিষয় <span class="text-danger">*</span></label>
+                        <input asp-for="Subject" class="form-control" placeholder="বার্তার বিষয়" required />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-medium">বার্তা <span class="text-danger">*</span></label>
+                        <textarea asp-for="Message" class="form-control" rows="5"
+                                  placeholder="আপনার বার্তা লিখুন..." required></textarea>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-send me-2"></i>বার্তা পাঠান
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

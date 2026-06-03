@@ -1,0 +1,43 @@
+﻿@model List<Bookmark>
+@{
+    ViewData["Title"] = "সংরক্ষিত সংবাদ";
+}
+
+<div class="container-fluid px-4 mt-4">
+    <h2 class="fw-bold mb-4">
+        <i class="bi bi-bookmark-heart me-2 text-primary"></i>সংরক্ষিত সংবাদ
+    </h2>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-bookmark fs-1 text-muted"></i>
+            <p class="text-muted mt-3">কোনো সংবাদ সংরক্ষণ করা হয়নি।</p>
+            <a href="/" class="btn btn-primary">সংবাদ পড়ুন</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var bookmark in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    @await Html.PartialAsync("_NewsCard", new NewsListDto
+                    {
+                        Id = bookmark.News.Id,
+                        Title = bookmark.News.Title,
+                        Slug = bookmark.News.Slug,
+                        Summary = bookmark.News.Summary,
+                        FeaturedImage = bookmark.News.FeaturedImage,
+                        CategoryName = bookmark.News.Category?.Name ?? "",
+                        CategorySlug = bookmark.News.Category?.Slug ?? "",
+                        CategoryColor = bookmark.News.Category?.ColorCode,
+                        AuthorName = bookmark.News.Author?.FullName ?? "",
+                        PublishedAt = bookmark.News.PublishedAt,
+                        ViewCount = bookmark.News.ViewCount
+                        })
+        </div>
+                }
+        </div>
+    }
+</div>

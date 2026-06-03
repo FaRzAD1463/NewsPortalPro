@@ -1,0 +1,129 @@
+﻿@model List<UserDto>
+@{
+    ViewData["Title"] = "ব্যবহারকারী ব্যবস্থাপনা";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">ব্যবহারকারী তালিকা</h4>
+    <form method="get" class="d-flex gap-2">
+        <input type="text" name="search" value="@ViewBag.Search"
+               class="form-control" placeholder="নাম বা ইমেইল খুঁজুন..." />
+        <button type="submit" class="btn btn-primary px-3"><i class="bi bi-search"></i></button>
+    </form>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ব্যবহারকারী</th>
+                        <th>ইমেইল</th>
+                        <th>রোল</th>
+                        <th>স্ট্যাটাস</th>
+                        <th>যোগদান</th>
+                        <th>শেষ লগিন</th>
+                        <th>অ্যাকশন</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (!string.IsNullOrEmpty(user.ProfilePicture))
+                                    {
+                                        <img src="@user.ProfilePicture" class="rounded-circle"
+                                             width="36" height="36" alt="@user.FullName" />
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                                             style="width:36px;height:36px;background:#6c757d;color:white;font-size:14px">
+                                            @user.FullName[0]
+                                        </div>
+                                    }
+                                    <span class="fw-medium">@user.FullName</span>
+                                </div>
+                            </td>
+                            <td><small>@user.Email</small></td>
+                            <td>
+                                @foreach (var role in user.Roles)
+                                {
+                                    <span class="badge @(role == "Admin" ? "bg-danger" : role == "Editor" ? "bg-warning text-dark" : "bg-secondary") me-1">
+                                        @role
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div class="form-check form-switch mb-0">
+                                    <input type="checkbox" class="form-check-input toggle-user-active"
+                                           data-id="@user.Id" @(user.IsActive ? "checked" : "") />
+                                </div>
+                            </td>
+                            <td><small class="text-muted">@user.CreatedAt.ToString("dd/MM/yy")</small></td>
+                            <td><small class="text-muted">@(user.LastLoginAt?.ToString("dd/MM/yy") ?? "-")</small></td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            data-bs-toggle="dropdown">
+                                        অ্যাকশন
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        @foreach (var role in (List<ApplicationRole>)ViewBag.Roles)
+                                        {
+                                            <li>
+                                                <form asp-action="AssignRole" asp-controller="User" asp-area="Admin" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <input type="hidden" name="role" value="@role.Name" />
+                                                    <button type="submit" class="dropdown-item small">
+                                                        <i class="bi bi-person-badge me-2"></i>@role.Name রোল দিন
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        }
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li>
+                                            <form asp-action="ResetPassword" asp-controller="User" asp-area="Admin" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@user.Id" />
+                                                <button type="submit" class="dropdown-item small text-warning">
+                                                    <i class="bi bi-key me-2"></i>পাসওয়ার্ড রিসেট
+                                                </button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form asp-action="Delete" asp-controller="User" asp-area="Admin" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@user.Id" />
+                                                <button type="submit" class="dropdown-item small text-danger">
+                                                    <i class="bi bi-trash me-2"></i>মুছুন
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).on('change', '.toggle-user-active', async function () {
+            const id = $(this).data('id');
+            const res = await $.post(`/Admin/User/ToggleActive`, { id },
+                null, 'json').catch(() => null);
+            if (res?.success) {
+                toastr.success(res.isActive ? 'অ্যাকাউন্ট সক্রিয় করা হয়েছে' : 'অ্যাকাউন্ট নিষ্ক্রিয় করা হয়েছে');
+            }
+        });
+    </script>
+}

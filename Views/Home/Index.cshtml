@@ -1,0 +1,360 @@
+﻿@model HomeViewModel
+@{
+    ViewData["Title"] = "হোম - নিউজপোর্টাল প্রো";
+}
+
+<!-- Hero / Featured Slider -->
+<section class="hero-section">
+    <div class="container-fluid px-4 py-3">
+        <div class="row g-3">
+
+            <!-- Main Featured Slider -->
+            <div class="col-lg-8">
+                @if (Model.FeaturedNews.Any())
+                {
+                    <div class="owl-carousel hero-slider" id="heroSlider">
+                        @foreach (var news in Model.FeaturedNews.Take(5))
+                        {
+                            <div class="hero-slide position-relative">
+                                <a href="/news/@news.Slug">
+                                    <img src="@(news.FeaturedImage ?? "/images/placeholder.jpg")"
+                                         alt="@news.FeaturedImageAlt"
+                                         class="hero-slide-img w-100"
+                                         loading="lazy" />
+                                </a>
+                                <div class="hero-slide-overlay">
+                                    <span class="category-badge" style="background:@news.CategoryColor">
+                                        @news.CategoryName
+                                    </span>
+                                    <h2 class="hero-title">
+                                        <a href="/news/@news.Slug" class="text-white">@news.Title</a>
+                                    </h2>
+                                    <div class="hero-meta text-white-50 small">
+                                        <span><i class="bi bi-person me-1"></i>@news.AuthorName</span>
+                                        <span class="mx-2">•</span>
+                                        <span><i class="bi bi-clock me-1"></i>@news.PublishedAt?.ToString("dd MMM yyyy")</span>
+                                        <span class="mx-2">•</span>
+                                        <span><i class="bi bi-eye me-1"></i>@news.ViewCount</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Side Featured News -->
+            <div class="col-lg-4">
+                <div class="row g-2 h-100">
+                    @foreach (var news in Model.FeaturedNews.Skip(5).Take(4))
+                    {
+                        <div class="col-6">
+                            <div class="side-news-card">
+                                <a href="/news/@news.Slug">
+                                    <img src="@(news.FeaturedImage ?? "/images/placeholder.jpg")"
+                                         alt="@news.Title" class="w-100" loading="lazy" />
+                                    <div class="side-news-overlay">
+                                        <span class="category-badge small" style="background:@news.CategoryColor">
+                                            @news.CategoryName
+                                        </span>
+                                        <h6 class="text-white mt-1 mb-0">@news.Title</h6>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Header Ad -->
+@if (Model.HeaderAds.Any())
+{
+    <div class="ad-banner text-center py-2">
+        @foreach (var ad in Model.HeaderAds.Take(1))
+        {
+            if (!string.IsNullOrEmpty(ad.HtmlCode))
+            {
+                @Html.Raw(ad.HtmlCode)
+            }
+            else if (!string.IsNullOrEmpty(ad.ImageUrl))
+            {
+                <a href="@ad.TargetUrl" target="_blank"
+                   onclick="trackAdClick(@ad.Id)">
+                    <img src="@ad.ImageUrl" alt="@ad.Title" class="img-fluid" />
+                </a>
+            }
+        }
+    </div>
+}
+
+<!-- Main Content Area -->
+<div class="container-fluid px-4 mt-4">
+    <div class="row g-4">
+
+        <!-- Left: News Feed -->
+        <div class="col-lg-8 col-xl-9">
+
+            <!-- Latest News Section -->
+            <section class="news-section mb-5">
+                <div class="section-header d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="section-title"><span>সর্বশেষ</span> সংবাদ</h2>
+                    <a href="/news" class="btn btn-sm btn-outline-primary">আরও দেখুন</a>
+                </div>
+
+                <div class="row g-3" id="latest-news-container">
+                    @foreach (var news in Model.LatestNews)
+                    {
+                        <div class="col-md-6 col-xl-4" data-aos="fade-up">
+                            @await Html.PartialAsync("_NewsCard", news)
+                        </div>
+                    }
+                </div>
+
+                <!-- Infinite Scroll Trigger -->
+                <div id="infinite-scroll-trigger" class="text-center py-4">
+                    <div id="loading-spinner" class="d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">লোড হচ্ছে...</span>
+                        </div>
+                    </div>
+                    <button id="load-more-btn" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-down-circle me-2"></i>আরও সংবাদ লোড করুন
+                    </button>
+                </div>
+            </section>
+
+            <!-- Category Blocks -->
+            @foreach (var block in Model.CategoryNewsBlocks)
+            {
+                var cat = block.Value.Category;
+                var catNews = block.Value.News;
+
+                <section class="news-section mb-5">
+                    <div class="section-header d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="section-title">
+                            <span style="color:@cat.ColorCode">@cat.Name</span>
+                        </h2>
+                        <a href="/category/@cat.Slug" class="btn btn-sm btn-outline-primary">আরও দেখুন</a>
+                    </div>
+
+                    <div class="row g-3">
+                        @if (catNews.Any())
+                        {
+                            <!-- Lead story -->
+                            <div class="col-md-6">
+                                <div class="news-card-lead" data-aos="fade-right">
+                                    <a href="/news/@catNews[0].Slug">
+                                        <img src="@(catNews[0].FeaturedImage ?? "/images/placeholder.jpg")"
+                                             alt="@catNews[0].Title" class="w-100 rounded" loading="lazy" />
+                                    </a>
+                                    <div class="mt-2">
+                                        <span class="category-badge" style="background:@cat.ColorCode">@cat.Name</span>
+                                        <h5 class="mt-1">
+                                            <a href="/news/@catNews[0].Slug">@catNews[0].Title</a>
+                                        </h5>
+                                        <p class="text-muted small">@catNews[0].Summary</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Side list -->
+                            <div class="col-md-6">
+                                @foreach (var n in catNews.Skip(1).Take(4))
+                                {
+                                    <div class="news-list-item d-flex gap-2 mb-3" data-aos="fade-left">
+                                        <img src="@(n.FeaturedImage ?? "/images/placeholder-sm.jpg")"
+                                             alt="@n.Title"
+                                             class="news-list-thumb rounded flex-shrink-0"
+                                             loading="lazy" />
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <a href="/news/@n.Slug">@n.Title</a>
+                                            </h6>
+                                            <small class="text-muted">
+                                                <i class="bi bi-clock me-1"></i>@n.PublishedAt?.ToString("dd MMM")
+                                            </small>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+
+        </div>
+
+        <!-- Right: Sidebar -->
+        <div class="col-lg-4 col-xl-3">
+            <div class="sticky-sidebar">
+
+                <!-- Search Widget -->
+                <div class="sidebar-widget mb-4">
+                    <h5 class="widget-title">সংবাদ খুঁজুন</h5>
+                    <div class="input-group">
+                        <input type="text" id="sidebar-search" class="form-control"
+                               placeholder="কীওয়ার্ড লিখুন..." />
+                        <button class="btn btn-primary" onclick="submitSidebarSearch()">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Trending News -->
+                <div class="sidebar-widget mb-4">
+                    <h5 class="widget-title"><i class="bi bi-fire me-2 text-danger"></i>ট্রেন্ডিং</h5>
+                    @foreach (var (news, i) in Model.TrendingNews.Select((n, i) => (n, i + 1)))
+                    {
+                        <div class="trending-item d-flex gap-2 mb-3">
+                            <span class="trending-number">@i</span>
+                            <div>
+                                <h6 class="mb-1 small">
+                                    <a href="/news/@news.Slug">@news.Title</a>
+                                </h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-eye me-1"></i>@news.ViewCount
+                                </small>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Sidebar Ads -->
+                @foreach (var ad in Model.SidebarAds.Take(2))
+                {
+                    <div class="sidebar-widget ad-widget mb-4">
+                        @if (!string.IsNullOrEmpty(ad.HtmlCode))
+                        {
+                            @Html.Raw(ad.HtmlCode)
+                        }
+                        else if (!string.IsNullOrEmpty(ad.ImageUrl))
+                        {
+                            <a href="@ad.TargetUrl" target="_blank" onclick="trackAdClick(@ad.Id)">
+                                <img src="@ad.ImageUrl" alt="@ad.Title" class="img-fluid rounded" />
+                            </a>
+                        }
+                    </div>
+                }
+
+                <!-- Most Viewed -->
+                <div class="sidebar-widget mb-4">
+                    <h5 class="widget-title"><i class="bi bi-eye me-2 text-primary"></i>সর্বাধিক পঠিত</h5>
+                    @foreach (var news in Model.MostViewed.Take(5))
+                    {
+                        <div class="d-flex gap-2 mb-2">
+                            <img src="@(news.FeaturedImage ?? "/images/placeholder-sm.jpg")"
+                                 alt="@news.Title"
+                                 class="rounded" style="width:60px;height:45px;object-fit:cover" loading="lazy" />
+                            <div>
+                                <a href="/news/@news.Slug" class="small text-dark">@news.Title</a>
+                                <br />
+                                <small class="text-muted"><i class="bi bi-eye me-1"></i>@news.ViewCount</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Hero Carousel
+        $(document).ready(function () {
+            $('#heroSlider').owlCarousel({
+                items: 1, loop: true, autoplay: true,
+                autoplayTimeout: 5000, animateOut: 'fadeOut',
+                nav: true, dots: true,
+                navText: ['<i class="bi bi-chevron-left"></i>', '<i class="bi bi-chevron-right"></i>']
+            });
+        });
+
+        // Infinite scroll
+        let currentPage = 2;
+        let isLoading = false;
+
+        $('#load-more-btn').on('click', loadMoreNews);
+
+        // Intersection observer for auto-load
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && !isLoading) loadMoreNews();
+        }, { threshold: 0.1 });
+
+        observer.observe(document.getElementById('infinite-scroll-trigger'));
+
+        async function loadMoreNews() {
+            if (isLoading) return;
+            isLoading = true;
+            $('#load-more-btn').hide();
+            $('#loading-spinner').removeClass('d-none');
+
+            try {
+                const res = await fetch(`/api/news?page=${currentPage}&pageSize=9`);
+                const data = await res.json();
+
+                if (data.items && data.items.length > 0) {
+                    data.items.forEach(news => {
+                        const card = buildNewsCard(news);
+                        $('#latest-news-container').append(
+                            `<div class="col-md-6 col-xl-4">${card}</div>`
+                        );
+                    });
+                    currentPage++;
+                    if (currentPage <= data.totalPages) $('#load-more-btn').show();
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                isLoading = false;
+                $('#loading-spinner').addClass('d-none');
+            }
+        }
+
+        function buildNewsCard(news) {
+            return `
+                <div class="news-card card h-100 border-0 shadow-sm">
+                    <a href="/news/${news.slug}">
+                        <img src="${news.featuredImage || '/images/placeholder.jpg'}"
+                             class="card-img-top" alt="${news.title}" loading="lazy" />
+                    </a>
+                    <div class="card-body">
+                        <span class="category-badge" style="background:${news.categoryColor}">${news.categoryName}</span>
+                        <h6 class="card-title mt-2">
+                            <a href="/news/${news.slug}">${news.title}</a>
+                        </h6>
+                        <small class="text-muted">
+                            <i class="bi bi-clock me-1"></i>${formatDate(news.publishedAt)}
+                        </small>
+                    </div>
+                </div>`;
+        }
+
+        function formatDate(d) {
+            if (!d) return '';
+            return new Date(d).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function subscribeNewsletter() {
+            const email = document.getElementById('newsletter-email').value;
+            if (!email) return;
+
+            fetch('/api/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.success) toastr.success('সাবস্ক্রিপশন সফল হয়েছে!');
+                else toastr.error(d.message || 'ত্রুটি হয়েছে');
+            });
+        }
+    </script>
+}

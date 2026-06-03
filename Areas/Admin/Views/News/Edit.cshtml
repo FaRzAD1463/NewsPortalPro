@@ -1,0 +1,116 @@
+﻿@model UpdateNewsDto
+@{
+    ViewData["Title"] = "সংবাদ সম্পাদনা";
+}
+
+<form asp-action="Edit" asp-controller="News" asp-area="Admin"
+      method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">শিরোনাম <span class="text-danger">*</span></label>
+                        <input asp-for="Title" class="form-control form-control-lg" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">উপশিরোনাম</label>
+                        <input asp-for="Subtitle" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">সারসংক্ষেপ</label>
+                        <textarea asp-for="Summary" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label fw-medium">বিষয়বস্তু</label>
+                        <textarea asp-for="Content" id="edit-content-editor" class="form-control" rows="20"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h6 class="fw-bold mb-0">SEO সেটিংস</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">Meta শিরোনাম</label>
+                        <input asp-for="MetaTitle" class="form-control" maxlength="160" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Meta বিবরণ</label>
+                        <textarea asp-for="MetaDescription" class="form-control" rows="2" maxlength="300"></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label">Meta কীওয়ার্ড</label>
+                        <input asp-for="MetaKeywords" class="form-control" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h6 class="fw-bold mb-0">প্রকাশনা সেটিংস</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">স্ট্যাটাস</label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="@NewsStatus.Draft">ড্রাফট</option>
+                            <option value="@NewsStatus.Published">প্রকাশিত</option>
+                            <option value="@NewsStatus.Scheduled">শিডিউল</option>
+                            <option value="@NewsStatus.Archived">আর্কাইভ</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">বিভাগ</label>
+                        <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select" required>
+                            <option value="">বিভাগ নির্বাচন করুন</option>
+                        </select>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input asp-for="IsBreaking" class="form-check-input" type="checkbox" />
+                        <label class="form-check-label">ব্রেকিং নিউজ</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input asp-for="IsFeatured" class="form-check-input" type="checkbox" />
+                        <label class="form-check-label">ফিচার্ড নিউজ</label>
+                    </div>
+                    <div class="form-check form-switch mb-4">
+                        <input asp-for="AllowComments" class="form-check-input" type="checkbox" />
+                        <label class="form-check-label">মন্তব্য অনুমতি</label>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>আপডেট করুন
+                        </button>
+                        <a href="/Admin/News" class="btn btn-outline-secondary">বাতিল</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h6 class="fw-bold mb-0">ফিচার্ড ইমেজ</h6>
+                </div>
+                <div class="card-body p-4">
+                    @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
+                    {
+                        <img src="@Model.FeaturedImageUrl" class="img-fluid rounded mb-3" alt="Current" />
+                    }
+                    <input type="file" name="featuredImage" accept="image/*" class="form-control mb-2" />
+                    <input asp-for="FeaturedImageUrl" class="form-control form-control-sm mb-2"
+                           placeholder="বা URL দিন" />
+                    <input asp-for="FeaturedImageAlt" class="form-control form-control-sm mb-2"
+                           placeholder="Alt টেক্সট" />
+                    <input asp-for="FeaturedImageCaption" class="form-control form-control-sm"
+                           placeholder="ক্যাপশন" />
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

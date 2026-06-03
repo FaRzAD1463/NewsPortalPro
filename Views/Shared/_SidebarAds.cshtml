@@ -1,0 +1,22 @@
+﻿@model IEnumerable<NewsPortalPro.DTOs.AdvertisementDto>
+
+@foreach (var ad in Model)
+{
+    <div class="sidebar-widget ad-widget mb-4" data-ad-id="@ad.Id">
+        @if (!string.IsNullOrEmpty(ad.HtmlCode))
+        {
+            @Html.Raw(ad.HtmlCode)
+        }
+        else if (!string.IsNullOrEmpty(ad.ImageUrl))
+        {
+            <a href="@ad.TargetUrl" target="_blank" rel="noopener"
+               onclick="trackAdClick(@ad.Id)">
+                <img src="@ad.ImageUrl" alt="@ad.Title"
+                     class="img-fluid rounded w-100" loading="lazy" />
+            </a>
+        }
+        <div class="text-center mt-1">
+            <small class="text-muted" style="font-size:10px">বিজ্ঞাপন</small>
+        </div>
+    </div>
+}

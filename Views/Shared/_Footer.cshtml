@@ -1,0 +1,110 @@
+﻿@inject NewsPortalPro.Interfaces.ISettingsService SettingsService
+@inject NewsPortalPro.Interfaces.ICategoryService CategoryService
+@{
+    var siteName = await SettingsService.GetAsync("SiteName") ?? "নিউজপোর্টাল প্রো";
+    var siteEmail = await SettingsService.GetAsync("SiteEmail") ?? "";
+    var sitePhone = await SettingsService.GetAsync("SitePhone") ?? "";
+    var fbUrl = await SettingsService.GetAsync("FacebookUrl") ?? "#";
+    var twUrl = await SettingsService.GetAsync("TwitterUrl") ?? "#";
+    var ytUrl = await SettingsService.GetAsync("YoutubeUrl") ?? "#";
+    var categories = await CategoryService.GetMenuCategoriesAsync();
+}
+
+<footer class="site-footer mt-5">
+    <div class="footer-main py-5">
+        <div class="container-fluid px-4">
+            <div class="row g-4">
+                <!-- About -->
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="footer-heading">@siteName</h5>
+                    <p class="text-muted small">
+                        বাংলাদেশের নির্ভরযোগ্য ও নিরপেক্ষ সংবাদ মাধ্যম।
+                        সর্বশেষ জাতীয় ও আন্তর্জাতিক সংবাদ পড়ুন।
+                    </p>
+                    <div class="social-links mt-3 d-flex gap-2">
+                        <a href="@fbUrl" target="_blank" class="social-btn facebook">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                        <a href="@twUrl" target="_blank" class="social-btn twitter">
+                            <i class="bi bi-twitter-x"></i>
+                        </a>
+                        <a href="@ytUrl" target="_blank" class="social-btn youtube">
+                            <i class="bi bi-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="col-lg-2 col-md-6">
+                    <h5 class="footer-heading">বিভাগসমূহ</h5>
+                    <ul class="footer-links">
+                        @foreach (var cat in categories.Take(8))
+                        {
+                            <li><a href="/category/@cat.Slug">@cat.Name</a></li>
+                        }
+                    </ul>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6">
+                    <h5 class="footer-heading">দ্রুত লিঙ্ক</h5>
+                    <ul class="footer-links">
+                        <li><a href="/about">আমাদের সম্পর্কে</a></li>
+                        <li><a href="/contact">যোগাযোগ</a></li>
+                        <li><a href="/privacy">গোপনীয়তা নীতি</a></li>
+                        <li><a href="/terms">সেবার শর্তাবলী</a></li>
+                        <li><a href="/sitemap.xml">সাইটম্যাপ</a></li>
+                        <li><a href="/rss.xml">RSS ফিড</a></li>
+                    </ul>
+                </div>
+
+                <!-- Newsletter -->
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="footer-heading">নিউজলেটার</h5>
+                    <p class="text-muted small">সর্বশেষ সংবাদ সরাসরি ইনবক্সে পান</p>
+                    <div class="input-group mt-2">
+                        <input type="email" id="newsletter-email" class="form-control form-control-sm"
+                               placeholder="আপনার ইমেইল" />
+                        <button class="btn btn-primary btn-sm" onclick="subscribeNewsletter()">
+                            সাবস্ক্রাইব
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div class="col-lg-2 col-md-6">
+                    <h5 class="footer-heading">যোগাযোগ</h5>
+                    <ul class="footer-links contact-links">
+                        @if (!string.IsNullOrEmpty(siteEmail))
+                        {
+                            <li><i class="bi bi-envelope me-2"></i>@siteEmail</li>
+                        }
+                        @if (!string.IsNullOrEmpty(sitePhone))
+                        {
+                            <li><i class="bi bi-telephone me-2"></i>@sitePhone</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom py-3">
+        <div class="container-fluid px-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted small">
+                        &copy; @DateTime.Now.Year @siteName। সর্বস্বত্ব সংরক্ষিত।
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted small">
+                        <a href="/sitemap.xml" class="text-muted me-3">সাইটম্যাপ</a>
+                        <a href="/rss.xml" class="text-muted me-3"><i class="bi bi-rss me-1"></i>RSS</a>
+                        <a href="/api-docs" class="text-muted">API ডকস</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>

@@ -1,0 +1,12 @@
+﻿@model (string Title, string Icon, string IconColor, object Content)
+
+<div class="sidebar-widget mb-4">
+    <h5 class="widget-title">
+        @if (!string.IsNullOrEmpty(Model.Icon))
+        {
+            <i class="@Model.Icon me-2" style="color:@Model.IconColor"></i>
+        }
+        @Model.Title
+    </h5>
+    @RenderBody()
+</div>

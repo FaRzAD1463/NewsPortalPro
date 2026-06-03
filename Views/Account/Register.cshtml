@@ -1,0 +1,62 @@
+﻿@model RegisterDto
+@{
+    ViewData["Title"] = "নিবন্ধন";
+}
+
+<div class="auth-page d-flex align-items-center justify-content-center min-vh-100 bg-light">
+    <div class="auth-card card shadow-sm border-0" style="width:460px;max-width:95vw">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold">নতুন অ্যাকাউন্ট</h2>
+                <p class="text-muted">বিনামূল্যে নিবন্ধন করুন</p>
+            </div>
+
+            <form asp-action="Register" asp-controller="Account" method="post">
+                @Html.AntiForgeryToken()
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <div>@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">পূর্ণ নাম</label>
+                    <input asp-for="FullName" class="form-control" placeholder="আপনার নাম" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">ইমেইল ঠিকানা</label>
+                    <input asp-for="Email" type="email" class="form-control"
+                           placeholder="name@example.com" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">পাসওয়ার্ড</label>
+                    <input asp-for="Password" type="password" class="form-control"
+                           placeholder="কমপক্ষে ৮ অক্ষর" id="reg-password" required />
+                    <div class="password-strength mt-1" id="pwd-strength"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-medium">পাসওয়ার্ড নিশ্চিত করুন</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control"
+                           placeholder="পুনরায় পাসওয়ার্ড দিন" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-medium">
+                    <i class="bi bi-person-plus me-2"></i>নিবন্ধন করুন
+                </button>
+            </form>
+
+            <p class="text-center mt-4 mb-0 small">
+                ইতিমধ্যে অ্যাকাউন্ট আছে?
+                <a href="/Account/Login" class="text-primary fw-medium">লগইন করুন</a>
+            </p>
+        </div>
+    </div>
+</div>

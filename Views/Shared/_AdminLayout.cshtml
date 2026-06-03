@@ -1,0 +1,164 @@
+﻿<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] ?? "অ্যাডমিন") - নিউজপোর্টাল প্রো</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="admin-body">
+
+    <!-- Sidebar -->
+    <nav id="admin-sidebar" class="admin-sidebar d-flex flex-column">
+        <div class="sidebar-brand">
+            <a href="/Admin/Dashboard" class="text-decoration-none text-white">
+                <i class="bi bi-newspaper me-2"></i>
+                <span>নিউজ অ্যাডমিন</span>
+            </a>
+            <button id="sidebar-toggle" class="btn btn-sm btn-link text-white ms-auto">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+
+        <ul class="nav flex-column sidebar-nav mt-3">
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")"
+                   href="/Admin/Dashboard">
+                    <i class="bi bi-speedometer2"></i><span>ড্যাশবোর্ড</span>
+                </a>
+            </li>
+            <li class="nav-section-label"><small>কন্টেন্ট</small></li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "News" ? "active" : "")"
+                   href="/Admin/News">
+                    <i class="bi bi-newspaper"></i><span>সংবাদ</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "active" : "")"
+                   href="/Admin/Category">
+                    <i class="bi bi-folder"></i><span>বিভাগ</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Media" ? "active" : "")"
+                   href="/Admin/Media">
+                    <i class="bi bi-images"></i><span>মিডিয়া</span>
+                </a>
+            </li>
+            <li class="nav-section-label"><small>ব্যবহারকারী</small></li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "User" ? "active" : "")"
+                   href="/Admin/User">
+                    <i class="bi bi-people"></i><span>ব্যবহারকারী</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Comment" ? "active" : "")"
+                   href="/Admin/Comment">
+                    <i class="bi bi-chat-dots"></i><span>মন্তব্য</span>
+                    @if (ViewBag.PendingComments > 0)
+                    {
+                        <span class="badge bg-danger ms-auto">@ViewBag.PendingComments</span>
+                    }
+                </a>
+            </li>
+            <li class="nav-section-label"><small>সিস্টেম</small></li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Ads" ? "active" : "")"
+                   href="/Admin/Ads">
+                    <i class="bi bi-megaphone"></i><span>বিজ্ঞাপন</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Analytics" ? "active" : "")"
+                   href="/Admin/Analytics">
+                    <i class="bi bi-bar-chart-line"></i><span>অ্যানালিটিক্স</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Newsletter" ? "active" : "")"
+                   href="/Admin/Newsletter">
+                    <i class="bi bi-envelope-paper"></i><span>নিউজলেটার</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Settings" ? "active" : "")"
+                   href="/Admin/Settings">
+                    <i class="bi bi-gear"></i><span>সেটিংস</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer mt-auto pb-3 px-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-person-circle text-white fs-4"></i>
+                <div class="text-white-50 small">
+                    <div class="text-white">@User.Identity?.Name</div>
+                    <div>Admin</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div id="admin-main" class="admin-main">
+
+        <!-- Top Bar -->
+        <div class="admin-topbar d-flex align-items-center px-4">
+            <button id="sidebar-collapse-btn" class="btn btn-link text-dark p-0 me-3">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+
+            <nav aria-label="breadcrumb" class="me-auto">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/Admin/Dashboard">অ্যাডমিন</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex align-items-center gap-3">
+                <a href="/" target="_blank" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>সাইট দেখুন
+                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-box-arrow-right me-1"></i>লগআউট
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="admin-content p-4">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="bi bi-exclamation-circle me-2"></i>@TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

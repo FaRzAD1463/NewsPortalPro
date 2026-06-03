@@ -1,0 +1,132 @@
+﻿@{
+    ViewData["Title"] = "অ্যানালিটিক্স";
+}
+
+<div class="row g-4 mb-4">
+    @{
+        var visitorStats = ViewBag.VisitorStats as VisitorStatsDto;
+    }
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center p-4">
+            <div class="fs-2 fw-bold text-primary">@visitorStats?.TotalVisitors.ToString("N0")</div>
+            <div class="text-muted small">মোট ভিজিট (৩০ দিন)</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card border-0 shadow-sm text-center p-4">
+            <div class="fs-2 fw-bold text-success">@visitorStats?.UniqueVisitors.ToString("N0")</div>
+            <div class="text-muted small">অনন্য ভিজিটর</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0">দৈনিক ভিউ (৩০ দিন)</h5>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="analyticsViewsChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0">ডিভাইস ব্রেকডাউন</h5>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="deviceChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0">সর্বাধিক পঠিত সংবাদ</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr><th>#</th><th>শিরোনাম</th><th>ভিউ</th></tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var topNews = ViewBag.TopNews as List<TopNewsDto>;
+                                int idx = 1;
+                            }
+                            @if (topNews != null)
+                            {
+                                @foreach (var news in topNews)
+                                {
+                                    <tr>
+                                        <td class="text-muted fw-bold">@(idx++)</td>
+                                        <td>
+                                            <a href="/news/@news.Slug" target="_blank"
+                                               class="text-dark text-decoration-none small">
+                                                @news.Title[..Math.Min(55, news.Title.Length)]...
+                                            </a>
+                                        </td>
+                                        <td><span class="badge bg-primary">@news.ViewCount.ToString("N0")</span></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0">বিভাগ অনুযায়ী সংবাদ</h5>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="analyticsCategoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+        const dailyViews   = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.DailyViews ?? new List<DailyViewsDto>()));
+        const catStats     = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.CategoryStats ?? new List<CategoryStatsDto>()));
+        const deviceStats  = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.VisitorStats?.DeviceBreakdown ?? new Dictionary<string, int>()));
+
+        new Chart(document.getElementById('analyticsViewsChart'), {
+            type: 'bar',
+            data: {
+                labels: dailyViews.map(d => new Date(d.date).toLocaleDateString('bn-BD', { month: 'short', day: 'numeric' })),
+                datasets: [{ label: 'ভিউ', data: dailyViews.map(d => d.views), backgroundColor: 'rgba(13,110,253,0.7)', borderRadius: 4 }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('deviceChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(deviceStats),
+                datasets: [{ data: Object.values(deviceStats), backgroundColor: ['#0d6efd','#198754','#ffc107','#dc3545'] }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('analyticsCategoryChart'), {
+            type: 'horizontalBar',
+            type: 'bar',
+            data: {
+                labels: catStats.map(c => c.name),
+                datasets: [{ label: 'সংবাদ', data: catStats.map(c => c.newsCount), backgroundColor: catStats.map(c => c.colorCode || '#6c757d'), borderRadius: 4 }]
+            },
+            options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } } }
+        });
+    </script>
+}

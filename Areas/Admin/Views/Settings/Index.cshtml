@@ -1,0 +1,133 @@
+﻿@{
+    ViewData["Title"] = "সাইট সেটিংস";
+    var general = ViewBag.General as Dictionary<string, string> ?? new();
+    var social = ViewBag.Social as Dictionary<string, string> ?? new();
+    var email = ViewBag.Email as Dictionary<string, string> ?? new();
+    var seo = ViewBag.SEO as Dictionary<string, string> ?? new();
+    var widgets = ViewBag.Widgets as Dictionary<string, string> ?? new();
+    var system = ViewBag.System as Dictionary<string, string> ?? new();
+}
+
+<ul class="nav nav-tabs mb-4" id="settingsTabs">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#general">সাধারণ</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#social">সোশ্যাল</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#email">ইমেইল</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#seo">SEO</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#widgets">উইজেট</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#system">সিস্টেম</button></li>
+</ul>
+
+<form asp-action="Save" asp-controller="Settings" asp-area="Admin" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="general">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    @foreach (var kv in general)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">@kv.Key</label>
+                            <input type="text" name="settings[@kv.Key]" value="@kv.Value" class="form-control" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="social">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    @foreach (var kv in social)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">@kv.Key</label>
+                            <input type="url" name="settings[@kv.Key]" value="@kv.Value" class="form-control" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="email">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    @foreach (var kv in email)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">@kv.Key</label>
+                            <input type="@(kv.Key.Contains("Password") ? "password" : "text")"
+                                   name="settings[@kv.Key]" value="@kv.Value" class="form-control" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="seo">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    @foreach (var kv in seo)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">@kv.Key</label>
+                            <input type="text" name="settings[@kv.Key]" value="@kv.Value" class="form-control" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="widgets">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    @foreach (var kv in widgets)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">@kv.Key</label>
+                            <input type="text" name="settings[@kv.Key]" value="@kv.Value" class="form-control" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="system">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    @foreach (var kv in system)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-medium d-flex justify-content-between">
+                                @kv.Key
+                                @if (kv.Key == "MaintenanceMode")
+                                {
+                                    <span class="badge @(kv.Value == "true" ? "bg-danger" : "bg-success")">
+                                        @(kv.Value == "true" ? "চালু" : "বন্ধ")
+                                    </span>
+                                }
+                            </label>
+                            @if (kv.Key == "MaintenanceMode")
+                            {
+                                <select name="settings[@kv.Key]" class="form-select">
+                                    <option value="false" selected="@(kv.Value != "true")">বন্ধ (স্বাভাবিক)</option>
+                                    <option value="true" selected="@(kv.Value == "true")">চালু (রক্ষণাবেক্ষণ)</option>
+                                </select>
+                            }
+                            else
+                            {
+                                <input type="text" name="settings[@kv.Key]" value="@kv.Value" class="form-control" />
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-save me-2"></i>সেটিংস সংরক্ষণ করুন
+        </button>
+    </div>
+</form>

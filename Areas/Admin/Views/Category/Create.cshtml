@@ -1,0 +1,99 @@
+﻿@model CreateCategoryDto
+@{
+    ViewData["Title"] = "নতুন বিভাগ";
+}
+
+<form asp-action="Create" asp-controller="Category" asp-area="Admin" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0">নতুন বিভাগ তৈরি করুন</h5>
+                </div>
+                <div class="card-body p-4">
+
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-medium">নাম <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control" placeholder="বিভাগের নাম" required />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">রঙ কোড</label>
+                            <div class="input-group">
+                                <input asp-for="ColorCode" class="form-control"
+                                       placeholder="#e74c3c" id="color-input" />
+                                <input type="color" class="form-control form-control-color"
+                                       id="color-picker" value="#e74c3c"
+                                       style="max-width:50px" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">বিবরণ</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"
+                                      placeholder="বিভাগের সংক্ষিপ্ত বিবরণ"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">মূল বিভাগ</label>
+                            <select asp-for="ParentId" asp-items="ViewBag.Parents" class="form-select">
+                                <option value="">কোনো মূল বিভাগ নেই</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">ক্রম</label>
+                            <input asp-for="DisplayOrder" type="number" class="form-control"
+                                   min="0" value="0" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input asp-for="ShowInMenu" class="form-check-input" type="checkbox" checked />
+                                <label class="form-check-label fw-medium">নেভিগেশন মেনুতে দেখান</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <h6 class="fw-bold text-muted mb-3">SEO সেটিংস</h6>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Meta শিরোনাম</label>
+                            <input asp-for="MetaTitle" class="form-control" maxlength="160" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Meta বিবরণ</label>
+                            <textarea asp-for="MetaDescription" class="form-control"
+                                      rows="2" maxlength="300"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Meta কীওয়ার্ড</label>
+                            <input asp-for="MetaKeywords" class="form-control" />
+                        </div>
+
+                        <div class="col-12 pt-2">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bi bi-plus-circle me-2"></i>বিভাগ তৈরি করুন
+                                </button>
+                                <a href="/Admin/Category" class="btn btn-outline-secondary">বাতিল</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        const colorInput  = document.getElementById('color-input');
+        const colorPicker = document.getElementById('color-picker');
+
+        colorPicker.addEventListener('input', () => colorInput.value = colorPicker.value);
+        colorInput.addEventListener('input', () => {
+            if (/^#[0-9A-Fa-f]{6}$/.test(colorInput.value))
+                colorPicker.value = colorInput.value;
+        });
+    </script>
+}

@@ -1,0 +1,38 @@
+﻿@model NewsPortalPro.Helpers.PaginationHelper
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="পৃষ্ঠা নেভিগেশন" class="mt-4">
+        <ul class="pagination justify-content-center flex-wrap gap-1">
+
+            @if (Model.HasPrevious)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="?page=@Model.PreviousPage">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            }
+
+            @foreach (var page in Model.GetPageNumbers())
+            {
+                <li class="page-item @(page == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" href="?page=@page">@page</a>
+                </li>
+            }
+
+            @if (Model.HasNext)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="?page=@Model.NextPage">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+            }
+
+        </ul>
+        <p class="text-center text-muted small mt-2">
+            @Model.TotalItems টির মধ্যে পৃষ্ঠা @Model.CurrentPage / @Model.TotalPages
+        </p>
+    </nav>
+}

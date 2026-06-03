@@ -1,0 +1,44 @@
+﻿@inject NewsPortalPro.Interfaces.ICategoryService CategoryService
+@{
+    var categories = await CategoryService.GetMenuCategoriesAsync();
+}
+
+@foreach (var cat in categories)
+{
+    if (cat.Children.Any())
+    {
+        <li class="nav-item dropdown mega-menu-item">
+            <a class="nav-link dropdown-toggle" href="/category/@cat.Slug"
+               data-bs-toggle="dropdown" style="border-bottom: 3px solid @cat.ColorCode">
+                @cat.Name
+            </a>
+            <div class="dropdown-menu mega-menu">
+                <div class="container-fluid">
+                    <div class="row p-3">
+                        <div class="col-md-3">
+                            <h6 class="text-uppercase fw-bold mb-3" style="color:@cat.ColorCode">@cat.Name</h6>
+                            <ul class="list-unstyled">
+                                @foreach (var child in cat.Children)
+                                {
+                                    <li><a class="dropdown-item" href="/category/@child.Slug">@child.Name</a></li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="col-md-9" id="mega-news-@cat.Id">
+                            <!-- Loaded via AJAX on hover -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link" href="/category/@cat.Slug"
+               style="border-bottom: 3px solid @(cat.ColorCode ?? "transparent")">
+                @cat.Name
+            </a>
+        </li>
+    }
+}

@@ -1,0 +1,162 @@
+﻿@{
+    ViewData["Title"] = "আমার প্রোফাইল";
+}
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var user = await UserManager.GetUserAsync(User);
+}
+
+<div class="container mt-4" style="max-width:800px">
+    <div class="row g-4">
+
+        <!-- Profile Card -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center p-4">
+                @if (!string.IsNullOrEmpty(user?.ProfilePicture))
+                {
+                    <img src="@user.ProfilePicture" alt="@user.FullName"
+                         class="rounded-circle mx-auto mb-3" width="100" height="100" />
+                }
+                else
+                {
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center fw-bold fs-2"
+                         style="width:100px;height:100px;background:var(--primary);color:white">
+                        @user?.FullName[0]
+                    </div>
+                }
+                <h5 class="fw-bold mb-1">@user?.FullName</h5>
+                <p class="text-muted small mb-2">@user?.Designation</p>
+                <p class="text-muted small">@user?.Email</p>
+
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    @if (!string.IsNullOrEmpty(user?.FacebookUrl))
+                    {
+                        <a href="@user.FacebookUrl" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrEmpty(user?.TwitterUrl))
+                    {
+                        <a href="@user.TwitterUrl" class="btn btn-sm btn-outline-dark" target="_blank">
+                            <i class="bi bi-twitter-x"></i>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <ul class="nav nav-tabs mb-4">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile-tab">
+                                প্রোফাইল
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#password-tab">
+                                পাসওয়ার্ড
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="profile-tab">
+                            <div id="profile-message"></div>
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">পূর্ণ নাম</label>
+                                <input id="prof-fullname" class="form-control" value="@user?.FullName" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">পদবী</label>
+                                <input id="prof-designation" class="form-control" value="@user?.Designation" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">বায়ো</label>
+                                <textarea id="prof-bio" class="form-control" rows="3">@user?.Bio</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Facebook URL</label>
+                                <input id="prof-facebook" class="form-control" value="@user?.FacebookUrl" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Twitter URL</label>
+                                <input id="prof-twitter" class="form-control" value="@user?.TwitterUrl" />
+                            </div>
+                            <button class="btn btn-primary" onclick="updateProfile()">
+                                <i class="bi bi-save me-2"></i>প্রোফাইল সংরক্ষণ করুন
+                            </button>
+                        </div>
+
+                        <div class="tab-pane fade" id="password-tab">
+                            <div id="password-message"></div>
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">বর্তমান পাসওয়ার্ড</label>
+                                <input type="password" id="current-password" class="form-control" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">নতুন পাসওয়ার্ড</label>
+                                <input type="password" id="new-password" class="form-control" />
+                            </div>
+                            <button class="btn btn-primary" onclick="changePassword()">
+                                <i class="bi bi-key me-2"></i>পাসওয়ার্ড পরিবর্তন করুন
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function updateProfile() {
+            const token = localStorage.getItem('jwt_token');
+            const res = await fetch('/api/auth/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    fullName: document.getElementById('prof-fullname').value,
+                    designation: document.getElementById('prof-designation').value,
+                    bio: document.getElementById('prof-bio').value,
+                    facebookUrl: document.getElementById('prof-facebook').value,
+                    twitterUrl: document.getElementById('prof-twitter').value
+                })
+            });
+            const data = await res.json();
+            if (data.success) toastr.success('প্রোফাইল আপডেট হয়েছে');
+            else toastr.error('ত্রুটি হয়েছে');
+        }
+
+        async function changePassword() {
+            const token = localStorage.getItem('jwt_token');
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    currentPassword: document.getElementById('current-password').value,
+                    newPassword: document.getElementById('new-password').value
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toastr.success('পাসওয়ার্ড পরিবর্তন হয়েছে');
+                document.getElementById('current-password').value = '';
+                document.getElementById('new-password').value = '';
+            } else {
+                toastr.error(data.errors?.[0] || 'ত্রুটি হয়েছে');
+            }
+        }
+    </script>
+}

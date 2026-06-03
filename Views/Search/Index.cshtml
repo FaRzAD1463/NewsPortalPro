@@ -1,0 +1,46 @@
+﻿@model SearchResultDto
+@{
+    ViewData["Title"] = $"অনুসন্ধান: {Model?.Query}";
+}
+
+<div class="container-fluid px-4 mt-4">
+    <h2 class="mb-1">অনুসন্ধান ফলাফল</h2>
+    @if (Model != null)
+    {
+        <p class="text-muted mb-4">
+            "<strong>@Model.Query</strong>" এর জন্য @Model.TotalCount টি ফলাফল পাওয়া গেছে
+        </p>
+
+        @if (!Model.News.Any())
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>কোনো ফলাফল পাওয়া যায়নি। অন্য কীওয়ার্ড দিয়ে খুঁজুন।
+            </div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var news in Model.News)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        @await Html.PartialAsync("_NewsCard", news)
+                    </div>
+                }
+            </div>
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.Page ? "active" : "")">
+                                <a class="page-link" href="/Search?q=@Uri.EscapeDataString(Model.Query)&page=@i">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+    }
+</div>

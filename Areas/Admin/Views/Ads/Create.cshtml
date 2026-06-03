@@ -1,0 +1,90 @@
+﻿@model CreateAdDto
+@{
+    ViewData["Title"] = "নতুন বিজ্ঞাপন";
+}
+
+<form asp-action="Create" asp-controller="Ads" asp-area="Admin" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0">নতুন বিজ্ঞাপন</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-medium">শিরোনাম <span class="text-danger">*</span></label>
+                            <input asp-for="Title" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">পজিশন</label>
+                            <select asp-for="Position" class="form-select">
+                                @foreach (var pos in Enum.GetValues<Models.AdPosition>())
+                                {
+                                    <option value="@pos">@pos</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">প্রদর্শন ক্রম</label>
+                            <input asp-for="DisplayOrder" type="number" class="form-control" min="0" value="0" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">ছবির URL</label>
+                            <input asp-for="ImageUrl" class="form-control"
+                                   placeholder="https://..." id="ad-image-url" />
+                            <div id="ad-preview" class="mt-2 d-none">
+                                <img id="ad-preview-img" src="" alt="Preview"
+                                     class="img-fluid rounded" style="max-height:100px" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">গন্তব্য URL</label>
+                            <input asp-for="TargetUrl" class="form-control" placeholder="https://..." />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">HTML কোড (ঐচ্ছিক)</label>
+                            <textarea asp-for="HtmlCode" class="form-control font-monospace" rows="5"
+                                      placeholder="কাস্টম HTML বিজ্ঞাপন কোড..."></textarea>
+                            <small class="text-muted">HTML কোড দিলে ছবির URL উপেক্ষা করা হবে।</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">শুরুর তারিখ</label>
+                            <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">শেষের তারিখ</label>
+                            <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                        </div>
+                        <div class="col-12 pt-2">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bi bi-megaphone me-2"></i>বিজ্ঞাপন তৈরি করুন
+                                </button>
+                                <a href="/Admin/Ads" class="btn btn-outline-secondary">বাতিল</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        document.getElementById('ad-image-url').addEventListener('input', function () {
+            const url = this.value.trim();
+            const preview = document.getElementById('ad-preview');
+            const img = document.getElementById('ad-preview-img');
+            if (url) {
+                img.src = url;
+                preview.classList.remove('d-none');
+            } else {
+                preview.classList.add('d-none');
+            }
+        });
+    </script>
+}

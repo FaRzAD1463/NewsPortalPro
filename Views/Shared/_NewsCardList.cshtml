@@ -1,0 +1,8 @@
+﻿@model IEnumerable<NewsPortalPro.DTOs.NewsListDto>
+
+@foreach (var news in Model)
+{
+    <div class="col-md-6 col-xl-4">
+        @await Html.PartialAsync("_NewsCard", news)
+    </div>
+}

@@ -1,0 +1,184 @@
+﻿
+$(document).ready(function () {
+
+    // ── AOS Animations ───────────────────────────────────
+    AOS.init({ duration: 600, once: true, offset: 60 });
+
+    // ── Current Date (Bengali) ───────────────────────────
+    const days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+    const months = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
+        'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+    const now = new Date();
+    const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    $('#current-date').text(dateStr);
+
+    // ── Dark Mode ────────────────────────────────────────
+    const saved = localStorage.getItem('theme') || 'light';
+    setTheme(saved);
+
+    $('#theme-toggle').on('click', function () {
+        const current = document.documentElement.getAttribute('data-theme');
+        setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        $('#theme-toggle').html(theme === 'dark'
+            ? '<i class="bi bi-sun-fill"></i>'
+            : '<i class="bi bi-moon-fill"></i>');
+    }
+
+    // ── Live Search ──────────────────────────────────────
+    let searchTimer;
+    $('#live-search').on('input', function () {
+        clearTimeout(searchTimer);
+        const q = $(this).val().trim();
+        if (!q) { $('#search-suggestions').empty().hide(); return; }
+
+        searchTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                const box = $('#search-suggestions');
+                box.empty();
+                if (data.length) {
+                    data.forEach(s => box.append(
+                        `<a href="/Search?q=${encodeURIComponent(s)}">${s}</a>`
+                    ));
+                    box.show();
+                } else {
+                    box.hide();
+                }
+            } catch { }
+        }, 300);
+    });
+
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('.search-box').length)
+            $('#search-suggestions').hide();
+    });
+
+    // ── Load Breaking News Ticker ────────────────────────
+    loadBreakingNews();
+
+    async function loadBreakingNews() {
+        try {
+            const res = await fetch('/api/news/breaking?count=8');
+            const data = await res.json();
+            if (data && data.length) {
+                const links = data.map(n =>
+                    `<a href="/news/${n.slug}">${n.title}</a>`).join('');
+                $('#ticker-content').html(links);
+                $('#breaking-ticker').removeClass('d-none');
+            }
+        } catch { }
+    }
+
+    // ── Notifications ────────────────────────────────────
+    loadNotifications();
+    setInterval(loadNotifications, 60000);
+
+    async function loadNotifications() {
+        if (!$('#notif-bell').length) return;
+        try {
+            const res = await fetch('/api/notifications?count=10');
+            if (!res.ok) return;
+            const data = await res.json();
+            const unread = data.filter(n => !n.isRead).length;
+
+            if (unread > 0) {
+                $('#notif-count').text(unread).removeClass('d-none');
+            } else {
+                $('#notif-count').addClass('d-none');
+            }
+
+            const list = $('#notif-list');
+            list.empty();
+            if (data.length) {
+                data.forEach(n => list.append(`
+                    <div class="notif-item ${n.isRead ? '' : 'unread'}"
+                         onclick="readNotification(${n.id}, '${n.link || ''}')">
+                        <div class="fw-medium small">${n.title}</div>
+                        <div class="text-muted" style="font-size:12px">${n.message || ''}</div>
+                    </div>`));
+            } else {
+                list.html('<div class="p-3 text-center text-muted small">কোনো বিজ্ঞপ্তি নেই</div>');
+            }
+        } catch { }
+    }
+
+    $('#notif-bell').on('click', function () {
+        $('#notif-dropdown').toggleClass('d-none');
+    });
+
+    $('#mark-all-read').on('click', async function (e) {
+        e.preventDefault();
+        await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+        loadNotifications();
+    });
+
+    // ── Ad Tracking ──────────────────────────────────────
+    // Track impressions for visible ads
+    const adObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const adId = entry.target.dataset.adId;
+                if (adId) {
+                    fetch(`/api/ads/${adId}/impression`, { method: 'POST' });
+                    adObserver.unobserve(entry.target);
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-ad-id]').forEach(el => adObserver.observe(el));
+
+    // ── Toastr Config ────────────────────────────────────
+    toastr.options = {
+        positionClass: 'toast-bottom-right',
+        timeOut: 3500,
+        closeButton: true,
+        progressBar: true
+    };
+
+    // ── Sticky Header Shadow ─────────────────────────────
+    $(window).on('scroll', function () {
+        if ($(this).scrollTop() > 80) {
+            $('#main-header').addClass('scrolled');
+        } else {
+            $('#main-header').removeClass('scrolled');
+        }
+    });
+
+    // ── Close notification dropdown on outside click ─────
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('.notification-bell-widget').length)
+            $('#notif-dropdown').addClass('d-none');
+    });
+});
+
+// ── Global Functions ─────────────────────────────────────
+
+function submitSearch() {
+    const q = document.getElementById('live-search').value.trim();
+    if (q) window.location.href = `/Search?q=${encodeURIComponent(q)}`;
+}
+
+function submitSidebarSearch() {
+    const q = document.getElementById('sidebar-search')?.value.trim();
+    if (q) window.location.href = `/Search?q=${encodeURIComponent(q)}`;
+}
+
+function trackAdClick(adId) {
+    fetch(`/api/ads/${adId}/click`, { method: 'POST' });
+}
+
+async function readNotification(id, link) {
+    await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+    if (link) window.location.href = link;
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && document.activeElement.id === 'live-search') submitSearch();
+});

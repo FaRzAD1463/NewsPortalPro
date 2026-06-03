@@ -1,0 +1,77 @@
+﻿@model PagedResult<CommentDto>
+@{
+    ViewData["Title"] = "মন্তব্য পর্যালোচনা";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">
+        অপেক্ষারত মন্তব্য
+        <span class="badge bg-danger ms-2">@Model.TotalCount</span>
+    </h4>
+</div>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle me-2"></i>কোনো অপেক্ষারত মন্তব্য নেই।
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            @foreach (var comment in Model.Items)
+            {
+                <div class="comment-row p-4 border-bottom d-flex gap-3" data-id="@comment.Id">
+                    <div class="flex-shrink-0">
+                        <div class="avatar-placeholder rounded-circle"
+                             style="width:42px;height:42px;background:#6c757d;color:white;
+                                            display:flex;align-items:center;justify-content:center;font-weight:700">
+                            @comment.UserName[0]
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div>
+                                <strong>@comment.UserName</strong>
+                                <span class="text-muted small ms-2">@comment.CreatedAt.ToString("dd MMM yyyy HH:mm")</span>
+                            </div>
+                            <div>
+                                <a href="/news/@comment.NewsSlug" target="_blank"
+                                   class="badge bg-primary text-decoration-none">
+                                    @comment.NewsTitle[..Math.Min(40, comment.NewsTitle.Length)]...
+                                </a>
+                            </div>
+                        </div>
+                        <p class="mt-2 mb-3">@comment.Content</p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-success btn-approve-comment" data-id="@comment.Id">
+                                <i class="bi bi-check-lg me-1"></i>অনুমোদন
+                            </button>
+                            <button class="btn btn-sm btn-warning btn-reject-comment" data-id="@comment.Id">
+                                <i class="bi bi-x-lg me-1"></i>প্রত্যাখ্যান
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-approve-comment" data-id="@comment.Id">
+                                <i class="bi bi-trash me-1"></i>মুছুন
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.Page ? "active" : "")">
+                        <a class="page-link" href="?page=@i">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
