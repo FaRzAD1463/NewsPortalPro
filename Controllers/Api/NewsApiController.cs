@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
 using NewsPortalPro.Models;
-using NewsPortalPro.Services;
 using System.Security.Claims;
 
 namespace NewsPortalPro.Controllers.Api
@@ -15,14 +16,18 @@ namespace NewsPortalPro.Controllers.Api
     {
         private readonly INewsService _news;
         private readonly ICommentService _comments;
+        private readonly ApplicationDbContext _db;
 
-        public NewsApiController(INewsService news, ICommentService comments)
+        public NewsApiController(
+            INewsService news,
+            ICommentService comments,
+            ApplicationDbContext db)
         {
             _news = news;
             _comments = comments;
+            _db = db;
         }
 
-        /// <summary>Get paginated published news</summary>
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] NewsFilterDto filter)
         {
@@ -30,7 +35,6 @@ namespace NewsPortalPro.Controllers.Api
             return Ok(result);
         }
 
-        /// <summary>Get breaking news</summary>
         [HttpGet("breaking")]
         public async Task<IActionResult> GetBreaking([FromQuery] int count = 8)
         {
@@ -38,7 +42,6 @@ namespace NewsPortalPro.Controllers.Api
             return Ok(result);
         }
 
-        /// <summary>Get featured news</summary>
         [HttpGet("featured")]
         public async Task<IActionResult> GetFeatured([FromQuery] int count = 6)
         {
@@ -46,7 +49,6 @@ namespace NewsPortalPro.Controllers.Api
             return Ok(result);
         }
 
-        /// <summary>Get trending news</summary>
         [HttpGet("trending")]
         public async Task<IActionResult> GetTrending([FromQuery] int count = 10)
         {
@@ -54,7 +56,6 @@ namespace NewsPortalPro.Controllers.Api
             return Ok(result);
         }
 
-        /// <summary>Get most viewed news</summary>
         [HttpGet("most-viewed")]
         public async Task<IActionResult> GetMostViewed([FromQuery] int count = 10)
         {
@@ -62,40 +63,35 @@ namespace NewsPortalPro.Controllers.Api
             return Ok(result);
         }
 
-        /// <summary>Get news by slug</summary>
         [HttpGet("{slug}")]
         public async Task<IActionResult> GetBySlug(string slug)
         {
             var result = await _news.GetBySlugAsync(slug);
-            if (result == null) return NotFound(ApiResponse<string>.Fail("সংবাদ পাওয়া যায়নি"));
+            if (result == null)
+                return NotFound(ApiResponse<string>.Fail("সংবাদ পাওয়া যায়নি"));
             return Ok(ApiResponse<NewsDetailDto>.Ok(result));
         }
 
-        /// <summary>React to news</summary>
         [HttpPost("react")]
         [Authorize]
         public async Task<IActionResult> React([FromBody] ReactRequestDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var db = HttpContext.RequestServices.GetRequiredService<Data.ApplicationDbContext>();
 
-            var existing = db.Reactions
-                .FirstOrDefault(r => r.NewsId == dto.NewsId && r.UserId == userId);
+            var existing = await _db.Reactions
+                .FirstOrDefaultAsync(r =>
+                    r.NewsId == dto.NewsId && r.UserId == userId);
 
             if (existing != null)
             {
                 if (existing.Type.ToString() == dto.ReactionType)
-                {
-                    db.Reactions.Remove(existing);
-                }
+                    _db.Reactions.Remove(existing);
                 else
-                {
                     existing.Type = Enum.Parse<ReactionType>(dto.ReactionType);
-                }
             }
             else
             {
-                db.Reactions.Add(new Reaction
+                _db.Reactions.Add(new Reaction
                 {
                     NewsId = dto.NewsId,
                     UserId = userId,
@@ -103,27 +99,32 @@ namespace NewsPortalPro.Controllers.Api
                 });
             }
 
-            await db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
 
-            var counts = db.Reactions
+            var counts = await _db.Reactions
                 .Where(r => r.NewsId == dto.NewsId)
                 .GroupBy(r => r.Type)
-                .ToDictionary(g => g.Key.ToString(), g => g.Count());
+                .Select(g => new { Type = g.Key.ToString(), Count = g.Count() })
+                .ToListAsync();
 
-            return Ok(new { success = true, counts });
+            return Ok(new
+            {
+                success = true,
+                counts = counts.ToDictionary(x => x.Type, x => x.Count)
+            });
         }
 
-        /// <summary>Get related news</summary>
         [HttpGet("{id:int}/related")]
         public async Task<IActionResult> GetRelated(int id, [FromQuery] int count = 5)
         {
-            var news = await _news.GetByIdAsync(id);
-            if (news == null) return NotFound();
-            var categoryId = await HttpContext.RequestServices
-                .GetRequiredService<Data.ApplicationDbContext>()
-                .News.Where(n => n.Id == id)
+            // Get categoryId as a concrete value first
+            var categoryId = await _db.News
+                .Where(n => n.Id == id)
                 .Select(n => n.CategoryId)
                 .FirstOrDefaultAsync();
+
+            if (categoryId == 0) return NotFound();
+
             var related = await _news.GetRelatedAsync(id, categoryId, count);
             return Ok(related);
         }

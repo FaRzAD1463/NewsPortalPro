@@ -26,19 +26,14 @@ namespace NewsPortalPro.Services
                 throw new ArgumentException("Invalid file");
 
             using var stream = file.OpenReadStream();
+
             var uploadParams = new ImageUploadParams
             {
                 File = new FileDescription(file.FileName, stream),
                 Folder = $"newsportalpro/{folder}",
                 Transformation = new Transformation()
                     .Quality("auto:good")
-                    .FetchFormat("webp"),
-                EagerTransforms =
-                [
-                    new Transformation()
-                        .Width(400).Height(267)
-                        .Crop("fill").Quality("auto")
-                ]
+                    .FetchFormat("webp")
             };
 
             var result = await _cloudinary.UploadAsync(uploadParams);
@@ -51,11 +46,16 @@ namespace NewsPortalPro.Services
                     $"Upload failed: {result.Error.Message}");
             }
 
+            // Generate thumbnail URL manually via Cloudinary transformation URL
+            var thumbnailUrl = result.SecureUrl != null
+                ? result.SecureUrl.ToString()
+                    .Replace("/upload/", "/upload/w_400,h_267,c_fill/")
+                : null;
+
             return new UploadResultDto
             {
-                Url = result.SecureUrl.ToString(),
-                ThumbnailUrl = result.EagerTransforms?
-                    .FirstOrDefault()?.SecureUrl?.ToString(),
+                Url = result.SecureUrl?.ToString() ?? string.Empty,
+                ThumbnailUrl = thumbnailUrl,
                 PublicId = result.PublicId,
                 Width = result.Width,
                 Height = result.Height,
@@ -83,9 +83,10 @@ namespace NewsPortalPro.Services
             };
 
             var result = await _cloudinary.UploadAsync(uploadParams);
+
             return new UploadResultDto
             {
-                Url = result.SecureUrl.ToString(),
+                Url = result.SecureUrl?.ToString() ?? string.Empty,
                 PublicId = result.PublicId,
                 Width = result.Width,
                 Height = result.Height,

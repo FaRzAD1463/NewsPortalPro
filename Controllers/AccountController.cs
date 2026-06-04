@@ -4,8 +4,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NewsPortalPro.Configurations;
 using NewsPortalPro.DTOs;
+using NewsPortalPro.Interfaces;
 using NewsPortalPro.Models;
-using NewsPortalPro.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -18,31 +18,43 @@ namespace NewsPortalPro.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly JwtSettings _jwt;
         private readonly IEmailService _email;
+        private readonly ILogger<AccountController> _logger;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IOptions<JwtSettings> jwt,
-            IEmailService email)
+            IEmailService email,
+            ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwt = jwt.Value;
             _email = email;
+            _logger = logger;
         }
 
-        [HttpGet] public IActionResult Login() => View();
-        [HttpGet] public IActionResult Register() => View();
+        [HttpGet]
+        public IActionResult Login(string? returnUrl = null)
+        {
+            ViewBag.ReturnUrl = returnUrl;
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult Register() => View();
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginDto dto, string? returnUrl = null)
+        public async Task<IActionResult> Login(
+            LoginDto dto, string? returnUrl = null)
         {
             if (!ModelState.IsValid) return View(dto);
 
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null || !user.IsActive)
             {
-                ModelState.AddModelError("", "ইমেইল বা পাসওয়ার্ড সঠিক নয়");
+                ModelState.AddModelError("",
+                    "ইমেইল বা পাসওয়ার্ড সঠিক নয়");
                 return View(dto);
             }
 
@@ -53,13 +65,16 @@ namespace NewsPortalPro.Controllers
             {
                 user.LastLoginAt = DateTime.UtcNow;
                 await _userManager.UpdateAsync(user);
+                _logger.LogInformation("User logged in: {Email}", dto.Email);
                 return LocalRedirect(returnUrl ?? "/");
             }
 
             if (result.IsLockedOut)
-                ModelState.AddModelError("", "অ্যাকাউন্ট লক করা হয়েছে। ১৫ মিনিট পরে চেষ্টা করুন।");
+                ModelState.AddModelError("",
+                    "অ্যাকাউন্ট লক করা হয়েছে। ১৫ মিনিট পরে চেষ্টা করুন।");
             else
-                ModelState.AddModelError("", "ইমেইল বা পাসওয়ার্ড সঠিক নয়");
+                ModelState.AddModelError("",
+                    "ইমেইল বা পাসওয়ার্ড সঠিক নয়");
 
             return View(dto);
         }
@@ -104,6 +119,7 @@ namespace NewsPortalPro.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        [HttpGet] public IActionResult AccessDenied() => View();
+        [HttpGet]
+        public IActionResult AccessDenied() => View();
     }
 }

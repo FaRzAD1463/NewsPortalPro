@@ -1,5 +1,5 @@
 ﻿@using NewsPortalPro.Helpers
-@model PaginationHelper
+@model NewsPortalPro.Helpers.PaginationHelper
 
 @if (Model != null && Model.TotalPages > 1)
 {
@@ -10,8 +10,7 @@
             {
                 <li class="page-item">
                     <a class="page-link" href="?page=@Model.PreviousPage">
-                        <i class="bi bi-chevron-right"></i>
-                        পূর্ববর্তী
+                        <i class="bi bi-chevron-right"></i> পূর্ববর্তী
                     </a>
                 </li>
             }
@@ -27,8 +26,7 @@
             {
                 <li class="page-item">
                     <a class="page-link" href="?page=@Model.NextPage">
-                        পরবর্তী
-                        <i class="bi bi-chevron-left"></i>
+                        পরবর্তী <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
             }

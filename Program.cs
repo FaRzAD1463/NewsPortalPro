@@ -283,7 +283,7 @@ try
     // ──────────────────────────────────────────────────────────
     // AUTOMAPPER
     // ──────────────────────────────────────────────────────────
-    builder.Services.AddAutoMapper(typeof(Program).Assembly);
+    builder.Services.AddAutoMapper(new[] { typeof(Program).Assembly }); ;
 
     // ──────────────────────────────────────────────────────────
     // FLUENT VALIDATION
@@ -558,12 +558,7 @@ try
     else
     {
         app.UseExceptionHandler("/Home/Error");
-        app.UseHsts(options =>
-        {
-            options.MaxAge = TimeSpan.FromDays(365);
-            options.IncludeSubdomains = true;
-            options.Preload = true;
-        });
+        app.UseHsts();
     }
 
     // ──────────────────────────────────────────────────────────
