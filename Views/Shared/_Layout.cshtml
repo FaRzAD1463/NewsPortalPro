@@ -3,24 +3,16 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-
     <title>@(ViewData["Title"] ?? "নিউজপোর্টাল প্রো")</title>
 
     @if (ViewData["MetaDescription"] != null)
     {
         <meta name="description" content="@ViewData["MetaDescription"]" />
     }
-    @if (ViewData["MetaKeywords"] != null)
-    {
-        <meta name="keywords" content="@ViewData["MetaKeywords"]" />
-    }
 
-    <!-- Open Graph -->
     <meta property="og:title" content="@(ViewData["OgTitle"] ?? ViewData["Title"])" />
     <meta property="og:description" content="@ViewData["OgDescription"]" />
     <meta property="og:image" content="@ViewData["OgImage"]" />
-    <meta property="og:type" content="website" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -36,9 +28,9 @@
     <!-- Owl Carousel -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -46,102 +38,116 @@
     <!-- Reading Progress Bar -->
     <div id="reading-progress"></div>
 
-    <!-- Breaking News Ticker -->
-    @await Html.PartialAsync("_BreakingNewsTicker")
-
-    <!-- Sticky Header -->
-    <header id="main-header" class="site-header sticky-top">
-        <div class="header-top py-2 d-none d-md-block">
-            <div class="container-fluid px-4">
-                <div class="row align-items-center">
-                    <div class="col-md-4">
-                        <span class="text-muted small">
-                            <i class="bi bi-calendar3 me-1"></i>
-                            <span id="current-date"></span>
-                        </span>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <a href="/" class="site-logo-link">
-                            <span class="site-logo-text">নিউজপোর্টাল প্রো</span>
-                        </a>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <div class="d-flex align-items-center justify-content-end gap-3">
-                            <!-- Dark Mode Toggle -->
-                            <button id="theme-toggle" class="btn btn-sm btn-outline-secondary" title="ডার্ক মোড">
-                                <i class="bi bi-moon-fill"></i>
+    <!-- ══ TOP BAR ══════════════════════════════════════════ -->
+    <div class="top-bar py-1 d-none d-md-block">
+        <div class="container-fluid px-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <span class="text-muted small">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        <span id="current-date"></span>
+                    </span>
+                </div>
+                <div class="col-md-6 text-end d-flex align-items-center justify-content-end gap-3">
+                    <button id="theme-toggle" class="btn btn-sm btn-link text-muted p-0">
+                        <i class="bi bi-moon-fill"></i>
+                    </button>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-link text-muted dropdown-toggle p-0"
+                                    data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle me-1"></i>@User.Identity.Name
                             </button>
-                            @if (User.Identity?.IsAuthenticated == true)
-                            {
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                        <i class="bi bi-person-circle me-1"></i>@User.Identity.Name
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="/Account/Profile"><i class="bi bi-person me-2"></i>প্রোফাইল</a></li>
-                                        <li><a class="dropdown-item" href="/Account/Bookmarks"><i class="bi bi-bookmark me-2"></i>সংরক্ষিত</a></li>
-                                        @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
-                                        {
-                                            <li><hr class="dropdown-divider" /></li>
-                                            <li><a class="dropdown-item" href="/Admin/Dashboard"><i class="bi bi-speedometer2 me-2"></i>অ্যাডমিন</a></li>
-                                        }
-                                        <li><hr class="dropdown-divider" /></li>
-                                        <li>
-                                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="dropdown-item text-danger">
-                                                    <i class="bi bi-box-arrow-right me-2"></i>লগআউট
-                                                </button>
-                                            </form>
-                                        </li>
-                                    </ul>
-                                </div>
-                            }
-                            else
-                            {
-                                <a href="/Account/Login" class="btn btn-sm btn-outline-primary">লগইন</a>
-                                <a href="/Account/Register" class="btn btn-sm btn-primary">নিবন্ধন</a>
-                            }
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item small" href="/Account/Profile">প্রোফাইল</a></li>
+                                @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
+                                {
+                                    <li><a class="dropdown-item small" href="/Admin/Dashboard">অ্যাডমিন</a></li>
+                                }
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item small text-danger">লগআউট</button>
+                                    </form>
+                                </li>
+                            </ul>
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <a href="/Account/Login" class="text-muted small text-decoration-none">লগইন</a>
+                        <a href="/Account/Register" class="text-muted small text-decoration-none">নিবন্ধন</a>
+                    }
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Main Navigation -->
-        <nav class="navbar navbar-expand-lg main-nav py-0">
-            <div class="container-fluid px-4">
-                <!-- Mobile Logo -->
-                <a class="navbar-brand d-lg-none" href="/">নিউজপোর্টাল প্রো</a>
-
-                <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse">
-                    <ul class="navbar-nav me-auto align-items-stretch">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/">হোম</a>
-                        </li>
-                        @await Html.PartialAsync("_MegaMenu")
-                    </ul>
-
-                    <!-- Search Bar -->
-                    <div class="search-box ms-auto me-3">
-                        <div class="input-group input-group-sm">
-                            <input type="text" id="live-search" class="form-control" placeholder="সংবাদ খুঁজুন..." autocomplete="off" />
-                            <button class="btn btn-primary" onclick="submitSearch()">
-                                <i class="bi bi-search"></i>
-                            </button>
-                        </div>
-                        <div id="search-suggestions" class="search-dropdown"></div>
-                    </div>
-                </div>
-            </div>
-        </nav>
+    <!-- ══ SITE HEADER ══════════════════════════════════════ -->
+    <header class="site-header text-center py-3 border-bottom">
+        <div class="container-fluid px-4">
+            <a href="/" class="text-decoration-none">
+                <div class="site-logo-text">নিউজপোর্টাল প্রো</div>
+                <div class="site-tagline text-muted small">বাংলাদেশের নির্ভরযোগ্য সংবাদ মাধ্যম</div>
+            </a>
+        </div>
     </header>
 
-    <!-- Mobile Offcanvas Menu -->
+    <!-- ══ BREAKING NEWS TICKER ═════════════════════════════ -->
+    <div id="breaking-ticker" class="breaking-ticker d-none">
+        <div class="container-fluid px-4 d-flex align-items-center">
+            <span class="ticker-label">সর্বশেষ</span>
+            <div class="ticker-wrapper flex-grow-1 overflow-hidden">
+                <div id="ticker-content" class="ticker-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ MAIN NAVIGATION ══════════════════════════════════ -->
+    <nav class="main-nav sticky-top" id="main-header">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center justify-content-between">
+
+                <!-- Mobile logo -->
+                <a href="/" class="d-md-none text-white text-decoration-none fw-bold">NPP</a>
+
+                <!-- Desktop nav -->
+                <ul class="nav-list d-none d-md-flex align-items-center mb-0 flex-wrap">
+                    <li class="nav-item-custom">
+                        <a href="/" class="nav-link-custom">হোম</a>
+                    </li>
+                    @await Html.PartialAsync("_MegaMenu")
+                </ul>
+
+                <!-- Search -->
+                <div class="nav-search position-relative ms-auto">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="search-box-nav">
+                            <input type="text" id="live-search"
+                                   class="form-control form-control-sm"
+                                   placeholder="সংবাদ খুঁজুন..."
+                                   autocomplete="off" />
+                            <div id="search-suggestions" class="search-dropdown"></div>
+                        </div>
+                        <button class="btn btn-sm btn-light"
+                                onclick="submitSearch()">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile toggle -->
+                <button class="btn btn-link text-white d-md-none ms-2"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#mobileMenu">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ══ MOBILE MENU ═══════════════════════════════════════ -->
     <div class="offcanvas offcanvas-start" id="mobileMenu">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title">নিউজপোর্টাল প্রো</h5>
@@ -156,17 +162,18 @@
                 <li class="nav-item"><a class="nav-link" href="/category/sports">খেলাধুলা</a></li>
                 <li class="nav-item"><a class="nav-link" href="/category/entertainment">বিনোদন</a></li>
                 <li class="nav-item"><a class="nav-link" href="/category/technology">প্রযুক্তি</a></li>
+                <li class="nav-item"><a class="nav-link" href="/category/economy">অর্থনীতি</a></li>
             </ul>
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- ══ MAIN CONTENT ══════════════════════════════════════ -->
     <main>
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-success alert-dismissible fade show m-0 rounded-0" role="alert">
-                <div class="container">
-                    <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+            <div class="alert alert-success alert-dismissible fade show m-0 rounded-0">
+                <div class="container-fluid px-4">
+                    @TempData["Success"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             </div>
@@ -174,34 +181,42 @@
         @RenderBody()
     </main>
 
-    <!-- Footer -->
+    <!-- ══ FOOTER ════════════════════════════════════════════ -->
     @await Html.PartialAsync("_Footer")
 
-    <!-- Floating Social Share (on news pages) -->
+    <!-- Floating Share Bar -->
     @if (ViewData["ShowShareBar"] != null)
     {
         <div class="floating-share-bar d-none d-lg-flex">
             <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(ViewData["CanonicalUrl"]?.ToString() ?? "")"
-               target="_blank" class="share-btn facebook" title="Facebook"><i class="bi bi-facebook"></i></a>
+               target="_blank" class="share-btn facebook">
+                <i class="bi bi-facebook"></i>
+            </a>
             <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString(ViewData["CanonicalUrl"]?.ToString() ?? "")"
-               target="_blank" class="share-btn twitter" title="Twitter"><i class="bi bi-twitter-x"></i></a>
-            <a href="https://wa.me/?text=@Uri.EscapeDataString(ViewData["Title"]?.ToString() + " " + ViewData["CanonicalUrl"]?.ToString() ?? "")"
-               target="_blank" class="share-btn whatsapp" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>
-            <button onclick="copyLink()" class="share-btn copy-link" title="লিঙ্ক কপি"><i class="bi bi-link-45deg"></i></button>
+               target="_blank" class="share-btn twitter">
+                <i class="bi bi-twitter-x"></i>
+            </a>
+            <a href="https://wa.me/?text=@Uri.EscapeDataString((ViewData["Title"]?.ToString() ?? "") + " " + (ViewData["CanonicalUrl"]?.ToString() ?? ""))"
+               target="_blank" class="share-btn whatsapp">
+                <i class="bi bi-whatsapp"></i>
+            </a>
+            <button onclick="copyLink()" class="share-btn copy-link">
+                <i class="bi bi-link-45deg"></i>
+            </button>
         </div>
     }
 
-    <!-- Notification Bell (authenticated) -->
+    <!-- Notification Bell -->
     @if (User.Identity?.IsAuthenticated == true)
     {
         <div class="notification-bell-widget">
-            <button id="notif-bell" class="btn btn-primary rounded-circle shadow-lg" title="বিজ্ঞপ্তি">
+            <button id="notif-bell" class="btn btn-primary rounded-circle shadow-lg">
                 <i class="bi bi-bell-fill"></i>
                 <span id="notif-count" class="badge bg-danger d-none">0</span>
             </button>
             <div id="notif-dropdown" class="notif-dropdown d-none">
-                <div class="notif-header d-flex justify-content-between align-items-center px-3 py-2">
-                    <strong>বিজ্ঞপ্তি</strong>
+                <div class="notif-header d-flex justify-content-between px-3 py-2">
+                    <strong class="small">বিজ্ঞপ্তি</strong>
                     <a href="#" id="mark-all-read" class="small text-primary">সব পড়া হয়েছে</a>
                 </div>
                 <div id="notif-list" class="notif-list"></div>
@@ -215,13 +230,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.min.css" rel="stylesheet" />
-    <script src="~/js/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/signalr-client.js" asp-append-version="true"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

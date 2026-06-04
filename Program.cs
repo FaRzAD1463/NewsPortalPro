@@ -24,6 +24,8 @@ using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
 using System.Text;
 
+
+
 // ════════════════════════════════════════════════════════════
 // SERILOG — must be configured before everything else
 // ════════════════════════════════════════════════════════════

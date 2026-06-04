@@ -8,48 +8,52 @@
 
 @foreach (var cat in categories)
 {
-    if (cat.Children != null && cat.Children.Any())
-    {
-        <li class="nav-item dropdown mega-menu-item">
-            <a class="nav-link dropdown-toggle" href="/category/@cat.Slug"
-               data-bs-toggle="dropdown"
-               style="border-bottom: 3px solid @(cat.ColorCode ?? "transparent")">
-                @cat.Name
-            </a>
-            <div class="dropdown-menu mega-menu">
-                <div class="container-fluid">
-                    <div class="row p-3">
-                        <div class="col-md-4">
-                            <h6 class="text-uppercase fw-bold mb-3"
-                                style="color:@cat.ColorCode">
-                                @cat.Name
-                            </h6>
-                            <ul class="list-unstyled">
+    <li class="nav-item-custom dropdown-hover">
+        <a class="nav-link-custom" href="/category/@cat.Slug">
+            @cat.Name
+            @if (cat.Children != null && cat.Children.Any())
+            {
+                <i class="bi bi-chevron-down ms-1" style="font-size:10px"></i>
+            }
+        </a>
+        <div class="mega-dropdown">
+            <div class="mega-dropdown-inner">
+                <div class="row g-0">
+                    <!-- Sub categories -->
+                    @if (cat.Children != null && cat.Children.Any())
+                    {
+                        <div class="col-3 mega-sub-cats border-end">
+                            <div class="p-3">
+                                <h6 class="fw-bold mb-3"
+                                    style="color:@cat.ColorCode;border-bottom:2px solid @cat.ColorCode;padding-bottom:8px">
+                                    @cat.Name
+                                </h6>
                                 @foreach (var child in cat.Children)
                                 {
-                                    <li>
-                                        <a class="dropdown-item"
-                                           href="/category/@child.Slug">@child.Name</a>
-                                    </li>
+                                    <a href="/category/@child.Slug"
+                                       class="d-flex align-items-center gap-2 py-2 text-decoration-none sub-cat-link">
+                                        <i class="bi bi-chevron-right small"></i>
+                                        <span>@child.Name</span>
+                                    </a>
                                 }
-                            </ul>
-                            <a href="/category/@cat.Slug"
-                               class="btn btn-sm btn-outline-primary mt-2">
-                                সব দেখুন
-                            </a>
+                            </div>
                         </div>
-                    </div>
+                        <div class="col-9 p-3" id="mega-news-@cat.Slug">
+                            <div class="text-center text-muted py-3">
+                                <div class="spinner-border spinner-border-sm"></div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-12 p-3" id="mega-news-@cat.Slug">
+                            <div class="text-center text-muted py-3">
+                                <div class="spinner-border spinner-border-sm"></div>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
-        </li>
-    }
-    else
-    {
-        <li class="nav-item">
-            <a class="nav-link" href="/category/@cat.Slug"
-               style="border-bottom: 3px solid @(cat.ColorCode ?? "transparent")">
-                @cat.Name
-            </a>
-        </li>
-    }
+        </div>
+    </li>
 }

@@ -5,83 +5,148 @@
     ViewData["Title"] = $"{category?.Name} - নিউজপোর্টাল প্রো";
 }
 
-<div class="category-page mt-4">
-    <div class="container-fluid px-4">
+<div class="container-fluid px-4 mt-4">
 
-        <!-- Category Header -->
-        <div class="category-header mb-4 p-4 rounded"
-             style="border-left: 5px solid @(category?.ColorCode ?? "#e74c3c");background:#f8f9fa">
-            <h1 class="h2 mb-1">@category?.Name</h1>
-            @if (!string.IsNullOrEmpty(category?.Description))
-            {
-                <p class="text-muted mb-0">@category.Description</p>
-            }
-        </div>
+    <!-- Category Header -->
+    <div class="category-page-header mb-4"
+         style="border-bottom: 3px solid @(category?.ColorCode ?? "#e74c3c")">
+        <h1 class="h2 fw-bold pb-2"
+            style="color:@(category?.ColorCode ?? "#e74c3c")">
+            @category?.Name
+        </h1>
+    </div>
 
-        <div class="row g-4">
+    <div class="row g-4">
+        <div class="col-lg-9">
+
+            <!-- Sort filters -->
+            <div class="d-flex gap-2 mb-4 flex-wrap">
+                <button class="btn btn-sm btn-primary active"
+                        onclick="filterSort('latest', this)">
+                    সর্বশেষ
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="filterSort('popular', this)">
+                    জনপ্রিয়
+                </button>
+                <button class="btn btn-sm btn-outline-secondary"
+                        onclick="filterSort('comments', this)">
+                    আলোচিত
+                </button>
+            </div>
+
             <!-- News Grid -->
-            <div class="col-lg-9">
+            <div class="row g-4" id="cat-news-grid">
+                @if (Model.Items.Any())
+                {
+                    <!-- Lead story -->
+                    <div class="col-12">
+                        <div class="d-md-flex gap-4 pb-4 border-bottom">
+                            <div class="flex-shrink-0 mb-3 mb-md-0">
+                                <a href="/news/@Model.Items[0].Slug">
+                                    <img src="@(Model.Items[0].FeaturedImage ?? "/images/placeholder.jpg")"
+                                         alt="@Model.Items[0].Title"
+                                         class="rounded"
+                                         style="width:320px;height:220px;object-fit:cover"
+                                         loading="lazy" />
+                                </a>
+                            </div>
+                            <div>
+                                <span class="category-badge mb-2 d-inline-block"
+                                      style="background:@(category?.ColorCode ?? "#6c757d")">
+                                    @Model.Items[0].CategoryName
+                                </span>
+                                <h3 class="fw-bold">
+                                    <a href="/news/@Model.Items[0].Slug"
+                                       class="text-dark text-decoration-none">
+                                        @Model.Items[0].Title
+                                    </a>
+                                </h3>
+                                <p class="text-muted">@Model.Items[0].Summary</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-person me-1"></i>@Model.Items[0].AuthorName
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-clock me-1"></i>
+                                    @Model.Items[0].PublishedAt?.ToString("dd MMM yyyy")
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-eye me-1"></i>@Model.Items[0].ViewCount
+                                </small>
+                            </div>
+                        </div>
+                    </div>
 
-                <!-- Filter Bar -->
-                <div class="filter-bar d-flex gap-2 mb-4 flex-wrap">
-                    <button class="btn btn-sm btn-primary active" onclick="filterNews('latest', this)">সর্বশেষ</button>
-                    <button class="btn btn-sm btn-outline-primary" onclick="filterNews('popular', this)">জনপ্রিয়</button>
-                    <button class="btn btn-sm btn-outline-primary" onclick="filterNews('comments', this)">আলোচিত</button>
-                </div>
-
-                <div class="row g-3" id="news-grid">
-                    @foreach (var news in Model.Items)
+                    <!-- Rest in grid -->
+                    @foreach (var news in Model.Items.Skip(1))
                     {
                         <div class="col-md-6 col-lg-4">
                             @await Html.PartialAsync("_NewsCard", news)
                         </div>
                     }
-                </div>
-
-                <!-- Pagination -->
-                @if (Model.TotalPages > 1)
-                {
-                    <nav class="mt-4">
-                        <ul class="pagination justify-content-center">
-                            @if (Model.HasPreviousPage)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link" href="/category/@category?.Slug/@(Model.Page - 1)">পূর্ববর্তী</a>
-                                </li>
-                            }
-                            @for (int i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
-                            {
-                                <li class="page-item @(i == Model.Page ? "active" : "")">
-                                    <a class="page-link" href="/category/@category?.Slug/@i">@i</a>
-                                </li>
-                            }
-                            @if (Model.HasNextPage)
-                            {
-                                <li class="page-item">
-                                    <a class="page-link" href="/category/@category?.Slug/@(Model.Page + 1)">পরবর্তী</a>
-                                </li>
-                            }
-                        </ul>
-                    </nav>
                 }
-
+                else
+                {
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-newspaper fs-1 text-muted"></i>
+                        <p class="text-muted mt-3">এই বিভাগে কোনো সংবাদ নেই।</p>
+                    </div>
+                }
             </div>
 
-            <!-- Sidebar -->
-            <div class="col-lg-3">
-                <div class="sticky-sidebar">
-                    @foreach (var ad in (List<AdvertisementDto>)ViewBag.SidebarAds ?? new())
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <nav class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        @if (Model.HasPreviousPage)
+                        {
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="/category/@(category?.Slug)/@(Model.Page - 1)">
+                                    পূর্ববর্তী
+                                </a>
+                            </li>
+                        }
+                        @for (int i = Math.Max(1, Model.Page - 2);
+                                            i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+                        {
+                            <li class="page-item @(i == Model.Page ? "active" : "")">
+                                <a class="page-link"
+                                   href="/category/@(category?.Slug)/@(i)">@i</a>
+                            </li>
+                        }
+                        @if (Model.HasNextPage)
+                        {
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="/category/@(category?.Slug)/@(Model.Page + 1)">
+                                    পরবর্তী
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="sticky-sidebar">
+                @if (ViewBag.SidebarAds != null)
+                {
+                    foreach (var ad in (List<AdvertisementDto>)ViewBag.SidebarAds)
                     {
                         <div class="sidebar-widget ad-widget mb-4">
                             @if (!string.IsNullOrEmpty(ad.ImageUrl))
                             {
                                 <a href="@ad.TargetUrl" target="_blank">
-                                    <img src="@ad.ImageUrl" alt="@ad.Title" class="img-fluid rounded" />
+                                    <img src="@ad.ImageUrl" alt="@ad.Title"
+                                         class="img-fluid rounded w-100" />
                                 </a>
                             }
                         </div>
                     }
-                </div>
+                }
             </div>
         </div>
     </div>
@@ -89,39 +154,76 @@
 
 @section Scripts {
     <script>
-        async function filterNews(sort, btn) {
-            document.querySelectorAll('.filter-bar .btn').forEach(b => {
-                b.classList.remove('btn-primary', 'active');
-                b.classList.add('btn-outline-primary');
+        async function filterSort(sort, btn) {
+            document.querySelectorAll('.btn[onclick^="filterSort"]').forEach(b => {
+                b.className = 'btn btn-sm btn-outline-secondary';
             });
-            btn.classList.remove('btn-outline-primary');
-            btn.classList.add('btn-primary', 'active');
+            btn.className = 'btn btn-sm btn-primary active';
 
-            const cat = '@category?.Slug';
-            const res = await fetch(`/api/news?categorySlug=${cat}&sort=${sort}&pageSize=12`);
+            const slug = '@category?.Slug';
+            const res = await fetch(`/api/news?categorySlug=${slug}&sort=${sort}&pageSize=12&page=1`);
             const data = await res.json();
-
-            const grid = document.getElementById('news-grid');
+            const grid = document.getElementById('cat-news-grid');
             grid.innerHTML = '';
 
-            data.items.forEach(n => {
-                grid.innerHTML += `
-                    <div class="col-md-6 col-lg-4">
-                        <div class="news-card card h-100 border-0 shadow-sm">
-                            <a href="/news/${n.slug}">
-                                <img src="${n.featuredImage || '/images/placeholder.jpg'}"
-                                     class="card-img-top" alt="${n.title}" loading="lazy" />
-                            </a>
-                            <div class="card-body p-3">
-                                <h6 class="card-title">
-                                    <a href="/news/${n.slug}" class="text-dark text-decoration-none">${n.title}</a>
-                                </h6>
+            if (!data.items || data.items.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">কোনো সংবাদ নেই</div>';
+                return;
+            }
+
+            data.items.forEach((n, i) => {
+                if (i === 0) {
+                    grid.innerHTML += `
+                    <div class="col-12">
+                        <div class="d-md-flex gap-4 pb-4 border-bottom">
+                            <div class="flex-shrink-0 mb-3 mb-md-0">
+                                <a href="/news/${n.slug}">
+                                    <img src="${n.featuredImage || '/images/placeholder.jpg'}"
+                                         alt="${n.title}" class="rounded"
+                                         style="width:280px;height:190px;object-fit:cover" />
+                                </a>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold">
+                                    <a href="/news/${n.slug}"
+                                       class="text-dark text-decoration-none">${n.title}</a>
+                                </h4>
+                                <p class="text-muted small">${n.summary || ''}</p>
                                 <small class="text-muted">
-                                    <i class="bi bi-eye me-1"></i>${n.viewCount}
+                                    <i class="bi bi-clock me-1"></i>
+                                    ${n.publishedAt ? new Date(n.publishedAt)
+                                        .toLocaleDateString('bn-BD') : ''}
                                 </small>
                             </div>
                         </div>
                     </div>`;
+                } else {
+                    grid.innerHTML += `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="news-card card h-100 border-0 shadow-sm">
+                            <a href="/news/${n.slug}">
+                                <img src="${n.featuredImage || '/images/placeholder.jpg'}"
+                                     class="card-img-top" alt="${n.title}"
+                                     style="height:175px;object-fit:cover" loading="lazy" />
+                            </a>
+                            <div class="card-body p-3">
+                                <span class="category-badge small"
+                                      style="background:${n.categoryColor||'#6c757d'}">
+                                    ${n.categoryName}
+                                </span>
+                                <h6 class="card-title mt-2 small fw-semibold">
+                                    <a href="/news/${n.slug}"
+                                       class="text-dark text-decoration-none">${n.title}</a>
+                                </h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    ${n.publishedAt ? new Date(n.publishedAt)
+                                        .toLocaleDateString('bn-BD') : ''}
+                                </small>
+                            </div>
+                        </div>
+                    </div>`;
+                }
             });
         }
     </script>
