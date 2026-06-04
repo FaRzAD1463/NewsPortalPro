@@ -12,17 +12,20 @@ namespace NewsPortalPro.Controllers
         private readonly ICommentService _comments;
         private readonly IAdsService _ads;
         private readonly IAnalyticsService _analytics;
+        private readonly IServiceScopeFactory _scopeFactory;
 
         public NewsController(
             INewsService news,
             ICommentService comments,
             IAdsService ads,
-            IAnalyticsService analytics)
+            IAnalyticsService analytics,
+            IServiceScopeFactory scopeFactory)
         {
             _news = news;
             _comments = comments;
             _ads = ads;
             _analytics = analytics;
+            _scopeFactory = scopeFactory;
         }
 
         [Route("news/{slug}")]
@@ -31,17 +34,29 @@ namespace NewsPortalPro.Controllers
             var news = await _news.GetBySlugAsync(slug);
             if (news == null) return NotFound();
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-
-            // Fire and forget — non blocking
-            _ = _news.IncrementViewAsync(
-                news.Id, userId, ip,
-                Request.Headers.UserAgent,
-                Request.Headers.Referer);
-
+            // Get sidebar ads BEFORE firing view increment
             ViewBag.SidebarAds = await _ads
                 .GetByPositionAsync(Models.AdPosition.Sidebar);
+
+            // Fire and forget with its OWN scope — fixes DbContext concurrency
+            var newsId = news.Id;
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var userAgent = Request.Headers.UserAgent.ToString();
+            var referrer = Request.Headers.Referer.ToString();
+
+            _ = Task.Run(async () =>
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var newsService = scope.ServiceProvider
+                    .GetRequiredService<INewsService>();
+                try
+                {
+                    await newsService.IncrementViewAsync(
+                        newsId, userId, ip, userAgent, referrer);
+                }
+                catch { /* non-critical */ }
+            });
 
             return View(news);
         }
@@ -49,6 +64,7 @@ namespace NewsPortalPro.Controllers
         [Route("news")]
         public async Task<IActionResult> Index([FromQuery] NewsFilterDto filter)
         {
+            filter.Page = filter.Page == 0 ? 1 : filter.Page;
             filter.PageSize = 20;
             var result = await _news.GetPublishedAsync(filter);
             ViewBag.Filter = filter;

@@ -32,7 +32,8 @@ namespace NewsPortalPro.Controllers
             {
                 BreakingNews = await _news.GetBreakingNewsAsync(8),
                 FeaturedNews = await _news.GetFeaturedAsync(6),
-                LatestNews = (await _news.GetPublishedAsync(new NewsFilterDto { PageSize = 12 })).Items,
+                LatestNews = (await _news.GetPublishedAsync(
+                    new NewsFilterDto { Page = 1, PageSize = 12 })).Items,
                 TrendingNews = await _news.GetTrendingAsync(8),
                 MostViewed = await _news.GetMostViewedAsync(8),
                 Categories = await _categories.GetAllActiveAsync(),
@@ -41,12 +42,12 @@ namespace NewsPortalPro.Controllers
                 SiteName = await _settings.GetAsync("SiteName") ?? "NewsPortal Pro"
             };
 
-            // Category-specific news blocks
+            // Category news blocks — sequential not parallel to avoid DbContext conflict
             var cats = await _categories.GetMenuCategoriesAsync();
             foreach (var cat in cats.Take(5))
             {
                 var catNews = await _news.GetByCategoryAsync(cat.Slug, 1, 5);
-                vm.CategoryNewsBlocks.Add(cat.Slug, (cat, catNews));
+                vm.CategoryNewsBlocks[cat.Slug] = (cat, catNews);
             }
 
             return View(vm);
