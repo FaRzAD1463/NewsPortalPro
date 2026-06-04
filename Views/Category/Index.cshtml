@@ -1,4 +1,5 @@
-﻿@model PagedResult<NewsListDto>
+﻿@using NewsPortalPro.DTOs
+@model PagedResult<NewsListDto>
 @{
     var category = ViewBag.Category as CategoryDto;
     ViewData["Title"] = $"{category?.Name} - নিউজপোর্টাল প্রো";

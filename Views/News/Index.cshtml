@@ -1,6 +1,57 @@
-﻿namespace NewsPortalPro.Views.News
-{
-    public class Index
-    {
-    }
+﻿@using NewsPortalPro.DTOs
+@model PagedResult<NewsListDto>
+@{
+    ViewData["Title"] = "সর্বশেষ সংবাদ";
+    var filter = ViewBag.Filter as NewsFilterDto ?? new NewsFilterDto();
 }
+
+<div class="container-fluid px-4 mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="fw-bold mb-0">সর্বশেষ সংবাদ</h2>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/news?sort=latest"
+               class="btn btn-sm @(filter.Sort == "latest" || filter.Sort == null ? "btn-primary" : "btn-outline-primary")">
+                সর্বশেষ
+            </a>
+            <a href="/news?sort=popular"
+               class="btn btn-sm @(filter.Sort == "popular" ? "btn-primary" : "btn-outline-primary")">
+                জনপ্রিয়
+            </a>
+            <a href="/news?sort=comments"
+               class="btn btn-sm @(filter.Sort == "comments" ? "btn-primary" : "btn-outline-primary")">
+                আলোচিত
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-9">
+            <div class="row g-3">
+                @foreach (var news in Model.Items)
+                {
+                    <div class="col-md-6 col-lg-4" data-aos="fade-up">
+                        @await Html.PartialAsync("_NewsCard", news)
+                    </div>
+                }
+            </div>
+
+            @await Html.PartialAsync("_Pagination", new NewsPortalPro.Helpers.PaginationHelper
+            {
+                TotalItems = Model.TotalCount,
+                        ItemsPerPage = Model.PageSize,
+                        CurrentPage = Model.Page
+                        })
+        </div>
+
+        <div class="col-lg-3">
+            <div class="sticky-sidebar">
+                @if (ViewBag.SidebarAds != null)
+                {
+                    @await Html.PartialAsync("_SidebarAds",
+                    (IEnumerable<AdvertisementDto>)ViewBag.SidebarAds)
+                                }
+            </div>
+        </div>
+    </div>
+</div>
