@@ -1,5 +1,6 @@
 ﻿@using NewsPortalPro.DTOs
-@model PagedResult<NewsListDto>
+@using NewsPortalPro.Models
+@model NewsPortalPro.DTOs.PagedResult<NewsPortalPro.DTOs.NewsListDto>
 @{
     ViewData["Title"] = "সর্বশেষ সংবাদ";
     var filter = ViewBag.Filter as NewsFilterDto ?? new NewsFilterDto();

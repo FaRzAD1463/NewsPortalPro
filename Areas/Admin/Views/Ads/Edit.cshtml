@@ -25,7 +25,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-medium">পজিশন</label>
                             <select asp-for="Position" class="form-select">
-                                @foreach (var pos in Enum.GetValues<Models.AdPosition>())
+                                @foreach (var pos in Enum.GetValues<NewsPortalPro.Models.AdPosition>())
                                 {
                                     <option value="@pos" selected="@(Model.Position == pos)">@pos</option>
                                 }
@@ -34,7 +34,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-medium">স্ট্যাটাস</label>
                             <select asp-for="Status" class="form-select">
-                                @foreach (var s in Enum.GetValues<Models.AdStatus>())
+                                @foreach (var s in Enum.GetValues<NewsPortalPro.Models.AdStatus>())
                                 {
                                     <option value="@s" selected="@(Model.Status == s)">@s</option>
                                 }
