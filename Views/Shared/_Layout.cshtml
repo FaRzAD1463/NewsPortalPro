@@ -27,8 +27,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" />
     <!-- Owl Carousel -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.min.css" rel="stylesheet" />
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
@@ -38,59 +38,100 @@
     <!-- Reading Progress Bar -->
     <div id="reading-progress"></div>
 
-    <!-- ══ TOP BAR ══════════════════════════════════════════ -->
-    <div class="top-bar py-1 d-none d-md-block">
+    <!-- ══ SITE HEADER ══════════════════════════════════════ -->
+    <header class="site-header py-3 border-bottom">
         <div class="container-fluid px-4">
             <div class="row align-items-center">
-                <div class="col-md-6">
-                    <span class="text-muted small">
-                        <i class="bi bi-calendar3 me-1"></i>
-                        <span id="current-date"></span>
-                    </span>
-                </div>
-                <div class="col-md-6 text-end d-flex align-items-center justify-content-end gap-3">
-                    <button id="theme-toggle" class="btn btn-sm btn-link text-muted p-0">
-                        <i class="bi bi-moon-fill"></i>
-                    </button>
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-link text-muted dropdown-toggle p-0"
-                                    data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i>@User.Identity.Name
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item small" href="/Account/Profile">প্রোফাইল</a></li>
-                                @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
-                                {
-                                    <li><a class="dropdown-item small" href="/Admin/Dashboard">অ্যাডমিন</a></li>
-                                }
-                                <li>
-                                    <form asp-controller="Account" asp-action="Logout" method="post">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="dropdown-item small text-danger">লগআউট</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
-                    }
-                    else
-                    {
-                        <a href="/Account/Login" class="text-muted small text-decoration-none">লগইন</a>
-                        <a href="/Account/Register" class="text-muted small text-decoration-none">নিবন্ধন</a>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- ══ SITE HEADER ══════════════════════════════════════ -->
-    <header class="site-header text-center py-3 border-bottom">
-        <div class="container-fluid px-4">
-            <a href="/" class="text-decoration-none">
-                <div class="site-logo-text">নিউজপোর্টাল প্রো</div>
-                <div class="site-tagline text-muted small">বাংলাদেশের নির্ভরযোগ্য সংবাদ মাধ্যম</div>
-            </a>
+                <!-- Left: Hamburger + Date -->
+                <div class="col-3 col-md-2">
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="sidebar-toggle-btn"
+                                data-bs-toggle="offcanvas"
+                                data-bs-target="#leftSidebar">
+                            <i class="bi bi-list fs-4"></i>
+                        </button>
+                        <div class="d-none d-md-block">
+                            <small class="text-muted" id="current-date-header"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center: Logo -->
+                <div class="col-6 col-md-8 text-center">
+                    <a href="/" class="text-decoration-none">
+                        <div class="site-logo-text">নিউজপোর্টাল প্রো</div>
+                        <div class="site-tagline text-muted">
+                            বাংলাদেশের নির্ভরযোগ্য সংবাদ মাধ্যম
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Right: Social + E-Paper + Auth -->
+                <div class="col-3 col-md-2 text-end">
+                    <!-- Social Icons -->
+                    <div class="d-none d-md-flex justify-content-end gap-2 mb-2">
+                        <a href="#" class="social-icon-btn facebook" target="_blank">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                        <a href="#" class="social-icon-btn twitter" target="_blank">
+                            <i class="bi bi-twitter-x"></i>
+                        </a>
+                        <a href="#" class="social-icon-btn linkedin" target="_blank">
+                            <i class="bi bi-linkedin"></i>
+                        </a>
+                        <a href="#" class="social-icon-btn instagram" target="_blank">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+                        <a href="#" class="social-icon-btn youtube" target="_blank">
+                            <i class="bi bi-youtube"></i>
+                        </a>
+                    </div>
+                    <!-- E-Paper + Theme + Auth -->
+                    <div class="d-none d-md-flex justify-content-end gap-2 align-items-center flex-wrap">
+                        <a href="#" class="btn btn-sm btn-outline-secondary epaper-btn">
+                            E-Paper
+                        </a>
+                        <button id="theme-toggle" class="btn btn-sm btn-link text-muted p-0">
+                            <i class="bi bi-moon-fill"></i>
+                        </button>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-link text-muted dropdown-toggle p-0"
+                                        data-bs-toggle="dropdown">
+                                    <i class="bi bi-person-circle me-1"></i>@User.Identity.Name
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item small" href="/Account/Profile">প্রোফাইল</a>
+                                    </li>
+                                    @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item small" href="/Admin/Dashboard">অ্যাডমিন</a>
+                                        </li>
+                                    }
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item small text-danger">
+                                                লগআউট
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a href="/Account/Login" class="btn btn-sm btn-primary">লগইন</a>
+                            <a href="/Account/Register" class="btn btn-sm btn-outline-primary">নিবন্ধন</a>
+                        }
+                    </div>
+                </div>
+
+            </div>
         </div>
     </header>
 
@@ -130,8 +171,7 @@
                                    autocomplete="off" />
                             <div id="search-suggestions" class="search-dropdown"></div>
                         </div>
-                        <button class="btn btn-sm btn-light"
-                                onclick="submitSearch()">
+                        <button class="btn btn-sm btn-light" onclick="submitSearch()">
                             <i class="bi bi-search"></i>
                         </button>
                     </div>
@@ -146,6 +186,26 @@
             </div>
         </div>
     </nav>
+
+    <!-- ══ LEFT SIDEBAR OFFCANVAS ════════════════════════════ -->
+    <div class="offcanvas offcanvas-start" id="leftSidebar">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">নিউজপোর্টাল প্রো</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="/">হোম</a></li>
+                <li class="nav-item"><a class="nav-link" href="/category/national">জাতীয়</a></li>
+                <li class="nav-item"><a class="nav-link" href="/category/politics">রাজনীতি</a></li>
+                <li class="nav-item"><a class="nav-link" href="/category/international">আন্তর্জাতিক</a></li>
+                <li class="nav-item"><a class="nav-link" href="/category/sports">খেলাধুলা</a></li>
+                <li class="nav-item"><a class="nav-link" href="/category/entertainment">বিনোদন</a></li>
+                <li class="nav-item"><a class="nav-link" href="/category/technology">প্রযুক্তি</a></li>
+                <li class="nav-item"><a class="nav-link" href="/category/economy">অর্থনীতি</a></li>
+            </ul>
+        </div>
+    </div>
 
     <!-- ══ MOBILE MENU ═══════════════════════════════════════ -->
     <div class="offcanvas offcanvas-start" id="mobileMenu">
@@ -231,7 +291,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.min.css" rel="stylesheet" />
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/signalr-client.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

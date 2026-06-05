@@ -1,5 +1,4 @@
-﻿
-$(document).ready(function () {
+﻿$(document).ready(function () {
 
     // ── AOS Animations ───────────────────────────────────
     AOS.init({ duration: 600, once: true, offset: 60 });
@@ -10,7 +9,7 @@ $(document).ready(function () {
         'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
     const now = new Date();
     const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-    $('#current-date').text(dateStr);
+    $('#current-date-header').text(dateStr);
 
     // ── Dark Mode ────────────────────────────────────────
     const saved = localStorage.getItem('theme') || 'light';
@@ -119,7 +118,6 @@ $(document).ready(function () {
     });
 
     // ── Ad Tracking ──────────────────────────────────────
-    // Track impressions for visible ads
     const adObserver = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
