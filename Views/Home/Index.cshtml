@@ -101,22 +101,26 @@
 
             <!-- Latest News -->
             <section class="news-section mb-4">
-                <div class="section-header mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2 class="section-title">সর্বশেষ সংবাদ</h2>
+                    <a href="/news" class="small text-primary">আরও দেখুন →</a>
                 </div>
-                <div class="row g-3" id="latest-news-container">
+
+                <div class="row g-4" id="latest-news-container">
                     @foreach (var news in Model.LatestNews)
                     {
-                        <div class="col-md-6 col-lg-4">
+                        <div class="col-6 col-md-4 col-lg-3">
                             @await Html.PartialAsync("_NewsCard", news)
                         </div>
                     }
                 </div>
-                <div class="text-center mt-4" id="infinite-scroll-trigger">
+
+                <div class="text-center mt-3" id="infinite-scroll-trigger">
                     <div id="loading-spinner" class="d-none">
-                        <div class="spinner-border text-primary" role="status"></div>
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
                     </div>
-                    <button id="load-more-btn" class="btn btn-outline-primary px-4">
+                    <button id="load-more-btn"
+                            class="btn btn-outline-secondary btn-sm px-4">
                         আরও দেখুন
                     </button>
                 </div>
@@ -130,61 +134,71 @@
                 if (!catNews.Any()) continue;
 
                 <section class="news-section mb-5">
-                    <div class="section-header d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2 class="section-title"
                             style="border-bottom-color:@cat.ColorCode">
-                            <span style="color:@cat.ColorCode">@cat.Name</span>
+                            <a href="/category/@cat.Slug"
+                               style="color:@cat.ColorCode"
+                               class="text-decoration-none">@cat.Name</a>
                         </h2>
                         <a href="/category/@cat.Slug"
-                           class="btn btn-sm"
-                           style="color:@cat.ColorCode;border-color:@cat.ColorCode">
-                            আরও দেখুন →
-                        </a>
+                           class="small text-decoration-none"
+                           style="color:@cat.ColorCode">আরও দেখুন →</a>
                     </div>
 
-                    <div class="row g-3">
-                        <!-- Lead -->
+                    <div class="row g-4">
+                        <!-- Lead story -->
                         <div class="col-md-5">
-                            <div class="cat-lead-story">
-                                <a href="/news/@catNews[0].Slug">
-                                    <img src="@(catNews[0].FeaturedImage ?? "/images/placeholder.jpg")"
-                                         alt="@catNews[0].Title"
-                                         class="w-100 rounded mb-2" loading="lazy"
-                                         style="height:200px;object-fit:cover" />
+                            <div class="pb-news-card pb-news-card-lead">
+                                <a href="/news/@catNews[0].Slug"
+                                   class="pb-card-img-link">
+                                    <div class="pb-card-img-wrapper">
+                                        <img src="@(catNews[0].FeaturedImage ?? "/images/placeholder.jpg")"
+                                             alt="@catNews[0].Title"
+                                             class="pb-card-img" loading="lazy" />
+                                    </div>
                                 </a>
-                                <h5 class="fw-semibold">
-                                    <a href="/news/@catNews[0].Slug" class="text-dark text-decoration-none">
-                                        @catNews[0].Title
-                                    </a>
-                                </h5>
-                                <p class="text-muted small">@catNews[0].Summary</p>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i>
-                                    @catNews[0].PublishedAt?.ToString("dd MMM yyyy")
-                                </small>
+                                <div class="pb-card-body">
+                                    <a href="/category/@cat.Slug"
+                                       class="pb-card-category"
+                                       style="color:@cat.ColorCode">@cat.Name</a>
+                                    <h3 class="pb-card-title">
+                                        <a href="/news/@catNews[0].Slug">@catNews[0].Title</a>
+                                    </h3>
+                                    <p class="pb-card-summary">@catNews[0].Summary</p>
+                                    <div class="pb-card-meta">
+                                        <span class="pb-card-time">
+                                            <i class="bi bi-clock me-1"></i>
+                                            @catNews[0].PublishedAt?.ToString("dd MMM yyyy")
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- List -->
+                        <!-- List stories -->
                         <div class="col-md-7">
                             @foreach (var n in catNews.Skip(1).Take(4))
                             {
-                                <div class="d-flex gap-3 mb-3 pb-3 border-bottom">
-                                    <img src="@(n.FeaturedImage ?? "/images/placeholder-sm.jpg")"
-                                         alt="@n.Title"
-                                         class="rounded flex-shrink-0"
-                                         style="width:90px;height:65px;object-fit:cover"
-                                         loading="lazy" />
-                                    <div>
-                                        <h6 class="mb-1 small fw-semibold">
-                                            <a href="/news/@n.Slug" class="text-dark text-decoration-none">
-                                                @n.Title
-                                            </a>
-                                        </h6>
-                                        <small class="text-muted">
-                                            <i class="bi bi-clock me-1"></i>
-                                            @n.PublishedAt?.ToString("dd MMM yyyy")
-                                        </small>
+                                <div class="pb-news-card-horizontal">
+                                    <a href="/news/@n.Slug"
+                                       class="pb-card-img-link">
+                                        <div class="pb-card-img-wrapper">
+                                            <img src="@(n.FeaturedImage ?? "/images/placeholder.jpg")"
+                                                 alt="@n.Title"
+                                                 class="pb-card-img" loading="lazy" />
+                                        </div>
+                                    </a>
+                                    <div class="pb-card-body flex-grow-1">
+                                        <h3 class="pb-card-title">
+                                            <a href="/news/@n.Slug">@n.Title</a>
+                                        </h3>
+                                        <div class="pb-card-meta mt-1">
+                                            <span class="pb-card-time">
+                                                <i class="bi bi-clock me-1"></i>
+                                                @n.PublishedAt?.ToString("dd MMM")
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             }
@@ -342,7 +356,7 @@
                     if (data.items && data.items.length > 0) {
                         data.items.forEach(n => {
                             $('#latest-news-container').append(`
-                                <div class="col-md-6 col-lg-4">
+                                <div class="col-6 col-md-4 col-lg-3">
                                     <div class="news-card card h-100 border-0 shadow-sm">
                                         <a href="/news/${n.slug}">
                                             <img src="${n.featuredImage || '/images/placeholder.jpg'}"

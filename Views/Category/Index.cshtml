@@ -40,45 +40,70 @@
                 @if (Model.Items.Any())
                 {
                     <!-- Lead story -->
-                    <div class="col-12">
-                        <div class="d-md-flex gap-4 pb-4 border-bottom">
-                            <div class="flex-shrink-0 mb-3 mb-md-0">
-                                <a href="/news/@Model.Items[0].Slug">
+                    <div class="col-12 col-md-6">
+                        <div class="pb-news-card pb-news-card-lead">
+                            <a href="/news/@Model.Items[0].Slug"
+                               class="pb-card-img-link">
+                                <div class="pb-card-img-wrapper">
                                     <img src="@(Model.Items[0].FeaturedImage ?? "/images/placeholder.jpg")"
                                          alt="@Model.Items[0].Title"
-                                         class="rounded"
-                                         style="width:320px;height:220px;object-fit:cover"
-                                         loading="lazy" />
-                                </a>
-                            </div>
-                            <div>
-                                <span class="category-badge mb-2 d-inline-block"
-                                      style="background:@(category?.ColorCode ?? "#6c757d")">
+                                         class="pb-card-img" loading="lazy" />
+                                </div>
+                            </a>
+                            <div class="pb-card-body">
+                                <a href="/category/@Model.Items[0].CategorySlug"
+                                   class="pb-card-category"
+                                   style="color:@(category?.ColorCode ?? "#c0392b")">
                                     @Model.Items[0].CategoryName
-                                </span>
-                                <h3 class="fw-bold">
-                                    <a href="/news/@Model.Items[0].Slug"
-                                       class="text-dark text-decoration-none">
-                                        @Model.Items[0].Title
-                                    </a>
+                                </a>
+                                <h3 class="pb-card-title">
+                                    <a href="/news/@Model.Items[0].Slug">@Model.Items[0].Title</a>
                                 </h3>
-                                <p class="text-muted">@Model.Items[0].Summary</p>
-                                <small class="text-muted">
-                                    <i class="bi bi-person me-1"></i>@Model.Items[0].AuthorName
-                                    <span class="mx-2">•</span>
-                                    <i class="bi bi-clock me-1"></i>
-                                    @Model.Items[0].PublishedAt?.ToString("dd MMM yyyy")
-                                    <span class="mx-2">•</span>
-                                    <i class="bi bi-eye me-1"></i>@Model.Items[0].ViewCount
-                                </small>
+                                <p class="pb-card-summary">@Model.Items[0].Summary</p>
+                                <div class="pb-card-meta">
+                                    <span><i class="bi bi-person me-1"></i>@Model.Items[0].AuthorName</span>
+                                    <span>
+                                        <i class="bi bi-clock me-1"></i>
+                                        @Model.Items[0].PublishedAt?.ToString("dd MMM yyyy")
+                                    </span>
+                                    <span><i class="bi bi-eye me-1"></i>@Model.Items[0].ViewCount</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Rest in grid -->
-                    @foreach (var news in Model.Items.Skip(1))
+                    <!-- Right side list -->
+                    <div class="col-12 col-md-6">
+                        @foreach (var news in Model.Items.Skip(1).Take(4))
+                        {
+                            <div class="pb-news-card-horizontal">
+                                <a href="/news/@news.Slug" class="pb-card-img-link">
+                                    <div class="pb-card-img-wrapper">
+                                        <img src="@(news.FeaturedImage ?? "/images/placeholder.jpg")"
+                                             alt="@news.Title"
+                                             class="pb-card-img" loading="lazy" />
+                                    </div>
+                                </a>
+                                <div class="pb-card-body flex-grow-1">
+                                    <h3 class="pb-card-title">
+                                        <a href="/news/@news.Slug">@news.Title</a>
+                                    </h3>
+                                    <p class="pb-card-summary">@news.Summary</p>
+                                    <div class="pb-card-meta">
+                                        <span>
+                                            <i class="bi bi-clock me-1"></i>
+                                            @news.PublishedAt?.ToString("dd MMM yyyy")
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Rest in 4-column grid -->
+                    @foreach (var news in Model.Items.Skip(5))
                     {
-                        <div class="col-md-6 col-lg-4">
+                        <div class="col-6 col-md-4 col-lg-3">
                             @await Html.PartialAsync("_NewsCard", news)
                         </div>
                     }
@@ -174,32 +199,61 @@
             data.items.forEach((n, i) => {
                 if (i === 0) {
                     grid.innerHTML += `
-                    <div class="col-12">
-                        <div class="d-md-flex gap-4 pb-4 border-bottom">
-                            <div class="flex-shrink-0 mb-3 mb-md-0">
-                                <a href="/news/${n.slug}">
+                    <div class="col-12 col-md-6">
+                        <div class="pb-news-card pb-news-card-lead">
+                            <a href="/news/${n.slug}" class="pb-card-img-link">
+                                <div class="pb-card-img-wrapper">
                                     <img src="${n.featuredImage || '/images/placeholder.jpg'}"
-                                         alt="${n.title}" class="rounded"
-                                         style="width:280px;height:190px;object-fit:cover" />
-                                </a>
-                            </div>
-                            <div>
-                                <h4 class="fw-bold">
-                                    <a href="/news/${n.slug}"
-                                       class="text-dark text-decoration-none">${n.title}</a>
-                                </h4>
-                                <p class="text-muted small">${n.summary || ''}</p>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i>
-                                    ${n.publishedAt ? new Date(n.publishedAt)
-                                        .toLocaleDateString('bn-BD') : ''}
-                                </small>
+                                         alt="${n.title}" class="pb-card-img" loading="lazy" />
+                                </div>
+                            </a>
+                            <div class="pb-card-body">
+                                <span class="pb-card-category"
+                                      style="color:${n.categoryColor || '#c0392b'}">
+                                    ${n.categoryName}
+                                </span>
+                                <h3 class="pb-card-title">
+                                    <a href="/news/${n.slug}">${n.title}</a>
+                                </h3>
+                                <p class="pb-card-summary">${n.summary || ''}</p>
+                                <div class="pb-card-meta">
+                                    <span>
+                                        <i class="bi bi-clock me-1"></i>
+                                        ${n.publishedAt ? new Date(n.publishedAt)
+                                            .toLocaleDateString('bn-BD') : ''}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>`;
+                } else if (i >= 1 && i <= 4) {
+                    if (i === 1) grid.innerHTML += '<div class="col-12 col-md-6">';
+                    grid.innerHTML += `
+                        <div class="pb-news-card-horizontal">
+                            <a href="/news/${n.slug}" class="pb-card-img-link">
+                                <div class="pb-card-img-wrapper">
+                                    <img src="${n.featuredImage || '/images/placeholder.jpg'}"
+                                         alt="${n.title}" class="pb-card-img" loading="lazy" />
+                                </div>
+                            </a>
+                            <div class="pb-card-body flex-grow-1">
+                                <h3 class="pb-card-title">
+                                    <a href="/news/${n.slug}">${n.title}</a>
+                                </h3>
+                                <p class="pb-card-summary">${n.summary || ''}</p>
+                                <div class="pb-card-meta">
+                                    <span>
+                                        <i class="bi bi-clock me-1"></i>
+                                        ${n.publishedAt ? new Date(n.publishedAt)
+                                            .toLocaleDateString('bn-BD') : ''}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>`;
+                    if (i === 4) grid.innerHTML += '</div>';
                 } else {
                     grid.innerHTML += `
-                    <div class="col-md-6 col-lg-4">
+                    <div class="col-6 col-md-4 col-lg-3">
                         <div class="news-card card h-100 border-0 shadow-sm">
                             <a href="/news/${n.slug}">
                                 <img src="${n.featuredImage || '/images/placeholder.jpg'}"
@@ -208,7 +262,7 @@
                             </a>
                             <div class="card-body p-3">
                                 <span class="category-badge small"
-                                      style="background:${n.categoryColor||'#6c757d'}">
+                                      style="background:${n.categoryColor || '#6c757d'}">
                                     ${n.categoryName}
                                 </span>
                                 <h6 class="card-title mt-2 small fw-semibold">

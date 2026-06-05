@@ -1,41 +1,66 @@
 ﻿@model NewsPortalPro.DTOs.NewsListDto
 
-<div class="news-card card h-100 border-0 shadow-sm">
-    <div class="card-img-wrapper position-relative overflow-hidden">
-        <a href="/news/@Model.Slug">
+<div class="pb-news-card">
+    <a href="/news/@Model.Slug" class="pb-card-img-link">
+        <div class="pb-card-img-wrapper">
             <img src="@(Model.FeaturedImage ?? "/images/placeholder.jpg")"
                  alt="@(Model.FeaturedImageAlt ?? Model.Title)"
-                 class="card-img-top"
+                 class="pb-card-img"
                  loading="lazy"
                  onerror="this.src='/images/placeholder.jpg'" />
-        </a>
-        @if (Model.IsBreaking)
+            @if (Model.IsBreaking)
+            {
+                <span class="pb-breaking-tag">ব্রেকিং</span>
+            }
+            @if (Model.Type == NewsPortalPro.Models.NewsType.Video)
+            {
+                <span class="pb-video-tag">
+                    <i class="bi bi-play-circle-fill"></i>
+                </span>
+            }
+        </div>
+    </a>
+    <div class="pb-card-body">
+        @if (!string.IsNullOrEmpty(Model.CategoryName))
         {
-            <span class="position-absolute top-0 start-0 badge bg-danger m-2">ব্রেকিং</span>
+            <a href="/category/@Model.CategorySlug"
+               class="pb-card-category"
+               style="color:@(Model.CategoryColor ?? "#c0392b")">
+                @Model.CategoryName
+            </a>
         }
-        @if (Model.Type == NewsType.Video)
+        <h3 class="pb-card-title">
+            <a href="/news/@Model.Slug">@Model.Title</a>
+        </h3>
+        @if (!string.IsNullOrEmpty(Model.Summary))
         {
-            <span class="position-absolute bottom-0 end-0 badge bg-dark m-2">
-                <i class="bi bi-play-circle-fill me-1"></i>ভিডিও
+            <p class="pb-card-summary">@Model.Summary</p>
+        }
+        <div class="pb-card-meta">
+            @if (Model.PublishedAt.HasValue)
+            {
+                <span class="pb-card-time">
+                    <i class="bi bi-clock me-1"></i>
+                    @GetTimeAgo(Model.PublishedAt.Value)
+                </span>
+            }
+            <span class="pb-card-views">
+                <i class="bi bi-eye me-1"></i>@Model.ViewCount
             </span>
-        }
-    </div>
-    <div class="card-body p-3">
-        <span class="category-badge small mb-1" style="background:@(Model.CategoryColor ?? "#6c757d")">
-            @Model.CategoryName
-        </span>
-        <h6 class="card-title mt-1 mb-2 news-title-clamp">
-            <a href="/news/@Model.Slug" class="text-dark text-decoration-none">@Model.Title</a>
-        </h6>
-        <div class="card-meta d-flex justify-content-between align-items-center">
-            <small class="text-muted">
-                <i class="bi bi-clock me-1"></i>
-                @(Model.PublishedAt.HasValue? Model.PublishedAt.Value.ToString("dd MMM") : "")
-            </small>
-            <div class="d-flex gap-2">
-                <small class="text-muted"><i class="bi bi-eye me-1"></i>@Model.ViewCount</small>
-                <small class="text-muted"><i class="bi bi-chat me-1"></i>@Model.CommentCount</small>
-            </div>
         </div>
     </div>
 </div>
+
+@functions {
+    string GetTimeAgo(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - dt;
+        if (diff.TotalMinutes < 60)
+            return $"{(int)diff.TotalMinutes} মিনিট আগে";
+        if (diff.TotalHours < 24)
+            return $"{(int)diff.TotalHours} ঘন্টা আগে";
+        if (diff.TotalDays < 7)
+            return $"{(int)diff.TotalDays} দিন আগে";
+        return dt.ToString("dd MMM yyyy");
+    }
+}
