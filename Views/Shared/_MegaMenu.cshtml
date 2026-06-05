@@ -3,57 +3,150 @@
 @inject ICategoryService CategoryService
 
 @{
-    var categories = await CategoryService.GetMenuCategoriesAsync();
+    var allCategories = await CategoryService.GetAllActiveAsync();
+    var menuCategories = allCategories.Where(c => c.ShowInMenu).ToList();
+    var allCats = allCategories.ToList();
 }
 
-@foreach (var cat in categories)
+@* ── Regular category nav items ─────────────────────── *@
+@foreach (var cat in menuCategories.Take(8))
 {
     <li class="nav-item-custom dropdown-hover">
         <a class="nav-link-custom" href="/category/@cat.Slug">
             @cat.Name
-            @if (cat.Children != null && cat.Children.Any())
-            {
-                <i class="bi bi-chevron-down ms-1" style="font-size:10px"></i>
-            }
         </a>
         <div class="mega-dropdown">
-            <div class="mega-dropdown-inner">
-                <div class="row g-0">
-                    <!-- Sub categories -->
-                    @if (cat.Children != null && cat.Children.Any())
-                    {
-                        <div class="col-3 mega-sub-cats border-end">
-                            <div class="p-3">
-                                <h6 class="fw-bold mb-3"
-                                    style="color:@cat.ColorCode;border-bottom:2px solid @cat.ColorCode;padding-bottom:8px">
-                                    @cat.Name
-                                </h6>
-                                @foreach (var child in cat.Children)
-                                {
-                                    <a href="/category/@child.Slug"
-                                       class="d-flex align-items-center gap-2 py-2 text-decoration-none sub-cat-link">
-                                        <i class="bi bi-chevron-right small"></i>
-                                        <span>@child.Name</span>
-                                    </a>
-                                }
-                            </div>
-                        </div>
-                        <div class="col-9 p-3" id="mega-news-@cat.Slug">
-                            <div class="text-center text-muted py-3">
-                                <div class="spinner-border spinner-border-sm"></div>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="col-12 p-3" id="mega-news-@cat.Slug">
-                            <div class="text-center text-muted py-3">
-                                <div class="spinner-border spinner-border-sm"></div>
-                            </div>
-                        </div>
-                    }
+            <div class="mega-dropdown-inner p-3">
+                <div class="row g-3">
+                    <div class="col-12 mb-2">
+                        <h6 class="fw-bold mb-0"
+                            style="color:@cat.ColorCode;border-bottom:2px solid @cat.ColorCode;padding-bottom:6px">
+                            @cat.Name
+                        </h6>
+                    </div>
+                </div>
+                <div id="mega-news-@cat.Slug" class="mega-news-container">
+                    <div class="text-center py-2">
+                        <div class="spinner-border spinner-border-sm text-secondary"></div>
+                    </div>
+                </div>
+                <div class="text-end mt-2 border-top pt-2">
+                    <a href="/category/@cat.Slug"
+                       class="small text-decoration-none"
+                       style="color:@cat.ColorCode">
+                        সব দেখুন →
+                    </a>
                 </div>
             </div>
         </div>
     </li>
 }
+
+@* ── "All" mega dropdown ─────────────────────────────── *@
+<li class="nav-item-custom dropdown-hover">
+    <a class="nav-link-custom" href="#">
+        সব <i class="bi bi-chevron-down ms-1" style="font-size:10px"></i>
+    </a>
+    <div class="mega-dropdown all-categories-dropdown">
+        <div class="mega-dropdown-inner">
+            <div class="row g-0">
+
+                <!-- Left panel: Quick links -->
+                <div class="col-2 all-cat-sidebar border-end">
+                    <div class="p-3">
+                        <a href="#" class="all-cat-quick-link">
+                            <i class="bi bi-newspaper me-2"></i>ই-পেপার
+                        </a>
+                        <a href="/Admin/Media" class="all-cat-quick-link">
+                            <i class="bi bi-images me-2"></i>ফটো
+                        </a>
+                        <a href="/category/video-news" class="all-cat-quick-link">
+                            <i class="bi bi-camera-video me-2"></i>ভিডিও
+                        </a>
+                        <a href="#" class="all-cat-quick-link">
+                            <i class="bi bi-person-circle me-2"></i>লেখক
+                        </a>
+                        <a href="#" class="all-cat-quick-link">
+                            <i class="bi bi-archive me-2"></i>আর্কাইভ
+                        </a>
+                        <a href="#" class="all-cat-quick-link">
+                            <i class="bi bi-arrow-left-right me-2"></i>কনভার্টার
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right panel: All categories in columns -->
+                <div class="col-10">
+                    <div class="p-3">
+                        <!-- Search box -->
+                        <div class="mb-3">
+                            <div class="input-group input-group-sm">
+                                <input type="text"
+                                       id="cat-search-input"
+                                       class="form-control"
+                                       placeholder="বিভাগ খুঁজুন..."
+                                       oninput="filterCategories(this.value)" />
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Categories grid -->
+                        <div class="row g-0" id="all-categories-grid">
+                            @{
+                                var col1 = allCats.Where(c => !c.ShowInMenu).Take(8).ToList();
+                                var col2 = allCats.Where(c => !c.ShowInMenu).Skip(8).Take(8).ToList();
+                                var col3 = allCats.Where(c => !c.ShowInMenu).Skip(16).Take(8).ToList();
+                                var col4 = allCats.Where(c => !c.ShowInMenu).Skip(24).ToList();
+                            }
+
+                            <div class="col-3 all-cat-col" data-col="1">
+                                @foreach (var cat in col1)
+                                {
+                                    <a href="/category/@cat.Slug"
+                                       class="all-cat-item"
+                                       data-name="@cat.Name.ToLower()">
+                                        @cat.Name
+                                    </a>
+                                }
+                            </div>
+                            <div class="col-3 all-cat-col" data-col="2">
+                                @foreach (var cat in col2)
+                                {
+                                    <a href="/category/@cat.Slug"
+                                       class="all-cat-item"
+                                       data-name="@cat.Name.ToLower()">
+                                        @cat.Name
+                                    </a>
+                                }
+                            </div>
+                            <div class="col-3 all-cat-col" data-col="3">
+                                @foreach (var cat in col3)
+                                {
+                                    <a href="/category/@cat.Slug"
+                                       class="all-cat-item"
+                                       data-name="@cat.Name.ToLower()">
+                                        @cat.Name
+                                    </a>
+                                }
+                            </div>
+                            <div class="col-3 all-cat-col" data-col="4">
+                                @foreach (var cat in col4)
+                                {
+                                    <a href="/category/@cat.Slug"
+                                       class="all-cat-item"
+                                       data-name="@cat.Name.ToLower()">
+                                        @cat.Name
+                                    </a>
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</li>

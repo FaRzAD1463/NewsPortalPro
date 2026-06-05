@@ -11,6 +11,45 @@
     const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
     $('#current-date-header').text(dateStr);
 
+    // ── Load mega menu news on hover ─────────────────────
+    $('.dropdown-hover').on('mouseenter', function () {
+        const link = $(this).find('.nav-link-custom').first().attr('href');
+        if (!link || link === '#') return;
+        const slug = link.replace('/category/', '');
+        const container = $(`#mega-news-${slug}`);
+        if (!container.length || container.data('loaded')) return;
+        container.data('loaded', true);
+
+        fetch(`/api/news?categorySlug=${slug}&pageSize=4&page=1`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.items || !data.items.length) {
+                    container.html('<p class="text-muted small py-2">কোনো সংবাদ নেই</p>');
+                    return;
+                }
+                let html = '';
+                data.items.forEach(n => {
+                    html += `
+                <a href="/news/${n.slug}" class="mega-news-item">
+                    <img src="${n.featuredImage || '/images/placeholder.jpg'}"
+                         alt="${n.title}" loading="lazy" />
+                    <span class="mega-news-item-title">${n.title}</span>
+                </a>`;
+                });
+                container.html(html);
+            })
+            .catch(() => container.html(''));
+    });
+
+    // ── Category search in All dropdown ──────────────────
+    window.filterCategories = function (query) {
+        const q = query.toLowerCase().trim();
+        document.querySelectorAll('.all-cat-item').forEach(el => {
+            const name = el.dataset.name || '';
+            el.classList.toggle('d-none', q !== '' && !name.includes(q));
+        });
+    };
+
     // ── Dark Mode ────────────────────────────────────────
     const saved = localStorage.getItem('theme') || 'light';
     setTheme(saved);

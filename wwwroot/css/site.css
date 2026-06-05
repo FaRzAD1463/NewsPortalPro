@@ -1263,3 +1263,122 @@ img {
             width: 150px;
         }
 }
+/* ══════════════════════════════════════════════════════
+   ALL CATEGORIES MEGA DROPDOWN
+   ══════════════════════════════════════════════════════ */
+.all-categories-dropdown {
+    min-width: 860px;
+    left: auto;
+    right: 0;
+}
+
+.all-cat-sidebar {
+    background: #f8f9fa;
+    min-width: 140px;
+}
+
+.all-cat-quick-link {
+    display: flex;
+    align-items: center;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #333;
+    text-decoration: none;
+    border-bottom: 1px solid #eee;
+    transition: all .15s;
+    font-weight: 500;
+}
+
+    .all-cat-quick-link:hover {
+        color: var(--primary);
+        background: #fff;
+        padding-left: 16px;
+    }
+
+.all-cat-item {
+    display: block;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #444;
+    text-decoration: none;
+    border-bottom: 1px dashed #eee;
+    transition: all .15s;
+}
+
+    .all-cat-item:hover {
+        color: var(--primary);
+        background: #fff8f8;
+        padding-left: 16px;
+    }
+
+    .all-cat-item.d-none {
+        display: none !important;
+    }
+
+/* ── Mega news container ─────────────────────────────── */
+.mega-news-container .row {
+    gap: 0;
+}
+
+.mega-news-item {
+    display: flex;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+    text-decoration: none;
+    color: inherit;
+}
+
+    .mega-news-item:last-child {
+        border-bottom: none;
+    }
+
+    .mega-news-item img {
+        width: 65px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 3px;
+        flex-shrink: 0;
+    }
+
+.mega-news-item-title {
+    font-size: 12.5px;
+    color: #222;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-weight: 600;
+}
+
+.mega-news-item:hover .mega-news-item-title {
+    color: var(--primary);
+}
+
+/* Dark mode */
+[data-theme="dark"] .all-cat-sidebar {
+    background: #252836;
+}
+
+[data-theme="dark"] .all-cat-quick-link {
+    color: var(--text);
+    border-color: var(--border);
+}
+
+    [data-theme="dark"] .all-cat-quick-link:hover {
+        background: #1a1d27;
+    }
+
+[data-theme="dark"] .all-cat-item {
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+    [data-theme="dark"] .all-cat-item:hover {
+        background: #252836;
+    }
+
+[data-theme="dark"] .mega-news-item-title {
+    color: var(--text);
+}

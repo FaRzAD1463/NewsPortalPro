@@ -207,7 +207,6 @@ namespace NewsPortalPro.Data
                 e.Property(n => n.CanonicalUrl).HasMaxLength(300);
                 e.Property(n => n.AuthorId).IsRequired();
 
-                // Indexes for performance
                 e.HasIndex(n => n.Slug).IsUnique();
                 e.HasIndex(n => n.Status);
                 e.HasIndex(n => n.PublishedAt);
@@ -276,7 +275,6 @@ namespace NewsPortalPro.Data
             {
                 e.HasKey(r => r.Id);
 
-                // One reaction type per user per news
                 e.HasIndex(r => new { r.NewsId, r.UserId }).IsUnique();
                 e.HasIndex(r => r.NewsId);
                 e.HasIndex(r => r.UserId);
@@ -297,7 +295,6 @@ namespace NewsPortalPro.Data
             {
                 e.HasKey(b => b.Id);
 
-                // One bookmark per user per news
                 e.HasIndex(b => new { b.UserId, b.NewsId }).IsUnique();
                 e.HasIndex(b => b.UserId);
 
@@ -648,442 +645,95 @@ namespace NewsPortalPro.Data
 
             // ── Permissions ───────────────────────────────────────
             builder.Entity<Permission>().HasData(
-                new Permission
-                {
-                    Id = 1,
-                    Name = "news.create",
-                    Module = "News",
-                    Description = "Create news articles",
-                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Permission
-                {
-                    Id = 2,
-                    Name = "news.edit",
-                    Module = "News",
-                    Description = "Edit news articles",
-                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Permission
-                {
-                    Id = 3,
-                    Name = "news.delete",
-                    Module = "News",
-                    Description = "Delete news articles",
-                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Permission
-                {
-                    Id = 4,
-                    Name = "news.publish",
-                    Module = "News",
-                    Description = "Publish news articles",
-                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Permission
-                {
-                    Id = 5,
-                    Name = "comment.manage",
-                    Module = "Comments",
-                    Description = "Manage all comments",
-                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Permission
-                {
-                    Id = 6,
-                    Name = "user.manage",
-                    Module = "Users",
-                    Description = "Manage users",
-                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Permission
-                {
-                    Id = 7,
-                    Name = "ads.manage",
-                    Module = "Ads",
-                    Description = "Manage advertisements",
-                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                },
-                new Permission
-                {
-                    Id = 8,
-                    Name = "settings.edit",
-                    Module = "Settings",
-                    Description = "Edit site settings",
-                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                }
+                new Permission { Id = 1, Name = "news.create", Module = "News", Description = "Create news articles", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 2, Name = "news.edit", Module = "News", Description = "Edit news articles", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 3, Name = "news.delete", Module = "News", Description = "Delete news articles", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 4, Name = "news.publish", Module = "News", Description = "Publish news articles", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 5, Name = "comment.manage", Module = "Comments", Description = "Manage all comments", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 6, Name = "user.manage", Module = "Users", Description = "Manage users", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 7, Name = "ads.manage", Module = "Ads", Description = "Manage advertisements", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 8, Name = "settings.edit", Module = "Settings", Description = "Edit site settings", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
             );
 
             // ── Categories ────────────────────────────────────────
             var seedDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
             builder.Entity<Category>().HasData(
-                new Category
-                {
-                    Id = 1,
-                    Name = "জাতীয়",
-                    Slug = "national",
-                    DisplayOrder = 1,
-                    ColorCode = "#e74c3c",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                },
-                new Category
-                {
-                    Id = 2,
-                    Name = "রাজনীতি",
-                    Slug = "politics",
-                    DisplayOrder = 2,
-                    ColorCode = "#3498db",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                },
-                new Category
-                {
-                    Id = 3,
-                    Name = "আন্তর্জাতিক",
-                    Slug = "international",
-                    DisplayOrder = 3,
-                    ColorCode = "#2ecc71",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                },
-                new Category
-                {
-                    Id = 4,
-                    Name = "অর্থনীতি",
-                    Slug = "economy",
-                    DisplayOrder = 4,
-                    ColorCode = "#f39c12",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                },
-                new Category
-                {
-                    Id = 5,
-                    Name = "খেলাধুলা",
-                    Slug = "sports",
-                    DisplayOrder = 5,
-                    ColorCode = "#9b59b6",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                },
-                new Category
-                {
-                    Id = 6,
-                    Name = "বিনোদন",
-                    Slug = "entertainment",
-                    DisplayOrder = 6,
-                    ColorCode = "#e91e63",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                },
-                new Category
-                {
-                    Id = 7,
-                    Name = "প্রযুক্তি",
-                    Slug = "technology",
-                    DisplayOrder = 7,
-                    ColorCode = "#00bcd4",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                },
-                new Category
-                {
-                    Id = 8,
-                    Name = "স্বাস্থ্য",
-                    Slug = "health",
-                    DisplayOrder = 8,
-                    ColorCode = "#4caf50",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                },
-                new Category
-                {
-                    Id = 9,
-                    Name = "শিক্ষা",
-                    Slug = "education",
-                    DisplayOrder = 9,
-                    ColorCode = "#ff9800",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                },
-                new Category
-                {
-                    Id = 10,
-                    Name = "লাইফস্টাইল",
-                    Slug = "lifestyle",
-                    DisplayOrder = 10,
-                    ColorCode = "#795548",
-                    IsActive = true,
-                    ShowInMenu = true,
-                    CreatedAt = seedDate
-                }
+                // ── Main categories (show in menu) ──────────────────
+                new Category { Id = 1, Name = "জাতীয়", Slug = "national", DisplayOrder = 1, ColorCode = "#e74c3c", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 2, Name = "রাজনীতি", Slug = "politics", DisplayOrder = 2, ColorCode = "#3498db", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 3, Name = "আন্তর্জাতিক", Slug = "international", DisplayOrder = 3, ColorCode = "#2ecc71", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 4, Name = "অর্থনীতি", Slug = "economy", DisplayOrder = 4, ColorCode = "#f39c12", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 5, Name = "খেলাধুলা", Slug = "sports", DisplayOrder = 5, ColorCode = "#9b59b6", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 6, Name = "বিনোদন", Slug = "entertainment", DisplayOrder = 6, ColorCode = "#e91e63", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 7, Name = "প্রযুক্তি", Slug = "technology", DisplayOrder = 7, ColorCode = "#00bcd4", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 8, Name = "স্বাস্থ্য", Slug = "health", DisplayOrder = 8, ColorCode = "#4caf50", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 9, Name = "শিক্ষা", Slug = "education", DisplayOrder = 9, ColorCode = "#ff9800", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 10, Name = "লাইফস্টাইল", Slug = "lifestyle", DisplayOrder = 10, ColorCode = "#795548", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+                new Category { Id = 40, Name = "মতামত", Slug = "opinion", DisplayOrder = 40, ColorCode = "#607d8b", IsActive = true, ShowInMenu = true, CreatedAt = seedDate },
+
+                // ── Sub-categories (not in main menu) ───────────────
+                new Category { Id = 11, Name = "তথ্যপ্রযুক্তি", Slug = "information-technology", DisplayOrder = 11, ColorCode = "#00bcd4", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 12, Name = "আইন-আদালত", Slug = "court-of-law", DisplayOrder = 12, ColorCode = "#607d8b", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 13, Name = "বিশেষ", Slug = "special", DisplayOrder = 13, ColorCode = "#9c27b0", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 14, Name = "ফ্যাক্ট চেক", Slug = "fact-check", DisplayOrder = 14, ColorCode = "#f44336", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 15, Name = "অদম্য বাংলাদেশ", Slug = "indomitable-bangladesh", DisplayOrder = 15, ColorCode = "#009688", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 16, Name = "আলোর পথে", Slug = "on-the-path-of-light", DisplayOrder = 16, ColorCode = "#ff5722", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 17, Name = "বিশেষ সংবাদ", Slug = "special-news", DisplayOrder = 17, ColorCode = "#e74c3c", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 18, Name = "ধর্ম", Slug = "religion", DisplayOrder = 18, ColorCode = "#4caf50", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 19, Name = "রাজধানী", Slug = "capital", DisplayOrder = 19, ColorCode = "#2196f3", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 20, Name = "সাহিত্য", Slug = "literature", DisplayOrder = 20, ColorCode = "#9c27b0", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 21, Name = "শিল্প ও সংস্কৃতি", Slug = "art-and-culture", DisplayOrder = 21, ColorCode = "#ff9800", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 22, Name = "লিঙ্গ-জাতি", Slug = "race-gender", DisplayOrder = 22, ColorCode = "#e91e63", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 23, Name = "ম্যাগাজিন", Slug = "magazine", DisplayOrder = 23, ColorCode = "#795548", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 24, Name = "বার্ষিকী", Slug = "anniversary", DisplayOrder = 24, ColorCode = "#607d8b", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 25, Name = "মোহনা", Slug = "estuary", DisplayOrder = 25, ColorCode = "#009688", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 26, Name = "ভ্রমণ", Slug = "travel", DisplayOrder = 26, ColorCode = "#4caf50", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 27, Name = "কৃষি ও প্রকৃতি", Slug = "agriculture-and-nature", DisplayOrder = 27, ColorCode = "#8bc34a", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 28, Name = "ভিডিও", Slug = "video-news", DisplayOrder = 28, ColorCode = "#f44336", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 29, Name = "সংগঠন", Slug = "organization", DisplayOrder = 29, ColorCode = "#3f51b5", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 30, Name = "ধানসিঁড়ি", Slug = "dhansiri", DisplayOrder = 30, ColorCode = "#ff5722", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 31, Name = "বিজ্ঞপ্তি", Slug = "notification", DisplayOrder = 31, ColorCode = "#9e9e9e", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 32, Name = "অপরাধ", Slug = "crime", DisplayOrder = 32, ColorCode = "#f44336", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 33, Name = "জীবন যাপন", Slug = "life-lived", DisplayOrder = 33, ColorCode = "#795548", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 34, Name = "নির্বাসন", Slug = "exile", DisplayOrder = 34, ColorCode = "#607d8b", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 35, Name = "মিডিয়া", Slug = "media", DisplayOrder = 35, ColorCode = "#2196f3", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 36, Name = "বিজ্ঞান", Slug = "science", DisplayOrder = 36, ColorCode = "#00bcd4", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 37, Name = "উদ্বোধনী অনুষ্ঠান", Slug = "inaugural-event", DisplayOrder = 37, ColorCode = "#ff9800", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 38, Name = "বিশেষ আয়োজন", Slug = "special-arrangements", DisplayOrder = 38, ColorCode = "#9c27b0", IsActive = true, ShowInMenu = false, CreatedAt = seedDate },
+                new Category { Id = 39, Name = "ঈদ সংখ্যা", Slug = "eid-number", DisplayOrder = 39, ColorCode = "#4caf50", IsActive = true, ShowInMenu = false, CreatedAt = seedDate }
             );
 
             // ── Site Settings ─────────────────────────────────────
             builder.Entity<SiteSetting>().HasData(
-                new SiteSetting
-                {
-                    Id = 1,
-                    Key = "SiteName",
-                    Value = "নিউজপোর্টাল প্রো",
-                    Group = "General",
-                    Description = "Site display name",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 2,
-                    Key = "SiteUrl",
-                    Value = "https://newsportalpro.com",
-                    Group = "General",
-                    Description = "Primary site URL",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 3,
-                    Key = "SiteDescription",
-                    Value = "বাংলাদেশের নির্ভরযোগ্য সংবাদ মাধ্যম",
-                    Group = "General",
-                    Description = "Site meta description",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 4,
-                    Key = "SiteEmail",
-                    Value = "info@newsportalpro.com",
-                    Group = "General",
-                    Description = "Contact email address",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 5,
-                    Key = "SitePhone",
-                    Value = "+880-1700-000000",
-                    Group = "General",
-                    Description = "Contact phone number",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 6,
-                    Key = "LogoUrl",
-                    Value = "/images/logo.png",
-                    Group = "General",
-                    Description = "Logo image path",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 7,
-                    Key = "FaviconUrl",
-                    Value = "/images/favicon.ico",
-                    Group = "General",
-                    Description = "Favicon path",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 8,
-                    Key = "FacebookUrl",
-                    Value = "",
-                    Group = "Social",
-                    Description = "Facebook page URL",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 9,
-                    Key = "TwitterUrl",
-                    Value = "",
-                    Group = "Social",
-                    Description = "Twitter/X profile URL",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 10,
-                    Key = "YoutubeUrl",
-                    Value = "",
-                    Group = "Social",
-                    Description = "YouTube channel URL",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 11,
-                    Key = "InstagramUrl",
-                    Value = "",
-                    Group = "Social",
-                    Description = "Instagram profile URL",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 12,
-                    Key = "NewsPerPage",
-                    Value = "20",
-                    Group = "Content",
-                    Description = "Number of news per page",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 13,
-                    Key = "CommentModeration",
-                    Value = "true",
-                    Group = "Content",
-                    Description = "Require comment approval",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 14,
-                    Key = "AllowGuestComments",
-                    Value = "false",
-                    Group = "Content",
-                    Description = "Allow comments without login",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 15,
-                    Key = "MaintenanceMode",
-                    Value = "false",
-                    Group = "System",
-                    Description = "Enable maintenance mode",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 16,
-                    Key = "GoogleAnalyticsId",
-                    Value = "",
-                    Group = "SEO",
-                    Description = "Google Analytics tracking ID",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 17,
-                    Key = "GoogleSiteVerification",
-                    Value = "",
-                    Group = "SEO",
-                    Description = "Google Search Console verification",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 18,
-                    Key = "SmtpHost",
-                    Value = "",
-                    Group = "Email",
-                    Description = "SMTP server hostname",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 19,
-                    Key = "SmtpPort",
-                    Value = "587",
-                    Group = "Email",
-                    Description = "SMTP server port",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 20,
-                    Key = "SmtpUser",
-                    Value = "",
-                    Group = "Email",
-                    Description = "SMTP username",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 21,
-                    Key = "SmtpPassword",
-                    Value = "",
-                    Group = "Email",
-                    Description = "SMTP password",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 22,
-                    Key = "SmtpSenderName",
-                    Value = "নিউজপোর্টাল প্রো",
-                    Group = "Email",
-                    Description = "Email sender display name",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 23,
-                    Key = "WeatherApiKey",
-                    Value = "",
-                    Group = "Widgets",
-                    Description = "OpenWeatherMap API key",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 24,
-                    Key = "WeatherCity",
-                    Value = "Dhaka",
-                    Group = "Widgets",
-                    Description = "Default city for weather widget",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 25,
-                    Key = "LiveTvEmbedUrl",
-                    Value = "",
-                    Group = "Widgets",
-                    Description = "Live TV iframe embed URL",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 26,
-                    Key = "PrayerTimeCity",
-                    Value = "Dhaka",
-                    Group = "Widgets",
-                    Description = "City for prayer time widget",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 27,
-                    Key = "MaxUploadSizeMB",
-                    Value = "10",
-                    Group = "System",
-                    Description = "Maximum file upload size in MB",
-                    UpdatedAt = seedDate
-                },
-                new SiteSetting
-                {
-                    Id = 28,
-                    Key = "AllowedImageTypes",
-                    Value = "jpg,jpeg,png,webp,gif",
-                    Group = "System",
-                    Description = "Allowed image file extensions",
-                    UpdatedAt = seedDate
-                }
+                new SiteSetting { Id = 1, Key = "SiteName", Value = "নিউজপোর্টাল প্রো", Group = "General", Description = "Site display name", UpdatedAt = seedDate },
+                new SiteSetting { Id = 2, Key = "SiteUrl", Value = "https://newsportalpro.com", Group = "General", Description = "Primary site URL", UpdatedAt = seedDate },
+                new SiteSetting { Id = 3, Key = "SiteDescription", Value = "বাংলাদেশের নির্ভরযোগ্য সংবাদ মাধ্যম", Group = "General", Description = "Site meta description", UpdatedAt = seedDate },
+                new SiteSetting { Id = 4, Key = "SiteEmail", Value = "info@newsportalpro.com", Group = "General", Description = "Contact email address", UpdatedAt = seedDate },
+                new SiteSetting { Id = 5, Key = "SitePhone", Value = "+880-1700-000000", Group = "General", Description = "Contact phone number", UpdatedAt = seedDate },
+                new SiteSetting { Id = 6, Key = "LogoUrl", Value = "/images/logo.png", Group = "General", Description = "Logo image path", UpdatedAt = seedDate },
+                new SiteSetting { Id = 7, Key = "FaviconUrl", Value = "/images/favicon.ico", Group = "General", Description = "Favicon path", UpdatedAt = seedDate },
+                new SiteSetting { Id = 8, Key = "FacebookUrl", Value = "", Group = "Social", Description = "Facebook page URL", UpdatedAt = seedDate },
+                new SiteSetting { Id = 9, Key = "TwitterUrl", Value = "", Group = "Social", Description = "Twitter/X profile URL", UpdatedAt = seedDate },
+                new SiteSetting { Id = 10, Key = "YoutubeUrl", Value = "", Group = "Social", Description = "YouTube channel URL", UpdatedAt = seedDate },
+                new SiteSetting { Id = 11, Key = "InstagramUrl", Value = "", Group = "Social", Description = "Instagram profile URL", UpdatedAt = seedDate },
+                new SiteSetting { Id = 12, Key = "NewsPerPage", Value = "20", Group = "Content", Description = "Number of news per page", UpdatedAt = seedDate },
+                new SiteSetting { Id = 13, Key = "CommentModeration", Value = "true", Group = "Content", Description = "Require comment approval", UpdatedAt = seedDate },
+                new SiteSetting { Id = 14, Key = "AllowGuestComments", Value = "false", Group = "Content", Description = "Allow comments without login", UpdatedAt = seedDate },
+                new SiteSetting { Id = 15, Key = "MaintenanceMode", Value = "false", Group = "System", Description = "Enable maintenance mode", UpdatedAt = seedDate },
+                new SiteSetting { Id = 16, Key = "GoogleAnalyticsId", Value = "", Group = "SEO", Description = "Google Analytics tracking ID", UpdatedAt = seedDate },
+                new SiteSetting { Id = 17, Key = "GoogleSiteVerification", Value = "", Group = "SEO", Description = "Google Search Console verification", UpdatedAt = seedDate },
+                new SiteSetting { Id = 18, Key = "SmtpHost", Value = "", Group = "Email", Description = "SMTP server hostname", UpdatedAt = seedDate },
+                new SiteSetting { Id = 19, Key = "SmtpPort", Value = "587", Group = "Email", Description = "SMTP server port", UpdatedAt = seedDate },
+                new SiteSetting { Id = 20, Key = "SmtpUser", Value = "", Group = "Email", Description = "SMTP username", UpdatedAt = seedDate },
+                new SiteSetting { Id = 21, Key = "SmtpPassword", Value = "", Group = "Email", Description = "SMTP password", UpdatedAt = seedDate },
+                new SiteSetting { Id = 22, Key = "SmtpSenderName", Value = "নিউজপোর্টাল প্রো", Group = "Email", Description = "Email sender display name", UpdatedAt = seedDate },
+                new SiteSetting { Id = 23, Key = "WeatherApiKey", Value = "", Group = "Widgets", Description = "OpenWeatherMap API key", UpdatedAt = seedDate },
+                new SiteSetting { Id = 24, Key = "WeatherCity", Value = "Dhaka", Group = "Widgets", Description = "Default city for weather widget", UpdatedAt = seedDate },
+                new SiteSetting { Id = 25, Key = "LiveTvEmbedUrl", Value = "", Group = "Widgets", Description = "Live TV iframe embed URL", UpdatedAt = seedDate },
+                new SiteSetting { Id = 26, Key = "PrayerTimeCity", Value = "Dhaka", Group = "Widgets", Description = "City for prayer time widget", UpdatedAt = seedDate },
+                new SiteSetting { Id = 27, Key = "MaxUploadSizeMB", Value = "10", Group = "System", Description = "Maximum file upload size in MB", UpdatedAt = seedDate },
+                new SiteSetting { Id = 28, Key = "AllowedImageTypes", Value = "jpg,jpeg,png,webp,gif", Group = "System", Description = "Allowed image file extensions", UpdatedAt = seedDate }
             );
         }
     }
