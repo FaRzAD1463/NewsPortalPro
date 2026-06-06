@@ -244,27 +244,7 @@
     <!-- ══ FOOTER ════════════════════════════════════════════ -->
     @await Html.PartialAsync("_Footer")
 
-    <!-- Floating Share Bar -->
-    @if (ViewData["ShowShareBar"] != null)
-    {
-        <div class="floating-share-bar d-none d-lg-flex">
-            <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(ViewData["CanonicalUrl"]?.ToString() ?? "")"
-               target="_blank" class="share-btn facebook">
-                <i class="bi bi-facebook"></i>
-            </a>
-            <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString(ViewData["CanonicalUrl"]?.ToString() ?? "")"
-               target="_blank" class="share-btn twitter">
-                <i class="bi bi-twitter-x"></i>
-            </a>
-            <a href="https://wa.me/?text=@Uri.EscapeDataString((ViewData["Title"]?.ToString() ?? "") + " " + (ViewData["CanonicalUrl"]?.ToString() ?? ""))"
-               target="_blank" class="share-btn whatsapp">
-                <i class="bi bi-whatsapp"></i>
-            </a>
-            <button onclick="copyLink()" class="share-btn copy-link">
-                <i class="bi bi-link-45deg"></i>
-            </button>
-        </div>
-    }
+  
 
     <!-- Notification Bell -->
     @if (User.Identity?.IsAuthenticated == true)
