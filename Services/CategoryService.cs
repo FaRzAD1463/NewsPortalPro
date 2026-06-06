@@ -31,8 +31,9 @@ namespace NewsPortalPro.Services
             }
             catch { }
 
+            // Return ALL active categories (not just root ones)
             var cats = await _db.Categories
-                .Where(c => c.IsActive && c.ParentId == null)
+                .Where(c => c.IsActive)
                 .Include(c => c.Children.Where(ch => ch.IsActive))
                 .OrderBy(c => c.DisplayOrder)
                 .ToListAsync();
@@ -53,8 +54,14 @@ namespace NewsPortalPro.Services
             return dtos;
         }
 
-        public async Task<List<CategoryDto>> GetMenuCategoriesAsync() =>
-            (await GetAllActiveAsync()).Where(c => c.ShowInMenu).ToList();
+        // Separate method for menu only
+        public async Task<List<CategoryDto>> GetMenuCategoriesAsync()
+        {
+            var all = await GetAllActiveAsync();
+            return all.Where(c => c.ShowInMenu).ToList();
+        }
+
+
 
         public async Task<CategoryDto?> GetBySlugAsync(string slug)
         {

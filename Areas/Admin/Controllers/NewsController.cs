@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
 using NewsPortalPro.Services;
@@ -15,11 +16,14 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         private readonly INewsService _news;
         private readonly ICategoryService _categories;
         private readonly IFileUploadService _upload;
+        private readonly Data.ApplicationDbContext _db;
 
-        public NewsController(INewsService news, ICategoryService categories, IFileUploadService upload)
+        public NewsController(INewsService news, ICategoryService categories, IFileUploadService upload, Data.ApplicationDbContext db)
         {
             _news = news;
             _categories = categories;
+            _upload = upload;
+            _db = db;
             _upload = upload;
         }
 
@@ -145,7 +149,13 @@ namespace NewsPortalPro.Areas.Admin.Controllers
 
         private async Task PopulateCategoryList()
         {
-            var cats = await _categories.GetAllActiveAsync();
+            // Get ALL categories including non-menu ones
+            var cats = await _db.Categories
+                .Where(c => c.IsActive && !c.IsDeleted)
+                .OrderBy(c => c.DisplayOrder)
+                .Select(c => new { c.Id, c.Name })
+                .ToListAsync();
+
             ViewBag.Categories = new SelectList(cats, "Id", "Name");
         }
     }
