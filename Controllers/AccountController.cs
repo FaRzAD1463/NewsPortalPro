@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -110,6 +111,62 @@ namespace NewsPortalPro.Controllers
                 ModelState.AddModelError("", error.Description);
 
             return View(dto);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken, Authorize]
+        public async Task<IActionResult> UpdateProfile(
+    string FullName, string? Designation,
+    string? Bio, string? FacebookUrl, string? TwitterUrl)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login");
+
+            user.FullName = FullName;
+            user.Designation = Designation;
+            user.Bio = Bio;
+            user.FacebookUrl = FacebookUrl;
+            user.TwitterUrl = TwitterUrl;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _userManager.UpdateAsync(user);
+            TempData["Success"] = "প্রোফাইল আপডেট হয়েছে";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        [HttpPost, ValidateAntiForgeryToken, Authorize]
+        public async Task<IActionResult> ChangePassword(
+            string CurrentPassword, string NewPassword, string ConfirmPassword)
+        {
+            if (NewPassword != ConfirmPassword)
+            {
+                TempData["Error"] = "পাসওয়ার্ড মিলছে না";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login");
+
+            var result = await _userManager.ChangePasswordAsync(
+                user, CurrentPassword, NewPassword);
+
+            if (result.Succeeded)
+                TempData["Success"] = "পাসওয়ার্ড পরিবর্তন হয়েছে";
+            else
+                TempData["Error"] = string.Join(", ",
+                    result.Errors.Select(e => e.Description));
+
+            return RedirectToAction(nameof(Profile));
+        }
+
+        // Add this to Controllers/AccountController.cs
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Profile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login");
+            return View(user);
         }
 
         [HttpPost, ValidateAntiForgeryToken]
