@@ -18,44 +18,43 @@
         <div class="container-fluid px-4">
             <div class="row g-4">
                 <div class="col-lg-3 col-md-6">
-                    <h5 class="footer-heading">@siteName</h5>
-                    <p class="text-muted small">
+                    <h5 class="footer-heading" style="color:#fff;">@siteName</h5>
+                    <p style="color:#fff;" class="small">
                         বাংলাদেশের নির্ভরযোগ্য ও নিরপেক্ষ সংবাদ মাধ্যম।
                     </p>
                     <div class="social-links mt-3 d-flex gap-2">
-                        <a href="@fbUrl" target="_blank" class="social-btn facebook">
+                        <a href="@fbUrl" target="_blank" class="social-btn facebook" style="color:#fff;">
                             <i class="bi bi-facebook"></i>
                         </a>
-                        <a href="@twUrl" target="_blank" class="social-btn twitter">
+                        <a href="@twUrl" target="_blank" class="social-btn twitter" style="color:#fff;">
                             <i class="bi bi-twitter-x"></i>
                         </a>
-                        <a href="@ytUrl" target="_blank" class="social-btn youtube">
+                        <a href="@ytUrl" target="_blank" class="social-btn youtube" style="color:#fff;">
                             <i class="bi bi-youtube"></i>
                         </a>
                     </div>
                 </div>
 
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-heading">বিভাগসমূহ</h5>
+                    <h5 class="footer-heading" style="color:#fff;">বিভাগসমূহ</h5>
                     <ul class="footer-links">
                         @foreach (var cat in categories.Take(8))
                         {
-                            <li><a href="/category/@cat.Slug">@cat.Name</a></li>
+                            <li><a href="/category/@cat.Slug" style="color:#fff;">@cat.Name</a></li>
                         }
                     </ul>
                 </div>
 
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-heading">দ্রুত লিঙ্ক</h5>
+                    <h5 class="footer-heading" style="color:#fff;">দ্রুত লিঙ্ক</h5>
                     <ul class="footer-links">
-                        <li><a href="/Contact">যোগাযোগ</a></li>
-                        
+                        <li><a href="/Contact" style="color:#fff;">যোগাযোগ</a></li>
                     </ul>
                 </div>
 
                 <div class="col-lg-3 col-md-6">
-                    <h5 class="footer-heading">নিউজলেটার</h5>
-                    <p class="text-muted small">সর্বশেষ সংবাদ সরাসরি ইনবক্সে পান</p>
+                    <h5 class="footer-heading" style="color:#fff;">নিউজলেটার</h5>
+                    <p style="color:#fff;" class="small">সর্বশেষ সংবাদ সরাসরি ইনবক্সে পান</p>
                     <div class="input-group mt-2">
                         <input type="email" id="newsletter-email" class="form-control form-control-sm"
                                placeholder="আপনার ইমেইল" />
@@ -66,15 +65,15 @@
                 </div>
 
                 <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-heading">যোগাযোগ</h5>
+                    <h5 class="footer-heading" style="color:#fff;">যোগাযোগ</h5>
                     <ul class="footer-links">
                         @if (!string.IsNullOrEmpty(siteEmail))
                         {
-                            <li><i class="bi bi-envelope me-2"></i>@siteEmail</li>
+                            <li style="color:#fff;"><i class="bi bi-envelope me-2"></i>@siteEmail</li>
                         }
                         @if (!string.IsNullOrEmpty(sitePhone))
                         {
-                            <li><i class="bi bi-telephone me-2"></i>@sitePhone</li>
+                            <li style="color:#fff;"><i class="bi bi-telephone me-2"></i>@sitePhone</li>
                         }
                     </ul>
                 </div>
@@ -86,14 +85,14 @@
         <div class="container-fluid px-4">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="mb-0 text-muted small">
+                    <p class="mb-0 small" style="color:#fff;">
                         &copy; @DateTime.Now.Year @siteName। সর্বস্বত্ব সংরক্ষিত।
                     </p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="mb-0 text-muted small">
-                        <a href="/sitemap.xml" class="text-muted me-3">সাইটম্যাপ</a>
-                        <a href="/rss.xml" class="text-muted me-3">
+                    <p class="mb-0 small">
+                        <a href="/sitemap.xml" style="color:#fff;" class="me-3">সাইটম্যাপ</a>
+                        <a href="/rss.xml" style="color:#fff;" class="me-3">
                             <i class="bi bi-rss me-1"></i>RSS
                         </a>
                     </p>
