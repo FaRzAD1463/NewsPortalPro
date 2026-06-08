@@ -54,13 +54,23 @@
 @functions {
     string GetTimeAgo(DateTime dt)
     {
-        var diff = DateTime.UtcNow - dt;
-        if (diff.TotalMinutes < 60)
-            return $"{(int)diff.TotalMinutes} মিনিট আগে";
-        if (diff.TotalHours < 24)
-            return $"{(int)diff.TotalHours} ঘন্টা আগে";
-        if (diff.TotalDays < 7)
-            return $"{(int)diff.TotalDays} দিন আগে";
-        return dt.ToString("dd MMM yyyy");
+        // Convert UTC to Bangladesh Standard Time (UTC+6)
+        var bdTime = TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+            TimeZoneInfo.FindSystemTimeZoneById("Bangladesh Standard Time")
+        );
+        var now = TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.UtcNow,
+            TimeZoneInfo.FindSystemTimeZoneById("Bangladesh Standard Time")
+        );
+        var diff = now - bdTime;
+
+        if (diff.TotalMinutes < 1) return "এইমাত্র";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} মিনিট আগে";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} ঘন্টা আগে";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} দিন আগে";
+        if (diff.TotalDays < 30) return $"{(int)(diff.TotalDays / 7)} সপ্তাহ আগে";
+        if (diff.TotalDays < 365) return $"{(int)(diff.TotalDays / 30)} মাস আগে";
+        return bdTime.ToString("dd MMM yyyy");
     }
 }

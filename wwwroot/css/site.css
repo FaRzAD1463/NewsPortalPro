@@ -860,6 +860,12 @@ img {
         font-size: 18px;
     }
 
+    .btn-reaction.reacted {
+        background: var(--primary) !important;
+        color: white !important;
+        transform: scale(1.1);
+    }
+
 /* ══════════════════════════════════════════════════════
    COMMENTS
    ══════════════════════════════════════════════════════ */

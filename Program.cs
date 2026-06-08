@@ -484,8 +484,8 @@ try
         options.Cookie.Name = "NewsPortalPro.XSRF";
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.HttpOnly = false; // Must be false for JS to read it
-        options.Cookie.SameSite = SameSiteMode.Strict;
-        options.HeaderName = "X-XSRF-TOKEN";
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.HeaderName = "RequestVerificationToken";
     });
 
     // ──────────────────────────────────────────────────────────

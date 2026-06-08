@@ -13,32 +13,34 @@ namespace NewsPortalPro.Controllers
         private readonly IAdsService _ads;
         private readonly IAnalyticsService _analytics;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ISettingsService _settings;
 
         public NewsController(
             INewsService news,
             ICommentService comments,
             IAdsService ads,
             IAnalyticsService analytics,
-            IServiceScopeFactory scopeFactory)
+            IServiceScopeFactory scopeFactory,
+            ISettingsService settings)
         {
             _news = news;
             _comments = comments;
             _ads = ads;
             _analytics = analytics;
             _scopeFactory = scopeFactory;
+            _settings = settings;
         }
 
+        [HttpGet]
         [Route("news/{slug}")]
         public async Task<IActionResult> Details(string slug)
         {
             var news = await _news.GetBySlugAsync(slug);
             if (news == null) return NotFound();
 
-            // Get sidebar ads BEFORE firing view increment
             ViewBag.SidebarAds = await _ads
                 .GetByPositionAsync(Models.AdPosition.Sidebar);
 
-            // Fire and forget with its OWN scope — fixes DbContext concurrency
             var newsId = news.Id;
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
@@ -48,19 +50,20 @@ namespace NewsPortalPro.Controllers
             _ = Task.Run(async () =>
             {
                 using var scope = _scopeFactory.CreateScope();
-                var newsService = scope.ServiceProvider
+                var svc = scope.ServiceProvider
                     .GetRequiredService<INewsService>();
                 try
                 {
-                    await newsService.IncrementViewAsync(
+                    await svc.IncrementViewAsync(
                         newsId, userId, ip, userAgent, referrer);
                 }
-                catch { /* non-critical */ }
+                catch { }
             });
 
             return View(news);
         }
 
+        [HttpGet]
         [Route("news")]
         public async Task<IActionResult> Index([FromQuery] NewsFilterDto filter)
         {
@@ -71,6 +74,7 @@ namespace NewsPortalPro.Controllers
             return View(result);
         }
 
+        [HttpGet]
         [Route("tag/{slug}/{page?}")]
         public async Task<IActionResult> ByTag(string slug, int page = 1)
         {
@@ -85,28 +89,45 @@ namespace NewsPortalPro.Controllers
             return View("Index", result);
         }
 
+        // ── AddComment ─────────────────────────────────────────
+        // Explicit route prevents conflict with news/{slug} route.
+        // Token sent via "RequestVerificationToken" header
+        // matching HeaderName in Program.cs antiforgery config.
         [HttpPost]
+        [Route("News/AddComment")]
         [ValidateAntiForgeryToken]
         [Authorize]
         public async Task<IActionResult> AddComment(
             [FromBody] CreateCommentDto dto)
         {
             if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
                 return BadRequest(new
                 {
                     success = false,
-                    message = "অবৈধ তথ্য"
+                    message = string.Join(", ", errors)
                 });
+            }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
             var id = await _comments.AddAsync(dto, userId, ip);
 
+            var moderation =
+                await _settings.GetAsync("CommentModeration") ?? "true";
+
             return Ok(new
             {
                 success = true,
                 commentId = id,
-                message = "মন্তব্য সফলভাবে জমা দেওয়া হয়েছে"
+                isPending = moderation == "true",
+                message = moderation == "true"
+                    ? "মন্তব্য অনুমোদনের অপেক্ষায় আছে"
+                    : "মন্তব্য সফলভাবে যোগ হয়েছে"
             });
         }
     }

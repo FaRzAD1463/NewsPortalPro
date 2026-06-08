@@ -10,6 +10,25 @@
     ViewData["CanonicalUrl"] = Model.CanonicalUrl ?? $"https://newsportalpro.com/news/{Model.Slug}";
 }
 
+@functions {
+    string FormatBdTime(DateTime? dt)
+    {
+        if (!dt.HasValue) return "";
+        try
+        {
+            var bdTime = TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc),
+                TimeZoneInfo.FindSystemTimeZoneById("Bangladesh Standard Time")
+            );
+            return bdTime.ToString("dd MMMM yyyy, hh:mm tt");
+        }
+        catch
+        {
+            return dt.Value.AddHours(6).ToString("dd MMMM yyyy, hh:mm tt");
+        }
+    }
+}
+
 <article class="news-detail" itemscope itemtype="https://schema.org/NewsArticle">
     <div class="container-fluid px-4 mt-4">
         <div class="row g-4">
@@ -24,9 +43,13 @@
                         <li class="breadcrumb-item">
                             <a href="/category/@Model.CategorySlug">@Model.CategoryName</a>
                         </li>
-                        <li class="breadcrumb-item active" aria-current="page">@Model.Title[..Math.Min(40, Model.Title.Length)]...</li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            @Model.Title[..Math.Min(40, Model.Title.Length)]...
+                        </li>
                     </ol>
                 </nav>
+
+                @Html.AntiForgeryToken()
 
                 <!-- Category Badge -->
                 <span class="category-badge fs-6 mb-2 d-inline-block" style="background:@Model.CategoryColor">
@@ -57,12 +80,15 @@
                             <span class="fw-medium">@Model.AuthorName</span>
                         </div>
                     </div>
+
+                    <!-- FIXED: Published date now uses FormatBdTime for correct BD timezone display -->
                     <div class="text-muted small">
                         <i class="bi bi-calendar3 me-1"></i>
                         <time itemprop="datePublished" datetime="@Model.PublishedAt?.ToString("o")">
-                            @Model.PublishedAt?.ToString("dd MMMM yyyy, HH:mm")
+                            @FormatBdTime(Model.PublishedAt)
                         </time>
                     </div>
+
                     <div class="text-muted small">
                         <i class="bi bi-clock me-1"></i>@Model.ReadTimeMinutes মিনিট পড়ার সময়
                     </div>
@@ -79,7 +105,9 @@
                              class="img-fluid w-100 rounded" itemprop="image" />
                         @if (!string.IsNullOrEmpty(Model.FeaturedImageCaption))
                         {
-                            <figcaption class="text-muted small mt-1 text-center">@Model.FeaturedImageCaption</figcaption>
+                            <figcaption class="text-muted small mt-1 text-center">
+                                @Model.FeaturedImageCaption
+                            </figcaption>
                         }
                     </figure>
                 }
@@ -221,7 +249,9 @@
                                         <div class="flex-grow-1">
                                             <div class="d-flex justify-content-between">
                                                 <strong>@comment.UserName</strong>
-                                                <small class="text-muted">@comment.CreatedAt.ToString("dd MMM yyyy")</small>
+                                                <small class="text-muted">
+                                                    @comment.CreatedAt.ToString("dd MMM yyyy")
+                                                </small>
                                             </div>
                                             <p class="mb-1 mt-1">@comment.Content</p>
                                             <button class="btn btn-sm btn-link p-0 text-primary"
@@ -242,7 +272,9 @@
                                             {
                                                 <div class="reply-item mt-2 ps-3 border-start">
                                                     <strong class="small">@reply.UserName</strong>
-                                                    <span class="text-muted ms-2 small">@reply.CreatedAt.ToString("dd MMM")</span>
+                                                    <span class="text-muted ms-2 small">
+                                                        @reply.CreatedAt.ToString("dd MMM")
+                                                    </span>
                                                     <p class="mb-0 small">@reply.Content</p>
                                                 </div>
                                             }
@@ -284,79 +316,218 @@
 
 @section Scripts {
     <script>
-        // Reading Progress
-        window.addEventListener('scroll', function() {
+        // ── Reading Progress ──────────────────────────────────────
+        window.addEventListener('scroll', function () {
             const article = document.querySelector('.article-content');
             if (!article) return;
-            const total = article.offsetTop + article.offsetHeight - window.innerHeight;
+            const total    = article.offsetTop + article.offsetHeight - window.innerHeight;
             const scrolled = window.scrollY - article.offsetTop;
             const progress = Math.min(Math.max((scrolled / total) * 100, 0), 100);
-            document.getElementById('reading-progress').style.width = progress + '%';
+            const bar = document.getElementById('reading-progress');
+            if (bar) bar.style.width = progress + '%';
         });
 
+        // ── Get antiforgery token ─────────────────────────────────
+        function getToken() {
+            return document.querySelector(
+                'input[name="__RequestVerificationToken"]')?.value ?? '';
+        }
+
+        // ── Submit comment ────────────────────────────────────────
         async function submitComment(newsId) {
-            const content = document.getElementById('comment-text').value.trim();
+            const textarea = document.getElementById('comment-text');
+            const content  = textarea?.value?.trim();
             if (!content) { toastr.warning('মন্তব্য লিখুন'); return; }
 
-            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-            const res = await fetch('/News/AddComment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': token
-                },
-                body: JSON.stringify({ content, newsId, parentId: null })
-            });
+            try {
+                const res = await fetch('/News/AddComment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getToken()
+                    },
+                    body: JSON.stringify({
+                        content:  content,
+                        newsId:   newsId,
+                        parentId: null
+                    })
+                });
 
-            const data = await res.json();
-            if (data.success) {
-                toastr.success(data.message);
-                document.getElementById('comment-text').value = '';
-            } else {
-                toastr.error(data.message);
+                if (res.status === 401) {
+                    toastr.info('মন্তব্য করতে লগইন করুন');
+                    window.location.href = '/Account/Login';
+                    return;
+                }
+
+                if (res.status === 404) {
+                    toastr.error('রুট পাওয়া যায়নি');
+                    return;
+                }
+
+                let data;
+                try   { data = await res.json(); }
+                catch { data = { success: false, message: 'সার্ভার ত্রুটি' }; }
+
+                if (data.success) {
+                    toastr.success(data.message);
+                    textarea.value = '';
+
+                    const list = document.getElementById('comments-list');
+                    if (list) {
+                        const div = document.createElement('div');
+                        div.className = 'comment-item mb-3 p-3 bg-light rounded';
+                        div.innerHTML = `
+                            <div class="d-flex gap-2">
+                                <div class="avatar-placeholder rounded-circle flex-shrink-0
+                                            d-flex align-items-center justify-content-center
+                                            fw-bold"
+                                     style="width:40px;height:40px;
+                                            background:var(--primary);color:white">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>আপনি</strong>
+                                        <small class="text-muted">এইমাত্র</small>
+                                    </div>
+                                    <p class="mb-1 mt-1">${content}</p>
+                                    ${data.isPending
+                                        ? '<small class="text-warning"><i class="bi bi-clock me-1"></i>অনুমোদনের অপেক্ষায়</small>'
+                                        : '<small class="text-success"><i class="bi bi-check-circle me-1"></i>প্রকাশিত</small>'
+                                    }
+                                </div>
+                            </div>`;
+                        list.prepend(div);
+                    }
+                } else {
+                    toastr.error(data.message || 'মন্তব্য করা যায়নি');
+                }
+            } catch (e) {
+                console.error('Comment error:', e);
+                toastr.error('নেটওয়ার্ক ত্রুটি হয়েছে');
             }
         }
 
+        // ── Submit reply ──────────────────────────────────────────
         async function submitReply(newsId, parentId) {
-            const content = document.getElementById(`reply-text-${parentId}`).value.trim();
-            if (!content) return;
+            const textarea = document.getElementById(`reply-text-${parentId}`);
+            const content  = textarea?.value?.trim();
+            if (!content) { toastr.warning('উত্তর লিখুন'); return; }
 
-            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-            const res = await fetch('/News/AddComment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': token
-                },
-                body: JSON.stringify({ content, newsId, parentId })
-            });
+            try {
+                const res = await fetch('/News/AddComment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getToken()
+                    },
+                    body: JSON.stringify({
+                        content:  content,
+                        newsId:   newsId,
+                        parentId: parentId
+                    })
+                });
 
-            const data = await res.json();
-            if (data.success) toastr.success('উত্তর পাঠানো হয়েছে');
+                if (res.status === 401) {
+                    toastr.info('উত্তর করতে লগইন করুন');
+                    return;
+                }
+
+                let data;
+                try   { data = await res.json(); }
+                catch { data = { success: false, message: 'সার্ভার ত্রুটি' }; }
+
+                if (data.success) {
+                    toastr.success('উত্তর পাঠানো হয়েছে');
+                    if (textarea) textarea.value = '';
+                    document.getElementById(`reply-form-${parentId}`)
+                        ?.classList.add('d-none');
+                } else {
+                    toastr.error(data.message || 'উত্তর পাঠানো যায়নি');
+                }
+            } catch (e) {
+                console.error('Reply error:', e);
+                toastr.error('নেটওয়ার্ক ত্রুটি');
+            }
         }
 
+        // ── Show/hide reply form ───────────────────────────────────
         function showReplyForm(id) {
-            document.getElementById(`reply-form-${id}`).classList.toggle('d-none');
+            const form = document.getElementById(`reply-form-${id}`);
+            if (form) form.classList.toggle('d-none');
         }
+
+        // ── Reactions ─────────────────────────────────────────────
+        let userReaction = null;
 
         async function reactToNews(newsId, type) {
-            const res = await fetch('/api/news/react', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ newsId, reactionType: type })
-            });
-            const data = await res.json();
-            if (data.success && data.counts) {
-                Object.entries(data.counts).forEach(([t, c]) => {
-                    const el = document.getElementById(`reaction-${t}`);
-                    if (el) el.textContent = c;
+            try {
+                const res = await fetch('/api/news/react', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getToken()
+                    },
+                    body: JSON.stringify({
+                        newsId:       newsId,
+                        reactionType: type
+                    })
                 });
+
+                if (res.status === 401) {
+                    toastr.info('প্রতিক্রিয়া জানাতে লগইন করুন');
+                    return;
+                }
+
+                const data = await res.json();
+                if (!data.success) return;
+
+                // Update counts
+                if (data.counts) {
+                    Object.entries(data.counts).forEach(([t, c]) => {
+                        const el = document.getElementById(`reaction-${t}`);
+                        if (el) el.textContent = c;
+                    });
+                }
+
+                // Toggle button active state
+                document.querySelectorAll('.btn-reaction').forEach(btn => {
+                    btn.classList.remove('reacted');
+                    btn.style.background = '';
+                    btn.style.color      = '';
+                    btn.style.transform  = '';
+                });
+
+                if (userReaction === type) {
+                    // Same type clicked again — undo reaction
+                    userReaction = null;
+                } else {
+                    // New reaction
+                    userReaction = type;
+                    const activeBtn = document.querySelector(
+                        `.btn-reaction[data-reaction="${type}"]`);
+                    if (activeBtn) {
+                        activeBtn.classList.add('reacted');
+                        activeBtn.style.background = 'var(--primary)';
+                        activeBtn.style.color      = 'white';
+                        activeBtn.style.transform  = 'scale(1.15)';
+                    }
+                }
+            } catch (e) {
+                console.error('Reaction error:', e);
             }
         }
 
+        // ── Copy article link ─────────────────────────────────────
         function copyLink() {
-            navigator.clipboard.writeText(window.location.href);
-            toastr.info('লিঙ্ক কপি হয়েছে');
+            navigator.clipboard.writeText(window.location.href)
+                .then(() => toastr.info('লিঙ্ক কপি হয়েছে'))
+                .catch(() => toastr.error('কপি করা যায়নি'));
+        }
+
+        // ── Track ad click ────────────────────────────────────────
+        function trackAdClick(adId) {
+            fetch(`/api/ads/${adId}/click`, { method: 'POST' }).catch(() => {});
         }
     </script>
 }
