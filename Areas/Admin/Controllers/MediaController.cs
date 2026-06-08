@@ -38,6 +38,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -76,6 +77,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             var photo = await _db.Photos.FindAsync(id);
