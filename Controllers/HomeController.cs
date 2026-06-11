@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
 using NewsPortalPro.Services;
@@ -42,12 +42,14 @@ namespace NewsPortalPro.Controllers
                 SiteName = await _settings.GetAsync("SiteName") ?? "NewsPortal Pro"
             };
 
-            // Category news blocks � sequential not parallel to avoid DbContext conflict
-            var cats = await _categories.GetMenuCategoriesAsync();
-            foreach (var cat in cats.Take(5))
+            // Load ALL active categories — both menu and non-menu
+            var allCats = await _categories.GetAllActiveAsync();
+
+            foreach (var cat in allCats)
             {
-                var catNews = await _news.GetByCategoryAsync(cat.Slug, 1, 5);
-                vm.CategoryNewsBlocks[cat.Slug] = (cat, catNews);
+                var catNews = await _news.GetByCategoryAsync(cat.Slug, 1, 6);
+                if (catNews.Any())
+                    vm.CategoryNewsBlocks[cat.Slug] = (cat, catNews);
             }
 
             return View(vm);

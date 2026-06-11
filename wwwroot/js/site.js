@@ -1,44 +1,54 @@
-﻿$(document).ready(function () {
+﻿(function ($) {
+    'use strict';
 
     // ── AOS Animations ───────────────────────────────────
     AOS.init({ duration: 600, once: true, offset: 60 });
 
     // ── Current Date (Bengali) ───────────────────────────
-    const days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+    const days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার',
+        'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
     const months = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
         'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
     const now = new Date();
-    const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    const dateStr = `${days[now.getDay()]}, ${now.getDate()} `
+        + `${months[now.getMonth()]} ${now.getFullYear()}`;
     $('#current-date-header').text(dateStr);
 
     // ── Load mega menu news on hover ─────────────────────
-    $('.dropdown-hover').on('mouseenter', function () {
-        const link = $(this).find('.nav-link-custom').first().attr('href');
+    $(document).on('mouseenter', '.dropdown-hover', function () {
+        const link = $(this).find('.nav-link-custom').first().attr('href') || '';
         if (!link || link === '#') return;
-        const slug = link.replace('/category/', '');
+        const slug = link.replace('/category/', '').replace(/\/$/, '');
+        if (!slug) return;
         const container = $(`#mega-news-${slug}`);
-        if (!container.length || container.data('loaded')) return;
+        if (!container.length || container.data('loaded') === true) return;
         container.data('loaded', true);
 
-        fetch(`/api/news?categorySlug=${slug}&pageSize=4&page=1`)
-            .then(r => r.json())
+        fetch(`/api/news?categorySlug=${encodeURIComponent(slug)}&pageSize=4&page=1`)
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
             .then(data => {
                 if (!data.items || !data.items.length) {
-                    container.html('<p class="text-muted small py-2">কোনো সংবাদ নেই</p>');
+                    container.html(
+                        '<p class="text-muted small p-2 mb-0">কোনো সংবাদ নেই</p>');
                     return;
                 }
                 let html = '';
                 data.items.forEach(n => {
                     html += `
-                <a href="/news/${n.slug}" class="mega-news-item">
-                    <img src="${n.featuredImage || '/images/placeholder.jpg'}"
-                         alt="${n.title}" loading="lazy" />
-                    <span class="mega-news-item-title">${n.title}</span>
-                </a>`;
+                    <a href="/news/${n.slug}" class="mega-news-item">
+                        <img src="${n.featuredImage || '/images/placeholder.jpg'}"
+                             alt="${n.title}" loading="lazy"
+                             onerror="this.src='/images/placeholder.jpg'" />
+                        <span class="mega-news-item-title">${n.title}</span>
+                    </a>`;
                 });
                 container.html(html);
             })
-            .catch(() => container.html(''));
+            .catch(() => {
+                container.data('loaded', false);
+                container.html(
+                    '<p class="text-muted small p-2 mb-0">লোড হয়নি</p>');
+            });
     });
 
     // ── Category search in All dropdown ──────────────────
@@ -76,7 +86,8 @@
 
         searchTimer = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(q)}`);
+                const res = await fetch(
+                    `/api/search/suggest?q=${encodeURIComponent(q)}`);
                 const data = await res.json();
                 const box = $('#search-suggestions');
                 box.empty();
@@ -93,7 +104,7 @@
     });
 
     $(document).on('click', function (e) {
-        if (!$(e.target).closest('.search-box').length)
+        if (!$(e.target).closest('.search-box-nav').length)
             $('#search-suggestions').hide();
     });
 
@@ -125,23 +136,26 @@
             const data = await res.json();
             const unread = data.filter(n => !n.isRead).length;
 
-            if (unread > 0) {
+            if (unread > 0)
                 $('#notif-count').text(unread).removeClass('d-none');
-            } else {
+            else
                 $('#notif-count').addClass('d-none');
-            }
 
             const list = $('#notif-list');
             list.empty();
             if (data.length) {
                 data.forEach(n => list.append(`
                     <div class="notif-item ${n.isRead ? '' : 'unread'}"
-                         onclick="readNotification(${n.id}, '${n.link || ''}')">
+                         onclick="readNotification(${n.id},
+                             '${n.link || ''}')">
                         <div class="fw-medium small">${n.title}</div>
-                        <div class="text-muted" style="font-size:12px">${n.message || ''}</div>
+                        <div class="text-muted"
+                             style="font-size:12px">${n.message || ''}</div>
                     </div>`));
             } else {
-                list.html('<div class="p-3 text-center text-muted small">কোনো বিজ্ঞপ্তি নেই</div>');
+                list.html(
+                    '<div class="p-3 text-center text-muted small">' +
+                    'কোনো বিজ্ঞপ্তি নেই</div>');
             }
         } catch { }
     }
@@ -156,7 +170,7 @@
         loadNotifications();
     });
 
-    // ── Ad Tracking ──────────────────────────────────────
+    // ── Ad Tracking (impression) ─────────────────────────
     const adObserver = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -168,8 +182,8 @@
             }
         });
     });
-
-    document.querySelectorAll('[data-ad-id]').forEach(el => adObserver.observe(el));
+    document.querySelectorAll('[data-ad-id]').forEach(
+        el => adObserver.observe(el));
 
     // ── Toastr Config ────────────────────────────────────
     toastr.options = {
@@ -181,11 +195,10 @@
 
     // ── Sticky Header Shadow ─────────────────────────────
     $(window).on('scroll', function () {
-        if ($(this).scrollTop() > 80) {
+        if ($(this).scrollTop() > 80)
             $('#main-header').addClass('scrolled');
-        } else {
+        else
             $('#main-header').removeClass('scrolled');
-        }
     });
 
     // ── Close notification dropdown on outside click ─────
@@ -193,29 +206,55 @@
         if (!$(e.target).closest('.notification-bell-widget').length)
             $('#notif-dropdown').addClass('d-none');
     });
-});
 
-// ── Global Functions ─────────────────────────────────────
+    // ── Smooth scroll to category section on home page ───
+    document.querySelectorAll('.nav-link-custom').forEach(link => {
+        link.addEventListener('click', function (e) {
+            const href = this.getAttribute('href') || '';
+            if (!href.startsWith('/category/')) return;
+
+            const slug = href.replace('/category/', '').replace(/\/$/, '');
+            const section = document.getElementById(`cat-${slug}`);
+
+            if (section && window.location.pathname === '/') {
+                e.preventDefault();
+                const offset = 80;
+                const top = section.getBoundingClientRect().top
+                    + window.scrollY      // ← fixed: no longer deprecated
+                    - offset;
+                window.scrollTo({ top, behavior: 'smooth' });
+            }
+        });
+    });
+
+})(jQuery);
+
+// ── Global Functions (outside IIFE so they are globally accessible) ──────────
 
 function submitSearch() {
-    const q = document.getElementById('live-search').value.trim();
+    const q = document.getElementById('live-search')?.value?.trim();
     if (q) window.location.href = `/Search?q=${encodeURIComponent(q)}`;
 }
 
 function submitSidebarSearch() {
-    const q = document.getElementById('sidebar-search')?.value.trim();
+    const q = document.getElementById('sidebar-search-input')?.value?.trim()
+        || document.getElementById('sidebar-search')?.value?.trim();
     if (q) window.location.href = `/Search?q=${encodeURIComponent(q)}`;
 }
 
 function trackAdClick(adId) {
-    fetch(`/api/ads/${adId}/click`, { method: 'POST' });
+    fetch(`/api/ads/${adId}/click`, { method: 'POST' }).catch(() => { });
 }
 
 async function readNotification(id, link) {
-    await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+    try {
+        await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+    } catch { }
     if (link) window.location.href = link;
 }
 
 document.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && document.activeElement.id === 'live-search') submitSearch();
+    if (e.key === 'Enter' &&
+        document.activeElement?.id === 'live-search')
+        submitSearch();
 });
