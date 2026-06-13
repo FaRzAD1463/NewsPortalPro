@@ -35,6 +35,7 @@
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 body {
@@ -44,6 +45,10 @@ body {
     font-size: 15px;
     line-height: 1.7;
     transition: background-color .3s, color .3s;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
 a {
@@ -262,6 +267,7 @@ img {
 /* ══════════════════════════════════════════════════════
    MAIN NAVIGATION
    ══════════════════════════════════════════════════════ */
+
 .main-nav {
     background: var(--secondary);
     z-index: 1000;
@@ -294,14 +300,17 @@ img {
         background: rgba(255,255,255,.1);
     }
 
+
 /* ══════════════════════════════════════════════════════
    MEGA DROPDOWN
    ══════════════════════════════════════════════════════ */
+
 .mega-dropdown {
     position: absolute;
     top: 100%;
     left: 0;
     min-width: 600px;
+    max-width: calc(100vw - 20px);
     background: white;
     border-top: 3px solid var(--primary);
     box-shadow: 0 8px 40px rgba(0,0,0,.15);
@@ -311,6 +320,7 @@ img {
     transform: translateY(-8px);
     transition: all .2s ease;
     z-index: 1001;
+    overflow-x: hidden;
 }
 
     .dropdown-hover:hover .mega-dropdown,
@@ -319,6 +329,14 @@ img {
         visibility: visible;
         transform: translateY(0);
     }
+
+/* Regular mega dropdown — anchor to left of nav item */
+.nav-item-custom .mega-dropdown:not(.all-categories-dropdown) {
+    left: 0;
+    right: auto;
+    min-width: 500px;
+    max-width: 600px;
+}
 
 .mega-dropdown-inner {
     padding: 0;
@@ -337,6 +355,130 @@ img {
 
 .mega-sub-cats {
     background: #f8f9fa;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   FIX 1 — NAVBAR OVERLAPPING PAGE CONTENT
+   ══════════════════════════════════════════════════════ */
+
+/* Main content fills remaining height and never collapses */
+main {
+    flex: 1 0 auto;
+    min-height: 400px;
+    padding-top: 0;
+}
+
+/* Prevent anchor scrolling from hiding content */
+[id] {
+    scroll-margin-top: 80px;
+}
+
+/* Fix Bootstrap containers starting under navbar */
+.container-fluid.mt-4,
+.container-fluid.px-4.mt-4 {
+    margin-top: 24px !important;
+}
+
+/* Contact page spacing fixes */
+.contact-page,
+form.contact-form {
+    margin-top: 20px;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   FIX 1 — DROPDOWN MENU CUTTING OFF
+   ══════════════════════════════════════════════════════ */
+
+/* Proper right alignment for user/account dropdowns */
+.dropdown-menu-end {
+    right: 0 !important;
+    left: auto !important;
+}
+
+/* Ensure dropdowns appear above all content */
+.site-header .dropdown-menu {
+    position: absolute;
+    z-index: 1060;
+    min-width: 160px;
+}
+
+/* Prevent dropdown clipping from parent containers */
+.site-header,
+.main-nav,
+.nav-item-custom {
+    overflow: visible !important;
+}
+
+/* Better dropdown rendering */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    border-radius: 8px;
+    padding: 8px 0;
+}
+
+/* Dropdown item styling */
+.dropdown-item {
+    padding: 10px 16px;
+    font-size: 14px;
+    transition: background .15s ease;
+}
+
+    .dropdown-item:hover {
+        background: #f8f9fa;
+    }
+
+
+/* ══════════════════════════════════════════════════════
+   FIX 3 — FOOTER TOO HIGH / BLANK SPACE BELOW FOOTER
+   ══════════════════════════════════════════════════════ */
+
+.site-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+}
+
+/* Remove blank space below footer caused by last child margin */
+body > *:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Fix blank space caused by notification bell widget */
+.notification-bell-widget {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    margin: 0;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE FIXES
+   ══════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+    main {
+        padding-top: 0;
+    }
+
+    [id] {
+        scroll-margin-top: 70px;
+    }
+
+    .mega-dropdown {
+        min-width: 100%;
+        left: 0;
+        right: 0;
+    }
+
+    .dropdown-menu {
+        min-width: 140px;
+    }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -733,6 +875,9 @@ img {
 [data-theme="dark"] .pb-card-title a {
     color: var(--text);
 }
+
+
+
 /* ══════════════════════════════════════════════════════
    SIDEBAR (RIGHT)
    ══════════════════════════════════════════════════════ */
@@ -939,6 +1084,7 @@ img {
     bottom: 24px;
     right: 24px;
     z-index: 1000;
+    margin: 0;
 }
 
     .notification-bell-widget .btn {
@@ -988,6 +1134,8 @@ img {
 .site-footer {
     background: var(--secondary);
     color: rgba(255,255,255,.7);
+    flex-shrink: 0;
+    margin-top: auto;
 }
 
 .footer-heading {
@@ -1672,7 +1820,7 @@ img {
     filter: invert(1);
 }
 
-/* ── All categories dropdown ─────────────────────────── */
+/* ── All categories dropdown dark mode ───────────────── */
 [data-theme="dark"] .all-categories-dropdown {
     background: var(--surface);
 }
@@ -1802,15 +1950,37 @@ img {
             width: 150px;
         }
 }
+
+
 /* ══════════════════════════════════════════════════════
-   ALL CATEGORIES MEGA DROPDOWN
+   ALL CATEGORIES MEGA DROPDOWN — VIEWPORT-SAFE
    ══════════════════════════════════════════════════════ */
 .all-categories-dropdown {
-    min-width: 860px;
-    left: auto;
-    right: 0;
+    min-width: 760px;
+    max-width: 98vw;
+    width: 98vw;
+    /* Pin to left edge of the navbar, not the nav item */
+    position: fixed !important;
+    left: 1vw !important;
+    right: 1vw !important;
+    width: auto !important;
+    top: auto;
+    transform: none !important;
+    transform-origin: top left;
 }
 
+    /* Hover open state — no translateX needed since fixed positioning */
+    .dropdown-hover:hover .all-categories-dropdown,
+    .all-categories-dropdown:hover {
+        opacity: 1;
+        visibility: visible;
+        transform: none !important;
+    }
+
+/* Hidden state */
+.nav-item-custom:not(:hover) .all-categories-dropdown {
+    transform: translateY(-8px) !important;
+}
 .all-cat-sidebar {
     background: #f8f9fa;
     min-width: 140px;
@@ -1895,7 +2065,7 @@ img {
     color: var(--primary);
 }
 
-/* Dark mode */
+/* ── Dark mode ───────────────────────────────────────── */
 [data-theme="dark"] .all-cat-sidebar {
     background: #252836;
 }
