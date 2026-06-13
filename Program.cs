@@ -149,8 +149,46 @@ try
     // ──────────────────────────────────────────────────────────
     // JWT AUTHENTICATION
     // ──────────────────────────────────────────────────────────
-    var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
-        ?? throw new InvalidOperationException("JwtSettings not configured");
+    // ── JWT SECRET — environment variable takes priority ──────
+    // Set in production: export NEWSPORTAL__JwtSettings__SecretKey="your-64-char-secret"
+    // Windows: setx NEWSPORTAL__JwtSettings__SecretKey "your-64-char-secret"
+    var jwtSecret = Environment.GetEnvironmentVariable(
+                        "NEWSPORTAL__JwtSettings__SecretKey")
+                 ?? builder.Configuration["JwtSettings:SecretKey"];
+
+    if (string.IsNullOrWhiteSpace(jwtSecret) ||
+        jwtSecret == "REPLACE_VIA_ENVIRONMENT_VARIABLE")
+    {
+        if (builder.Environment.IsProduction())
+            throw new InvalidOperationException(
+                "CRITICAL: JWT SecretKey is not configured. " +
+                "Set environment variable: NEWSPORTAL__JwtSettings__SecretKey");
+        else
+            Log.Warning(
+                "JWT SecretKey using development fallback. " +
+                "Never use this in production.");
+    }
+
+    // Override config with environment variable if set
+    if (!string.IsNullOrWhiteSpace(
+            Environment.GetEnvironmentVariable(
+                "NEWSPORTAL__JwtSettings__SecretKey")))
+    {
+        builder.Configuration["JwtSettings:SecretKey"] =
+            Environment.GetEnvironmentVariable(
+                "NEWSPORTAL__JwtSettings__SecretKey");
+    }
+
+    var jwtSettings = builder.Configuration
+        .GetSection("JwtSettings")
+        .Get<JwtSettings>()
+        ?? throw new InvalidOperationException(
+            "JwtSettings section not found in configuration");
+
+    // Validate minimum key length
+    if (jwtSettings.SecretKey.Length < 32)
+        throw new InvalidOperationException(
+            "JWT SecretKey must be at least 32 characters long.");
 
     builder.Services.Configure<JwtSettings>(
         builder.Configuration.GetSection("JwtSettings"));
@@ -566,14 +604,84 @@ try
     // ──────────────────────────────────────────────────────────
     // SECURITY HEADERS
     // ──────────────────────────────────────────────────────────
+    // ── SECURITY HEADERS ──────────────────────────────────────
     app.Use(async (context, next) =>
     {
-        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-        context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
-        context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
-        context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-        context.Response.Headers["Permissions-Policy"] =
-            "camera=(), microphone=(), geolocation=()";
+        var headers = context.Response.Headers;
+
+        // Prevent MIME type sniffing
+        headers["X-Content-Type-Options"] = "nosniff";
+
+        // Clickjacking protection
+        headers["X-Frame-Options"] = "SAMEORIGIN";
+
+        // Legacy XSS filter (IE/old browsers)
+        headers["X-XSS-Protection"] = "1; mode=block";
+
+        // Control referrer information
+        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+
+        // Restrict browser features
+        headers["Permissions-Policy"] =
+            "camera=(), microphone=(), geolocation=(), " +
+            "payment=(), usb=(), magnetometer=(), gyroscope=()";
+
+        // Content Security Policy
+        // 'unsafe-inline' is required for Bootstrap/jQuery/Toastr inline scripts
+        // Tighten this further once you move all inline scripts to external files
+        headers["Content-Security-Policy"] =
+            "default-src 'self'; " +
+
+            // Scripts — self + CDN sources used by the project
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
+                "https://cdnjs.cloudflare.com " +
+                "https://cdn.jsdelivr.net; " +
+
+            // Styles — self + Google Fonts + CDN
+            "style-src 'self' 'unsafe-inline' " +
+                "https://cdnjs.cloudflare.com " +
+                "https://cdn.jsdelivr.net " +
+                "https://fonts.googleapis.com; " +
+
+            // Fonts
+            "font-src 'self' " +
+                "https://fonts.gstatic.com " +
+                "https://cdnjs.cloudflare.com " +
+                "https://cdn.jsdelivr.net; " +
+
+            // Images — self + data URIs + blob + HTTPS
+            "img-src 'self' data: blob: https:; " +
+
+            // WebSocket for SignalR
+            "connect-src 'self' wss: ws:; " +
+
+            // Prevent embedding in iframes except same origin
+            "frame-ancestors 'self'; " +
+
+            // Restrict form targets
+            "form-action 'self'; " +
+
+            // Prevent base tag hijacking
+            "base-uri 'self'; " +
+
+            // Block mixed content
+            "upgrade-insecure-requests;";
+
+        // HSTS — only set on HTTPS connections
+        // WARNING: preload requires registration at hstspreload.org
+        // Start without preload, add after confirming HTTPS works correctly
+        if (context.Request.IsHttps)
+        {
+            headers["Strict-Transport-Security"] =
+                "max-age=31536000; includeSubDomains";
+        }
+
+        // Remove server identification headers
+        context.Response.Headers.Remove("Server");
+        context.Response.Headers.Remove("X-Powered-By");
+        context.Response.Headers.Remove("X-AspNet-Version");
+        context.Response.Headers.Remove("X-AspNetMvc-Version");
+
         await next();
     });
 

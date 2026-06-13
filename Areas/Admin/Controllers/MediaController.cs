@@ -15,11 +15,13 @@ namespace NewsPortalPro.Areas.Admin.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IFileUploadService _upload;
+        private readonly ILogger<MediaController> _logger;
 
-        public MediaController(ApplicationDbContext db, IFileUploadService upload)
+        public MediaController(ApplicationDbContext db, IFileUploadService upload, ILogger<MediaController> logger)
         {
             _db = db;
             _upload = upload;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index(int page = 1)
@@ -39,6 +41,8 @@ namespace NewsPortalPro.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(10_485_760)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
         public async Task<IActionResult> Upload(IFormFile file)
         {
             if (file == null || file.Length == 0)

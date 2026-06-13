@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Ganss.Xss;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using NewsPortalPro.Data;
@@ -17,6 +18,85 @@ namespace NewsPortalPro.Services
         private readonly ILogger<NewsService> _logger;
         private readonly INotificationService _notifications;
 
+        // ── HTML Sanitizer ─────────────────────────────────────────
+        // Thread-safe singleton — built once, never mutated after init.
+        // Prevents stored XSS in article content and all text fields.
+        private static readonly HtmlSanitizer Sanitizer = CreateSanitizer();
+
+        private static HtmlSanitizer CreateSanitizer()
+        {
+            var s = new HtmlSanitizer();
+
+            // ── Allowed tags ───────────────────────────────────────
+            s.AllowedTags.Clear();
+            foreach (var tag in new[]
+            {
+                "p", "br", "b", "strong", "i", "em", "u",
+                "h1", "h2", "h3", "h4", "h5", "h6",
+                "ul", "ol", "li",
+                "blockquote", "pre", "code",
+                "a", "img",
+                "table", "thead", "tbody", "tr", "th", "td",
+                "div", "span", "figure", "figcaption",
+                "hr", "sup", "sub"
+            })
+            {
+                s.AllowedTags.Add(tag);
+            }
+
+            // ── Allowed attributes ─────────────────────────────────
+            // style is NOT included — prevents CSS exfiltration tricks
+            s.AllowedAttributes.Clear();
+            foreach (var attr in new[]
+            {
+                "href", "src", "alt", "title", "class", "id",
+                "width", "height", "target", "rel",
+                "colspan", "rowspan"
+            })
+            {
+                s.AllowedAttributes.Add(attr);
+            }
+
+            // ── Allowed URL schemes ────────────────────────────────
+            // data: and javascript: are blocked — prevents XSS via img src
+            s.AllowedSchemes.Clear();
+            s.AllowedSchemes.Add("https");
+            s.AllowedSchemes.Add("http");
+            s.AllowedSchemes.Add("mailto");
+
+            // ── Force safe external link attributes ────────────────
+            // Must not mutate sanitizer after this point
+            s.PostProcessNode += (sender, e) =>
+            {
+                if (e.Node is AngleSharp.Dom.IElement element &&
+                    element.TagName.Equals(
+                        "A", StringComparison.OrdinalIgnoreCase))
+                {
+                    var href = element.GetAttribute("href") ?? "";
+                    if (!href.StartsWith("/") && !href.StartsWith("#"))
+                    {
+                        element.SetAttribute("target", "_blank");
+                        element.SetAttribute("rel",
+                            "noopener noreferrer nofollow");
+                    }
+                }
+            };
+
+            return s;
+        }
+
+        // ── Helper — sanitize any user-controlled text field ───────
+        // Strips dangerous HTML from all fields, not just Content.
+        // Covers: Summary, Subtitle, MetaDescription, MetaKeywords,
+        //         FeaturedImageAlt, FeaturedImageCaption
+        private static string Clean(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            return Sanitizer.Sanitize(input.Trim());
+        }
+
         public NewsService(
             ApplicationDbContext db,
             IDistributedCache cache,
@@ -31,7 +111,8 @@ namespace NewsPortalPro.Services
             _notifications = notifications;
         }
 
-        public async Task<PagedResult<NewsListDto>> GetPublishedAsync(NewsFilterDto filter)
+        public async Task<PagedResult<NewsListDto>> GetPublishedAsync(
+            NewsFilterDto filter)
         {
             var query = _db.News
                 .Where(n => n.Status == NewsStatus.Published)
@@ -41,18 +122,22 @@ namespace NewsPortalPro.Services
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(filter.CategorySlug))
-                query = query.Where(n => n.Category.Slug == filter.CategorySlug);
+                query = query.Where(
+                    n => n.Category.Slug == filter.CategorySlug);
 
             if (!string.IsNullOrEmpty(filter.TagSlug))
-                query = query.Where(n => n.NewsTags.Any(nt => nt.Tag.Slug == filter.TagSlug));
+                query = query.Where(n => n.NewsTags.Any(
+                    nt => nt.Tag.Slug == filter.TagSlug));
 
             if (!string.IsNullOrEmpty(filter.AuthorId))
-                query = query.Where(n => n.AuthorId == filter.AuthorId);
+                query = query.Where(
+                    n => n.AuthorId == filter.AuthorId);
 
             if (!string.IsNullOrEmpty(filter.Search))
                 query = query.Where(n =>
                     n.Title.Contains(filter.Search) ||
-                    (n.Summary != null && n.Summary.Contains(filter.Search)));
+                    (n.Summary != null &&
+                     n.Summary.Contains(filter.Search)));
 
             if (filter.Type.HasValue)
                 query = query.Where(n => n.Type == filter.Type.Value);
@@ -60,7 +145,8 @@ namespace NewsPortalPro.Services
             query = filter.Sort switch
             {
                 "popular" => query.OrderByDescending(n => n.ViewCount),
-                "comments" => query.OrderByDescending(n => n.CommentCount),
+                "comments" => query.OrderByDescending(
+                    n => n.CommentCount),
                 _ => query.OrderByDescending(n => n.PublishedAt)
             };
 
@@ -86,24 +172,28 @@ namespace NewsPortalPro.Services
             {
                 var cached = await _cache.GetStringAsync(cacheKey);
                 if (cached != null)
-                    return JsonConvert.DeserializeObject<NewsDetailDto>(cached);
+                    return JsonConvert.DeserializeObject<NewsDetailDto>(
+                        cached);
             }
-            catch { /* cache miss — continue */ }
+            catch { }
 
             var news = await _db.News
-                .Where(n => n.Slug == slug && n.Status == NewsStatus.Published)
+                .Where(n => n.Slug == slug
+                         && n.Status == NewsStatus.Published)
                 .Include(n => n.Category)
                 .Include(n => n.Author)
                 .Include(n => n.Editor)
                 .Include(n => n.NewsTags).ThenInclude(nt => nt.Tag)
                 .Include(n => n.Comments.Where(c =>
-                    c.Status == CommentStatus.Approved && c.ParentId == null))
+                    c.Status == CommentStatus.Approved
+                    && c.ParentId == null))
                     .ThenInclude(c => c.User)
                 .Include(n => n.Comments.Where(c =>
-                    c.Status == CommentStatus.Approved && c.ParentId == null))
-                    .ThenInclude(c => c.Replies
-                        .Where(r => r.Status == CommentStatus.Approved))
-                        .ThenInclude(r => r.User)
+                    c.Status == CommentStatus.Approved
+                    && c.ParentId == null))
+                    .ThenInclude(c => c.Replies.Where(r =>
+                        r.Status == CommentStatus.Approved))
+                    .ThenInclude(r => r.User)
                 .Include(n => n.Reactions)
                 .FirstOrDefaultAsync();
 
@@ -111,8 +201,8 @@ namespace NewsPortalPro.Services
 
             var related = await _db.News
                 .Where(n => n.CategoryId == news.CategoryId
-                    && n.Id != news.Id
-                    && n.Status == NewsStatus.Published)
+                         && n.Id != news.Id
+                         && n.Status == NewsStatus.Published)
                 .OrderByDescending(n => n.PublishedAt)
                 .Take(5)
                 .Include(n => n.Category)
@@ -123,14 +213,16 @@ namespace NewsPortalPro.Services
 
             try
             {
-                await _cache.SetStringAsync(cacheKey,
+                await _cache.SetStringAsync(
+                    cacheKey,
                     JsonConvert.SerializeObject(dto),
                     new DistributedCacheEntryOptions
                     {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                        AbsoluteExpirationRelativeToNow =
+                            TimeSpan.FromMinutes(5)
                     });
             }
-            catch { /* cache write failure is non-critical */ }
+            catch { }
 
             return dto;
         }
@@ -146,19 +238,22 @@ namespace NewsPortalPro.Services
             return news == null ? null : MapToDetailDto(news, []);
         }
 
-        public async Task<List<NewsListDto>> GetBreakingNewsAsync(int count = 5)
+        public async Task<List<NewsListDto>> GetBreakingNewsAsync(
+            int count = 5)
         {
             const string cacheKey = "news:breaking";
             try
             {
                 var cached = await _cache.GetStringAsync(cacheKey);
                 if (cached != null)
-                    return JsonConvert.DeserializeObject<List<NewsListDto>>(cached)!;
+                    return JsonConvert
+                        .DeserializeObject<List<NewsListDto>>(cached)!;
             }
             catch { }
 
             var news = await _db.News
-                .Where(n => n.IsBreaking && n.Status == NewsStatus.Published)
+                .Where(n => n.IsBreaking
+                         && n.Status == NewsStatus.Published)
                 .OrderByDescending(n => n.PublishedAt)
                 .Take(count)
                 .Include(n => n.Category)
@@ -169,11 +264,13 @@ namespace NewsPortalPro.Services
 
             try
             {
-                await _cache.SetStringAsync(cacheKey,
+                await _cache.SetStringAsync(
+                    cacheKey,
                     JsonConvert.SerializeObject(dtos),
                     new DistributedCacheEntryOptions
                     {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1)
+                        AbsoluteExpirationRelativeToNow =
+                            TimeSpan.FromMinutes(1)
                     });
             }
             catch { }
@@ -184,7 +281,8 @@ namespace NewsPortalPro.Services
         public async Task<List<NewsListDto>> GetFeaturedAsync(int count = 6)
         {
             var news = await _db.News
-                .Where(n => n.IsFeatured && n.Status == NewsStatus.Published)
+                .Where(n => n.IsFeatured
+                         && n.Status == NewsStatus.Published)
                 .OrderByDescending(n => n.PublishedAt)
                 .Take(count)
                 .Include(n => n.Category)
@@ -199,7 +297,7 @@ namespace NewsPortalPro.Services
         {
             var news = await _db.News
                 .Where(n => n.Category.Slug == categorySlug
-                    && n.Status == NewsStatus.Published)
+                         && n.Status == NewsStatus.Published)
                 .OrderByDescending(n => n.PublishedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -215,8 +313,8 @@ namespace NewsPortalPro.Services
         {
             var news = await _db.News
                 .Where(n => n.CategoryId == categoryId
-                    && n.Id != newsId
-                    && n.Status == NewsStatus.Published)
+                         && n.Id != newsId
+                         && n.Status == NewsStatus.Published)
                 .OrderByDescending(n => n.PublishedAt)
                 .Take(count)
                 .Include(n => n.Category)
@@ -231,7 +329,7 @@ namespace NewsPortalPro.Services
             var cutoff = DateTime.UtcNow.AddDays(-7);
             var news = await _db.News
                 .Where(n => n.Status == NewsStatus.Published
-                    && n.PublishedAt >= cutoff)
+                         && n.PublishedAt >= cutoff)
                 .OrderByDescending(n => n.ViewCount)
                 .Take(count)
                 .Include(n => n.Category)
@@ -241,7 +339,8 @@ namespace NewsPortalPro.Services
             return news.Select(MapToListDto).ToList();
         }
 
-        public async Task<List<NewsListDto>> GetMostViewedAsync(int count = 10)
+        public async Task<List<NewsListDto>> GetMostViewedAsync(
+            int count = 10)
         {
             var news = await _db.News
                 .Where(n => n.Status == NewsStatus.Published)
@@ -254,18 +353,35 @@ namespace NewsPortalPro.Services
             return news.Select(MapToListDto).ToList();
         }
 
-        public async Task<int> CreateAsync(CreateNewsDto dto, string authorId)
+        public async Task<int> CreateAsync(
+            CreateNewsDto dto, string authorId)
         {
             var slug = _seo.GenerateSlug(dto.Title);
             slug = await EnsureUniqueSlugAsync(slug);
 
             var news = new News
             {
-                Title = dto.Title,
+                Title = dto.Title?.Trim() ?? string.Empty,
                 Slug = slug,
-                Subtitle = dto.Subtitle,
-                Content = dto.Content,
-                Summary = dto.Summary ?? GenerateSummary(dto.Content),
+
+                // ── SANITIZE all user-controlled fields ───────────
+                // Prevents stored XSS. Clean() uses HtmlSanitizer
+                // which strips dangerous tags/attributes/schemes.
+                Subtitle = Clean(dto.Subtitle),
+                Content = Clean(dto.Content),
+                Summary = !string.IsNullOrWhiteSpace(
+                                            dto.Summary)
+                                        ? Clean(dto.Summary)
+                                        : GenerateSummary(dto.Content),
+                FeaturedImageAlt = Clean(dto.FeaturedImageAlt),
+                FeaturedImageCaption = Clean(dto.FeaturedImageCaption),
+                MetaTitle = Clean(dto.MetaTitle
+                                            ?? dto.Title),
+                MetaDescription = Clean(dto.MetaDescription
+                                            ?? dto.Summary),
+                MetaKeywords = Clean(dto.MetaKeywords),
+                // ─────────────────────────────────────────────────
+
                 CategoryId = dto.CategoryId,
                 AuthorId = authorId,
                 Status = dto.Status,
@@ -275,15 +391,11 @@ namespace NewsPortalPro.Services
                 AllowComments = dto.AllowComments,
                 ScheduledAt = dto.ScheduledAt,
                 FeaturedImage = dto.FeaturedImageUrl,
-                FeaturedImageAlt = dto.FeaturedImageAlt,
-                FeaturedImageCaption = dto.FeaturedImageCaption,
                 VideoUrl = dto.VideoUrl,
-                MetaTitle = dto.MetaTitle ?? dto.Title,
-                MetaDescription = dto.MetaDescription ?? dto.Summary,
-                MetaKeywords = dto.MetaKeywords,
                 ReadTimeMinutes = _seo.CalculateReadTime(dto.Content),
                 PublishedAt = dto.Status == NewsStatus.Published
-                    ? DateTime.UtcNow : null
+                                    ? DateTime.UtcNow
+                                    : null
             };
 
             _db.News.Add(news);
@@ -296,12 +408,14 @@ namespace NewsPortalPro.Services
                     news.Id, news.Title, news.Slug);
 
             await InvalidateNewsCacheAsync();
-            _logger.LogInformation("News created: {Id} - {Title}", news.Id, news.Title);
+            _logger.LogInformation(
+                "News created: {Id} - {Title}", news.Id, news.Title);
 
             return news.Id;
         }
 
-        public async Task<bool> UpdateAsync(int id, UpdateNewsDto dto, string editorId)
+        public async Task<bool> UpdateAsync(
+            int id, UpdateNewsDto dto, string editorId)
         {
             var news = await _db.News
                 .Include(n => n.NewsTags)
@@ -311,10 +425,21 @@ namespace NewsPortalPro.Services
 
             var wasPublished = news.Status == NewsStatus.Published;
 
-            news.Title = dto.Title;
-            news.Subtitle = dto.Subtitle;
-            news.Content = dto.Content;
-            news.Summary = dto.Summary ?? GenerateSummary(dto.Content);
+            // ── SANITIZE all user-controlled fields on update ──────
+            news.Title = dto.Title?.Trim() ?? news.Title;
+            news.Subtitle = Clean(dto.Subtitle);
+            news.Content = Clean(dto.Content);
+            news.Summary = !string.IsNullOrWhiteSpace(
+                                            dto.Summary)
+                                        ? Clean(dto.Summary)
+                                        : GenerateSummary(dto.Content);
+            news.FeaturedImageAlt = Clean(dto.FeaturedImageAlt);
+            news.FeaturedImageCaption = Clean(dto.FeaturedImageCaption);
+            news.MetaTitle = Clean(dto.MetaTitle ?? dto.Title);
+            news.MetaDescription = Clean(dto.MetaDescription);
+            news.MetaKeywords = Clean(dto.MetaKeywords);
+            // ──────────────────────────────────────────────────────
+
             news.CategoryId = dto.CategoryId;
             news.EditorId = editorId;
             news.Status = dto.Status;
@@ -324,12 +449,7 @@ namespace NewsPortalPro.Services
             news.AllowComments = dto.AllowComments;
             news.ScheduledAt = dto.ScheduledAt;
             news.FeaturedImage = dto.FeaturedImageUrl ?? news.FeaturedImage;
-            news.FeaturedImageAlt = dto.FeaturedImageAlt;
-            news.FeaturedImageCaption = dto.FeaturedImageCaption;
             news.VideoUrl = dto.VideoUrl;
-            news.MetaTitle = dto.MetaTitle ?? dto.Title;
-            news.MetaDescription = dto.MetaDescription;
-            news.MetaKeywords = dto.MetaKeywords;
             news.ReadTimeMinutes = _seo.CalculateReadTime(dto.Content);
             news.UpdatedAt = DateTime.UtcNow;
 
@@ -392,7 +512,8 @@ namespace NewsPortalPro.Services
             return true;
         }
 
-        public async Task IncrementViewAsync(int newsId, string? userId,
+        public async Task IncrementViewAsync(
+            int newsId, string? userId,
             string? ip, string? userAgent, string? referrer)
         {
             var recentView = await _db.NewsViews
@@ -414,7 +535,8 @@ namespace NewsPortalPro.Services
             });
 
             await _db.Database.ExecuteSqlRawAsync(
-                "UPDATE News SET ViewCount = ViewCount + 1 WHERE Id = {0}", newsId);
+                "UPDATE News SET ViewCount = ViewCount + 1 WHERE Id = {0}",
+                newsId);
 
             await _db.SaveChangesAsync();
         }
@@ -451,17 +573,23 @@ namespace NewsPortalPro.Services
                 .AsQueryable();
 
             if (filter.Status.HasValue)
-                query = query.Where(n => n.Status == filter.Status.Value);
+                query = query.Where(
+                    n => n.Status == filter.Status.Value);
             if (filter.IsBreaking.HasValue)
-                query = query.Where(n => n.IsBreaking == filter.IsBreaking.Value);
+                query = query.Where(
+                    n => n.IsBreaking == filter.IsBreaking.Value);
             if (filter.IsFeatured.HasValue)
-                query = query.Where(n => n.IsFeatured == filter.IsFeatured.Value);
+                query = query.Where(
+                    n => n.IsFeatured == filter.IsFeatured.Value);
             if (filter.FromDate.HasValue)
-                query = query.Where(n => n.CreatedAt >= filter.FromDate.Value);
+                query = query.Where(
+                    n => n.CreatedAt >= filter.FromDate.Value);
             if (filter.ToDate.HasValue)
-                query = query.Where(n => n.CreatedAt <= filter.ToDate.Value);
+                query = query.Where(
+                    n => n.CreatedAt <= filter.ToDate.Value);
             if (!string.IsNullOrEmpty(filter.CategorySlug))
-                query = query.Where(n => n.Category.Slug == filter.CategorySlug);
+                query = query.Where(
+                    n => n.Category.Slug == filter.CategorySlug);
             if (!string.IsNullOrEmpty(filter.Search))
                 query = query.Where(n => n.Title.Contains(filter.Search));
 
@@ -487,7 +615,7 @@ namespace NewsPortalPro.Services
             var now = DateTime.UtcNow;
             var scheduled = await _db.News
                 .Where(n => n.Status == NewsStatus.Scheduled
-                    && n.ScheduledAt <= now)
+                         && n.ScheduledAt <= now)
                 .ToListAsync();
 
             foreach (var news in scheduled)
@@ -502,7 +630,8 @@ namespace NewsPortalPro.Services
                 await _db.SaveChangesAsync();
                 await InvalidateNewsCacheAsync();
                 _logger.LogInformation(
-                    "Published {Count} scheduled news", scheduled.Count);
+                    "Published {Count} scheduled news",
+                    scheduled.Count);
             }
         }
 
@@ -513,7 +642,7 @@ namespace NewsPortalPro.Services
                 "DELETE FROM NewsViews WHERE ViewedAt < {0}", cutoff);
         }
 
-        // ── Private Helpers ──────────────────────────────────
+        // ── Private Helpers ────────────────────────────────────────
 
         private static NewsListDto MapToListDto(News n) => new()
         {
@@ -535,43 +664,48 @@ namespace NewsPortalPro.Services
             IsBreaking = n.IsBreaking,
             IsFeatured = n.IsFeatured,
             Type = n.Type,
-            Tags = n.NewsTags?.Select(nt => nt.Tag.Name).ToList() ?? []
+            Tags = n.NewsTags?
+                                .Select(nt => nt.Tag.Name).ToList()
+                              ?? []
         };
 
-        private static NewsDetailDto MapToDetailDto(News n, List<News> related) => new()
-        {
-            Id = n.Id,
-            Title = n.Title,
-            Slug = n.Slug,
-            Subtitle = n.Subtitle,
-            Summary = n.Summary,
-            Content = n.Content,
-            FeaturedImage = n.FeaturedImage,
-            FeaturedImageAlt = n.FeaturedImageAlt,
-            FeaturedImageCaption = n.FeaturedImageCaption,
-            VideoUrl = n.VideoUrl,
-            CategoryName = n.Category?.Name ?? string.Empty,
-            CategorySlug = n.Category?.Slug ?? string.Empty,
-            CategoryColor = n.Category?.ColorCode,
-            AuthorName = n.Author?.FullName ?? string.Empty,
-            AuthorId = n.AuthorId,
-            AuthorPicture = n.Author?.ProfilePicture,
-            AuthorBio = n.Author?.Bio,
-            PublishedAt = n.PublishedAt,
-            ViewCount = n.ViewCount,
-            CommentCount = n.CommentCount,
-            ShareCount = n.ShareCount,
-            ReadTimeMinutes = n.ReadTimeMinutes,
-            IsBreaking = n.IsBreaking,
-            IsFeatured = n.IsFeatured,
-            Type = n.Type,
-            AllowComments = n.AllowComments,
-            MetaTitle = n.MetaTitle,
-            MetaDescription = n.MetaDescription,
-            MetaKeywords = n.MetaKeywords,
-            CanonicalUrl = n.CanonicalUrl,
-            Tags = n.NewsTags?.Select(nt => nt.Tag.Name).ToList() ?? [],
-            Comments = n.Comments?
+        private static NewsDetailDto MapToDetailDto(
+            News n, List<News> related) => new()
+            {
+                Id = n.Id,
+                Title = n.Title,
+                Slug = n.Slug,
+                Subtitle = n.Subtitle,
+                Summary = n.Summary,
+                Content = n.Content,
+                FeaturedImage = n.FeaturedImage,
+                FeaturedImageAlt = n.FeaturedImageAlt,
+                FeaturedImageCaption = n.FeaturedImageCaption,
+                VideoUrl = n.VideoUrl,
+                CategoryName = n.Category?.Name ?? string.Empty,
+                CategorySlug = n.Category?.Slug ?? string.Empty,
+                CategoryColor = n.Category?.ColorCode,
+                AuthorName = n.Author?.FullName ?? string.Empty,
+                AuthorId = n.AuthorId,
+                AuthorPicture = n.Author?.ProfilePicture,
+                AuthorBio = n.Author?.Bio,
+                PublishedAt = n.PublishedAt,
+                ViewCount = n.ViewCount,
+                CommentCount = n.CommentCount,
+                ShareCount = n.ShareCount,
+                ReadTimeMinutes = n.ReadTimeMinutes,
+                IsBreaking = n.IsBreaking,
+                IsFeatured = n.IsFeatured,
+                Type = n.Type,
+                AllowComments = n.AllowComments,
+                MetaTitle = n.MetaTitle,
+                MetaDescription = n.MetaDescription,
+                MetaKeywords = n.MetaKeywords,
+                CanonicalUrl = n.CanonicalUrl,
+                Tags = n.NewsTags?
+                                    .Select(nt => nt.Tag.Name).ToList()
+                                   ?? [],
+                Comments = n.Comments?
                 .Where(c => c.ParentId == null)
                 .Select(c => new CommentDto
                 {
@@ -596,11 +730,11 @@ namespace NewsPortalPro.Services
                             NewsId = r.NewsId
                         }).ToList() ?? []
                 }).ToList() ?? [],
-            Reactions = n.Reactions?
+                Reactions = n.Reactions?
                 .GroupBy(r => r.Type.ToString())
                 .ToDictionary(g => g.Key, g => g.Count()) ?? [],
-            RelatedNews = related.Select(MapToListDto).ToList()
-        };
+                RelatedNews = related.Select(MapToListDto).ToList()
+            };
 
         private async Task SaveTagsAsync(int newsId, List<string> tagNames)
         {
@@ -621,10 +755,12 @@ namespace NewsPortalPro.Services
                 }
 
                 var exists = await _db.NewsTags
-                    .AnyAsync(nt => nt.NewsId == newsId && nt.TagId == tag.Id);
+                    .AnyAsync(nt => nt.NewsId == newsId
+                                 && nt.TagId == tag.Id);
 
                 if (!exists)
-                    _db.NewsTags.Add(new NewsTag { NewsId = newsId, TagId = tag.Id });
+                    _db.NewsTags.Add(
+                        new NewsTag { NewsId = newsId, TagId = tag.Id });
             }
             await _db.SaveChangesAsync();
         }
@@ -653,7 +789,7 @@ namespace NewsPortalPro.Services
         private static string GenerateSummary(string content)
         {
             var stripped = System.Text.RegularExpressions.Regex
-                .Replace(content, "<.*?>", "");
+                .Replace(content ?? string.Empty, "<.*?>", "");
             return stripped.Length > 300
                 ? stripped[..300] + "..."
                 : stripped;
@@ -662,9 +798,11 @@ namespace NewsPortalPro.Services
         private static string DetectDevice(string? userAgent)
         {
             if (string.IsNullOrEmpty(userAgent)) return "Unknown";
-            if (userAgent.Contains("Mobile", StringComparison.OrdinalIgnoreCase))
+            if (userAgent.Contains(
+                    "Mobile", StringComparison.OrdinalIgnoreCase))
                 return "Mobile";
-            if (userAgent.Contains("Tablet", StringComparison.OrdinalIgnoreCase))
+            if (userAgent.Contains(
+                    "Tablet", StringComparison.OrdinalIgnoreCase))
                 return "Tablet";
             return "Desktop";
         }
@@ -679,7 +817,7 @@ namespace NewsPortalPro.Services
                 if (slug != null)
                     await _cache.RemoveAsync($"news:slug:{slug}");
             }
-            catch { /* cache invalidation is non-critical */ }
+            catch { }
         }
     }
 }
