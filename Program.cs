@@ -156,8 +156,7 @@ try
                         "NEWSPORTAL__JwtSettings__SecretKey")
                  ?? builder.Configuration["JwtSettings:SecretKey"];
 
-    if (string.IsNullOrWhiteSpace(jwtSecret) ||
-        jwtSecret == "REPLACE_VIA_ENVIRONMENT_VARIABLE")
+    if (string.IsNullOrWhiteSpace(jwtSecret))
     {
         if (builder.Environment.IsProduction())
             throw new InvalidOperationException(
@@ -165,8 +164,8 @@ try
                 "Set environment variable: NEWSPORTAL__JwtSettings__SecretKey");
         else
             Log.Warning(
-                "JWT SecretKey using development fallback. " +
-                "Never use this in production.");
+                "JWT SecretKey is empty. " +
+                "Set a value in appsettings.json for development.");
     }
 
     // Override config with environment variable if set
