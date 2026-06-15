@@ -854,17 +854,17 @@ body > *:last-child {
 
 /* ── Large lead card ─────────────────────────────────── */
 .pb-news-card-lead .pb-card-img {
-    height: 280px;
+    height: 200px;
 }
 
 .pb-news-card-lead .pb-card-title {
-    font-size: 1.3rem;
-    -webkit-line-clamp: 4;
+    font-size: 1rem;
+    -webkit-line-clamp: 3;
 }
 
 .pb-news-card-lead .pb-card-summary {
-    -webkit-line-clamp: 3;
-    font-size: 14px;
+    -webkit-line-clamp: 2;
+    font-size: 13px;
 }
 
 /* ── Dark mode ───────────────────────────────────────── */

@@ -1,6 +1,7 @@
 ﻿using Ganss.Xss;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
@@ -15,6 +16,7 @@ namespace NewsPortalPro.Services
         private readonly ApplicationDbContext _db;
         private readonly IDistributedCache _cache;
         private readonly ISEOService _seo;
+        private readonly IMemoryCache _memCache;
         private readonly ILogger<NewsService> _logger;
         private readonly INotificationService _notifications;
 
@@ -101,11 +103,13 @@ namespace NewsPortalPro.Services
             ApplicationDbContext db,
             IDistributedCache cache,
             ISEOService seo,
+            IMemoryCache memCache,
             ILogger<NewsService> logger,
             INotificationService notifications)
         {
             _db = db;
             _cache = cache;
+            _memCache = memCache;
             _seo = seo;
             _logger = logger;
             _notifications = notifications;
@@ -164,6 +168,29 @@ namespace NewsPortalPro.Services
                 PageSize = filter.PageSize
             };
         }
+
+        // ── Generic cache-aside helper ─────────────────────────────
+        private async Task<T> GetOrSetMemCacheAsync<T>(
+            string key,
+            Func<Task<T>> factory,
+            TimeSpan expiry)
+        {
+            if (_memCache.TryGetValue(key, out T? cached) && cached != null)
+                return cached;
+
+            var value = await factory();
+
+            _memCache.Set(key, value, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = expiry,
+                SlidingExpiration = null,
+                Priority = CacheItemPriority.Normal,
+                Size = 1
+            });
+
+            return value;
+        }
+
 
         public async Task<NewsDetailDto?> GetBySlugAsync(string slug)
         {
