@@ -12,8 +12,7 @@ namespace NewsPortalPro.Controllers
         private readonly ICategoryService _categories;
         private readonly IAdsService _ads;
         private readonly ISettingsService _settings;
-        private readonly Models.AdPosition _adPos = Models.AdPosition.Header;
-
+       
         public HomeController(
             INewsService news,
             ICategoryService categories,
