@@ -24,15 +24,15 @@ using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
 using System.Text;
 
-
-
 // ════════════════════════════════════════════════════════════
 // SERILOG — must be configured before everything else
 // ════════════════════════════════════════════════════════════
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(new ConfigurationBuilder()
         .AddJsonFile("appsettings.json")
-        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+        .AddJsonFile(
+            $"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json",
+            optional: true)
         .Build())
     .Enrich.FromLogContext()
     .WriteTo.Console()
@@ -40,7 +40,9 @@ Log.Logger = new LoggerConfiguration()
         "Logs/log-.txt",
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 30,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+        outputTemplate:
+            "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] " +
+            "{Message:lj}{NewLine}{Exception}")
     .CreateBootstrapLogger();
 
 try
@@ -49,7 +51,7 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // Replace default logging with Serilog
+    // ── Replace default logging with Serilog ──────────────────
     builder.Host.UseSerilog((context, services, configuration) =>
         configuration
             .ReadFrom.Configuration(context.Configuration)
@@ -75,18 +77,15 @@ try
                     errorNumbersToAdd: null);
                 sql.CommandTimeout(30);
                 sql.MigrationsAssembly("NewsPortalPro");
-            }
-        )
+            })
         .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
-        .EnableDetailedErrors(builder.Environment.IsDevelopment())
-    );
+        .EnableDetailedErrors(builder.Environment.IsDevelopment()));
 
     // ──────────────────────────────────────────────────────────
     // IDENTITY
     // ──────────────────────────────────────────────────────────
     builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
-        // Password
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = false;
@@ -94,23 +93,23 @@ try
         options.Password.RequiredLength = 8;
         options.Password.RequiredUniqueChars = 1;
 
-        // User
         options.User.RequireUniqueEmail = true;
         options.User.AllowedUserNameCharacters =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+            "abcdefghijklmnopqrstuvwxyz" +
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+            "0123456789-._@+";
 
-        // Sign-in
         options.SignIn.RequireConfirmedEmail = false;
         options.SignIn.RequireConfirmedAccount = false;
 
-        // Lockout
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.AllowedForNewUsers = true;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
-    .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>(TokenOptions.DefaultProvider);
+    .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>(
+        TokenOptions.DefaultProvider);
 
     builder.Services.ConfigureApplicationCookie(options =>
     {
@@ -119,13 +118,18 @@ try
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.Cookie.Name = "NewsPortalPro.Auth";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+        // ── SameAsRequest allows dev on HTTP and prod on HTTPS ──
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
+
         options.Events.OnRedirectToLogin = context =>
         {
-            // Return 401 for API requests instead of redirecting
             if (context.Request.Path.StartsWithSegments("/api"))
             {
                 context.Response.StatusCode = 401;
@@ -134,6 +138,7 @@ try
             context.Response.Redirect(context.RedirectUri);
             return Task.CompletedTask;
         };
+
         options.Events.OnRedirectToAccessDenied = context =>
         {
             if (context.Request.Path.StartsWithSegments("/api"))
@@ -149,26 +154,22 @@ try
     // ──────────────────────────────────────────────────────────
     // JWT AUTHENTICATION
     // ──────────────────────────────────────────────────────────
-    // ── JWT SECRET — environment variable takes priority ──────
-    // Set in production: export NEWSPORTAL__JwtSettings__SecretKey="your-64-char-secret"
-    // Windows: setx NEWSPORTAL__JwtSettings__SecretKey "your-64-char-secret"
-    var jwtSecret = Environment.GetEnvironmentVariable(
-                        "NEWSPORTAL__JwtSettings__SecretKey")
-                 ?? builder.Configuration["JwtSettings:SecretKey"];
+    var jwtSecret =
+        Environment.GetEnvironmentVariable("NEWSPORTAL__JwtSettings__SecretKey")
+        ?? builder.Configuration["JwtSettings:SecretKey"];
 
     if (string.IsNullOrWhiteSpace(jwtSecret))
     {
         if (builder.Environment.IsProduction())
             throw new InvalidOperationException(
                 "CRITICAL: JWT SecretKey is not configured. " +
-                "Set environment variable: NEWSPORTAL__JwtSettings__SecretKey");
+                "Set env var: NEWSPORTAL__JwtSettings__SecretKey");
         else
             Log.Warning(
                 "JWT SecretKey is empty. " +
                 "Set a value in appsettings.json for development.");
     }
 
-    // Override config with environment variable if set
     if (!string.IsNullOrWhiteSpace(
             Environment.GetEnvironmentVariable(
                 "NEWSPORTAL__JwtSettings__SecretKey")))
@@ -184,7 +185,6 @@ try
         ?? throw new InvalidOperationException(
             "JwtSettings section not found in configuration");
 
-    // Validate minimum key length
     if (jwtSettings.SecretKey.Length < 32)
         throw new InvalidOperationException(
             "JWT SecretKey must be at least 32 characters long.");
@@ -194,7 +194,6 @@ try
 
     builder.Services.AddAuthentication(options =>
     {
-        // Keep cookie as default for MVC
         options.DefaultScheme = "Identity.Application";
         options.DefaultChallengeScheme = "Identity.Application";
     })
@@ -214,26 +213,22 @@ try
                 Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
             ClockSkew = TimeSpan.Zero
         };
-        // Allow JWT via query string for SignalR
+
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
-                var accessToken = context.Request.Query["access_token"];
-                var path = context.HttpContext.Request.Path;
-                if (!string.IsNullOrEmpty(accessToken) &&
-                    path.StartsWithSegments("/hubs"))
-                {
-                    context.Token = accessToken;
-                }
+                var token = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(token) &&
+                    context.HttpContext.Request.Path
+                        .StartsWithSegments("/hubs"))
+                    context.Token = token;
                 return Task.CompletedTask;
             },
             OnAuthenticationFailed = context =>
             {
                 if (context.Exception is SecurityTokenExpiredException)
-                {
                     context.Response.Headers["Token-Expired"] = "true";
-                }
                 return Task.CompletedTask;
             }
         };
@@ -245,22 +240,20 @@ try
     builder.Services.AddAuthorization(options =>
     {
         options.AddPolicy("AdminOnly",
-            policy => policy.RequireRole("Admin"));
-
+            p => p.RequireRole("Admin"));
         options.AddPolicy("EditorOrAbove",
-            policy => policy.RequireRole("Admin", "Editor"));
-
+            p => p.RequireRole("Admin", "Editor"));
         options.AddPolicy("ReporterOrAbove",
-            policy => policy.RequireRole("Admin", "Editor", "Reporter"));
-
+            p => p.RequireRole("Admin", "Editor", "Reporter"));
         options.AddPolicy("AuthenticatedUser",
-            policy => policy.RequireAuthenticatedUser());
+            p => p.RequireAuthenticatedUser());
     });
 
     // ──────────────────────────────────────────────────────────
-    // REDIS DISTRIBUTED CACHE
+    // REDIS / DISTRIBUTED CACHE
     // ──────────────────────────────────────────────────────────
-    var redisConnection = builder.Configuration.GetConnectionString("Redis");
+    var redisConnection =
+        builder.Configuration.GetConnectionString("Redis");
 
     if (!string.IsNullOrEmpty(redisConnection) &&
         !redisConnection.Contains("localhost") ||
@@ -270,20 +263,21 @@ try
         {
             options.Configuration = redisConnection;
             options.InstanceName =
-                builder.Configuration["RedisSettings:InstanceName"] ?? "NewsPortalPro_";
+                builder.Configuration["RedisSettings:InstanceName"]
+                ?? "NewsPortalPro_";
         });
     }
     else
     {
-        // Fallback to in-memory cache for local development
         builder.Services.AddDistributedMemoryCache();
-        Log.Warning("Redis not configured — using in-memory distributed cache");
+        Log.Warning(
+            "Redis not configured — using in-memory distributed cache");
     }
 
     builder.Services.AddMemoryCache();
 
     // ──────────────────────────────────────────────────────────
-    // HANGFIRE BACKGROUND JOBS
+    // HANGFIRE
     // ──────────────────────────────────────────────────────────
     builder.Services.AddHangfire(config => config
         .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -309,20 +303,21 @@ try
     });
 
     // ──────────────────────────────────────────────────────────
-    // SIGNALR REAL-TIME
+    // SIGNALR
     // ──────────────────────────────────────────────────────────
     builder.Services.AddSignalR(options =>
     {
         options.EnableDetailedErrors = builder.Environment.IsDevelopment();
         options.KeepAliveInterval = TimeSpan.FromSeconds(15);
         options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-        options.MaximumReceiveMessageSize = 32 * 1024; // 32KB
+        options.MaximumReceiveMessageSize = 32 * 1024;
     });
 
     // ──────────────────────────────────────────────────────────
     // AUTOMAPPER
     // ──────────────────────────────────────────────────────────
-    builder.Services.AddAutoMapper(new[] { typeof(Program).Assembly }); ;
+    builder.Services.AddAutoMapper(
+        new[] { typeof(Program).Assembly });
 
     // ──────────────────────────────────────────────────────────
     // FLUENT VALIDATION
@@ -344,10 +339,11 @@ try
     builder.Services.Configure<IpRateLimitPolicies>(
         builder.Configuration.GetSection("IpRateLimitPolicies"));
     builder.Services.AddInMemoryRateLimiting();
-    builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+    builder.Services.AddSingleton<IRateLimitConfiguration,
+        RateLimitConfiguration>();
 
     // ──────────────────────────────────────────────────────────
-    // CLOUDINARY IMAGE STORAGE
+    // CLOUDINARY
     // ──────────────────────────────────────────────────────────
     var cloudinarySettings = builder.Configuration
         .GetSection("CloudinarySettings")
@@ -357,7 +353,8 @@ try
         builder.Configuration.GetSection("CloudinarySettings"));
 
     if (cloudinarySettings != null &&
-        !string.IsNullOrEmpty(cloudinarySettings.CloudName))
+        !string.IsNullOrEmpty(cloudinarySettings.CloudName) &&
+        cloudinarySettings.CloudName != "REPLACE_VIA_ENVIRONMENT_VARIABLE")
     {
         var cloudinary = new Cloudinary(new Account(
             cloudinarySettings.CloudName,
@@ -365,12 +362,14 @@ try
             cloudinarySettings.ApiSecret));
         cloudinary.Api.Secure = true;
         builder.Services.AddSingleton(cloudinary);
+        Log.Information("Cloudinary configured successfully");
     }
     else
     {
-        // Register a default/dummy instance for development
-        builder.Services.AddSingleton(new Cloudinary());
-        Log.Warning("Cloudinary not configured — file uploads will fail");
+        // Null registration — FileUploadService falls back to local storage
+        builder.Services.AddSingleton<Cloudinary>(_ => null!);
+        Log.Warning(
+            "Cloudinary not configured — using local file storage");
     }
 
     // ──────────────────────────────────────────────────────────
@@ -380,8 +379,6 @@ try
         builder.Configuration.GetSection("EmailSettings"));
     builder.Services.Configure<RedisSettings>(
         builder.Configuration.GetSection("RedisSettings"));
-    builder.Services.Configure<CloudinarySettings>(
-        builder.Configuration.GetSection("CloudinarySettings"));
 
     // ──────────────────────────────────────────────────────────
     // REPOSITORIES
@@ -448,7 +445,7 @@ try
 
         c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
-            Description = "JWT Authorization. Enter: Bearer {your-token}",
+            Description = "JWT Authorization. Enter: Bearer {token}",
             Name = "Authorization",
             In = ParameterLocation.Header,
             Type = SecuritySchemeType.ApiKey,
@@ -464,7 +461,7 @@ try
                     Reference = new OpenApiReference
                     {
                         Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
+                        Id   = "Bearer"
                     }
                 },
                 Array.Empty<string>()
@@ -519,8 +516,13 @@ try
     builder.Services.AddAntiforgery(options =>
     {
         options.Cookie.Name = "NewsPortalPro.XSRF";
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.HttpOnly = false; // Must be false for JS to read it
+
+        // SameAsRequest in dev allows HTTP; Always in prod enforces HTTPS
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+
+        options.Cookie.HttpOnly = false; // JS must read this cookie
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.HeaderName = "RequestVerificationToken";
     });
@@ -531,11 +533,17 @@ try
     builder.Services.AddResponseCompression(options =>
     {
         options.EnableForHttps = true;
-        options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
-        options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+        options.Providers.Add<Microsoft.AspNetCore.ResponseCompression
+            .BrotliCompressionProvider>();
+        options.Providers.Add<Microsoft.AspNetCore.ResponseCompression
+            .GzipCompressionProvider>();
         options.MimeTypes = Microsoft.AspNetCore.ResponseCompression
             .ResponseCompressionDefaults.MimeTypes
-            .Concat(["application/json", "application/javascript", "text/css"]);
+            .Concat([
+                "application/json",
+                "application/javascript",
+                "text/css"
+            ]);
     });
 
     builder.Services.AddResponseCaching();
@@ -544,14 +552,11 @@ try
     {
         options.AddBasePolicy(b => b.Expire(TimeSpan.FromSeconds(10)));
         options.AddPolicy("NewsFeed",
-            b => b.Expire(TimeSpan.FromMinutes(2))
-                  .Tag("news"));
+            b => b.Expire(TimeSpan.FromMinutes(2)).Tag("news"));
         options.AddPolicy("CategoryList",
-            b => b.Expire(TimeSpan.FromMinutes(30))
-                  .Tag("categories"));
+            b => b.Expire(TimeSpan.FromMinutes(30)).Tag("categories"));
         options.AddPolicy("BreakingNews",
-            b => b.Expire(TimeSpan.FromMinutes(1))
-                  .Tag("breaking"));
+            b => b.Expire(TimeSpan.FromMinutes(1)).Tag("breaking"));
     });
 
     // ──────────────────────────────────────────────────────────
@@ -565,11 +570,13 @@ try
     // ──────────────────────────────────────────────────────────
     builder.Services.AddHealthChecks()
         .AddSqlServer(
-            builder.Configuration.GetConnectionString("DefaultConnection")!,
+            builder.Configuration
+                .GetConnectionString("DefaultConnection")!,
             name: "database",
             tags: ["db", "sql"])
         .AddRedis(
-            builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379",
+            builder.Configuration.GetConnectionString("Redis")
+                ?? "localhost:6379",
             name: "redis",
             tags: ["cache", "redis"]);
 
@@ -587,7 +594,9 @@ try
         app.UseSwagger();
         app.UseSwaggerUI(c =>
         {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "NewsPortalPro API v1");
+            c.SwaggerEndpoint(
+                "/swagger/v1/swagger.json",
+                "NewsPortalPro API v1");
             c.RoutePrefix = "api-docs";
             c.DisplayRequestDuration();
             c.EnableFilter();
@@ -603,79 +612,43 @@ try
     // ──────────────────────────────────────────────────────────
     // SECURITY HEADERS
     // ──────────────────────────────────────────────────────────
-    // ── SECURITY HEADERS ──────────────────────────────────────
     app.Use(async (context, next) =>
     {
         var headers = context.Response.Headers;
 
-        // Prevent MIME type sniffing
         headers["X-Content-Type-Options"] = "nosniff";
-
-        // Clickjacking protection
         headers["X-Frame-Options"] = "SAMEORIGIN";
-
-        // Legacy XSS filter (IE/old browsers)
         headers["X-XSS-Protection"] = "1; mode=block";
-
-        // Control referrer information
-        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-
-        // Restrict browser features
+        headers["Referrer-Policy"] =
+            "strict-origin-when-cross-origin";
         headers["Permissions-Policy"] =
             "camera=(), microphone=(), geolocation=(), " +
             "payment=(), usb=(), magnetometer=(), gyroscope=()";
 
-        // Content Security Policy
-        // 'unsafe-inline' is required for Bootstrap/jQuery/Toastr inline scripts
-        // Tighten this further once you move all inline scripts to external files
         headers["Content-Security-Policy"] =
             "default-src 'self'; " +
-
-            // Scripts — self + CDN sources used by the project
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
                 "https://cdnjs.cloudflare.com " +
                 "https://cdn.jsdelivr.net; " +
-
-            // Styles — self + Google Fonts + CDN
             "style-src 'self' 'unsafe-inline' " +
                 "https://cdnjs.cloudflare.com " +
                 "https://cdn.jsdelivr.net " +
                 "https://fonts.googleapis.com; " +
-
-            // Fonts
             "font-src 'self' " +
                 "https://fonts.gstatic.com " +
                 "https://cdnjs.cloudflare.com " +
                 "https://cdn.jsdelivr.net; " +
-
-            // Images — self + data URIs + blob + HTTPS
             "img-src 'self' data: blob: https:; " +
-
-            // WebSocket for SignalR
             "connect-src 'self' wss: ws:; " +
-
-            // Prevent embedding in iframes except same origin
             "frame-ancestors 'self'; " +
-
-            // Restrict form targets
             "form-action 'self'; " +
-
-            // Prevent base tag hijacking
             "base-uri 'self'; " +
-
-            // Block mixed content
             "upgrade-insecure-requests;";
 
-        // HSTS — only set on HTTPS connections
-        // WARNING: preload requires registration at hstspreload.org
-        // Start without preload, add after confirming HTTPS works correctly
         if (context.Request.IsHttps)
-        {
             headers["Strict-Transport-Security"] =
                 "max-age=31536000; includeSubDomains";
-        }
 
-        // Remove server identification headers
         context.Response.Headers.Remove("Server");
         context.Response.Headers.Remove("X-Powered-By");
         context.Response.Headers.Remove("X-AspNet-Version");
@@ -689,32 +662,26 @@ try
     // ──────────────────────────────────────────────────────────
     app.UseHttpsRedirection();
     app.UseResponseCompression();
+
     app.UseStaticFiles(new StaticFileOptions
     {
         OnPrepareResponse = ctx =>
         {
-            // Cache static files for 1 year
             ctx.Context.Response.Headers["Cache-Control"] =
                 "public,max-age=31536000";
         }
     });
+
     app.UseImageSharp();
     app.UseResponseCaching();
     app.UseOutputCache();
 
-    // Rate limiting — before routing
     app.UseIpRateLimiting();
-
     app.UseRouting();
-
-    // CORS — after routing, before auth
     app.UseCors("NewsPortalPolicy");
-
-    // Authentication & Authorization — always in this order
     app.UseAuthentication();
     app.UseAuthorization();
 
-    // Custom middleware — after auth so User is populated
     app.UseMiddleware<MaintenanceModeMiddleware>();
     app.UseMiddleware<RateLimitingMiddleware>();
     app.UseMiddleware<AnalyticsMiddleware>();
@@ -735,99 +702,88 @@ try
     // ──────────────────────────────────────────────────────────
     // HEALTH CHECK ENDPOINT
     // ──────────────────────────────────────────────────────────
-    app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-    {
-        ResponseWriter = async (context, report) =>
+    app.MapHealthChecks("/health",
+        new Microsoft.AspNetCore.Diagnostics.HealthChecks
+            .HealthCheckOptions
         {
-            context.Response.ContentType = "application/json";
-            var result = System.Text.Json.JsonSerializer.Serialize(new
+            ResponseWriter = async (context, report) =>
             {
-                status = report.Status.ToString(),
-                checks = report.Entries.Select(e => new
+                context.Response.ContentType = "application/json";
+                var result = System.Text.Json.JsonSerializer.Serialize(new
                 {
-                    name = e.Key,
-                    status = e.Value.Status.ToString(),
-                    duration = e.Value.Duration.TotalMilliseconds
-                }),
-                totalDuration = report.TotalDuration.TotalMilliseconds
-            });
-            await context.Response.WriteAsync(result);
-        }
-    });
+                    status = report.Status.ToString(),
+                    checks = report.Entries.Select(e => new
+                    {
+                        name = e.Key,
+                        status = e.Value.Status.ToString(),
+                        duration = e.Value.Duration.TotalMilliseconds
+                    }),
+                    totalDuration =
+                        report.TotalDuration.TotalMilliseconds
+                });
+                await context.Response.WriteAsync(result);
+            }
+        });
 
     // ──────────────────────────────────────────────────────────
     // ROUTE CONFIGURATION
     // ──────────────────────────────────────────────────────────
-
-    // Areas (Admin panel) — must be before default route
     app.MapControllerRoute(
         name: "areas",
         pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
-    // SEO-friendly news URL
     app.MapControllerRoute(
         name: "news-detail",
         pattern: "news/{slug}",
         defaults: new { controller = "News", action = "Details" });
 
-    // Category with optional page
     app.MapControllerRoute(
         name: "category",
         pattern: "category/{slug}/{page?}",
         defaults: new { controller = "Category", action = "Index" });
 
-    // Tag archive
     app.MapControllerRoute(
         name: "tag",
         pattern: "tag/{slug}/{page?}",
         defaults: new { controller = "News", action = "ByTag" });
 
-    // Default MVC route
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
 
-    // Razor Pages
     app.MapRazorPages();
-
-    // SignalR Hub
     app.MapHub<NewsHub>("/hubs/news");
 
     // ──────────────────────────────────────────────────────────
     // HANGFIRE RECURRING JOBS
+    // ── No scope needed — Hangfire resolves services itself ───
     // ──────────────────────────────────────────────────────────
-    using (var scope = app.Services.CreateScope())
-    {
-        // Publish news that has reached its scheduled time — every 5 minutes
-        RecurringJob.AddOrUpdate<INewsService>(
-            recurringJobId: "publish-scheduled-news",
-            methodCall: svc => svc.PublishScheduledAsync(),
-            cronExpression: "*/5 * * * *",
-            options: new RecurringJobOptions
-            {
-                TimeZone = TimeZoneInfo.Utc
-            });
+    RecurringJob.AddOrUpdate<INewsService>(
+        recurringJobId: "publish-scheduled-news",
+        methodCall: svc => svc.PublishScheduledAsync(),
+        cronExpression: "*/5 * * * *",
+        options: new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.Utc
+        });
 
-        // Aggregate analytics data — hourly
-        RecurringJob.AddOrUpdate<IAnalyticsService>(
-            recurringJobId: "aggregate-analytics",
-            methodCall: svc => svc.AggregateAsync(),
-            cronExpression: Cron.Hourly,
-            options: new RecurringJobOptions
-            {
-                TimeZone = TimeZoneInfo.Utc
-            });
+    RecurringJob.AddOrUpdate<IAnalyticsService>(
+        recurringJobId: "aggregate-analytics",
+        methodCall: svc => svc.AggregateAsync(),
+        cronExpression: Cron.Hourly,
+        options: new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.Utc
+        });
 
-        // Cleanup old view records — daily at 2am UTC
-        RecurringJob.AddOrUpdate<INewsService>(
-            recurringJobId: "cleanup-old-views",
-            methodCall: svc => svc.CleanupOldViewsAsync(),
-            cronExpression: "0 2 * * *",
-            options: new RecurringJobOptions
-            {
-                TimeZone = TimeZoneInfo.Utc
-            });
-    }
+    RecurringJob.AddOrUpdate<INewsService>(
+        recurringJobId: "cleanup-old-views",
+        methodCall: svc => svc.CleanupOldViewsAsync(),
+        cronExpression: "0 2 * * *",
+        options: new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.Utc
+        });
 
     // ──────────────────────────────────────────────────────────
     // DATABASE MIGRATION + SEED
@@ -835,34 +791,32 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider
-            .GetRequiredService<ApplicationDbContext>();
+                              .GetRequiredService<ApplicationDbContext>();
         var userManager = scope.ServiceProvider
-            .GetRequiredService<UserManager<ApplicationUser>>();
+                              .GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = scope.ServiceProvider
-            .GetRequiredService<RoleManager<ApplicationRole>>();
+                              .GetRequiredService<RoleManager<ApplicationRole>>();
         var logger = scope.ServiceProvider
-            .GetRequiredService<ILogger<Program>>();
+                              .GetRequiredService<ILogger<Program>>();
 
         try
         {
-            // Apply pending migrations automatically
-            var pendingMigrations = await db.Database.GetPendingMigrationsAsync();
-            if (pendingMigrations.Any())
+            var pending = await db.Database.GetPendingMigrationsAsync();
+            if (pending.Any())
             {
                 logger.LogInformation(
                     "Applying {Count} pending migrations...",
-                    pendingMigrations.Count());
+                    pending.Count());
                 await db.Database.MigrateAsync();
                 logger.LogInformation("Migrations applied successfully");
             }
 
-            // Seed admin user
             await SeedAdminUserAsync(userManager, roleManager, logger);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error during database migration or seeding");
-            // Don't rethrow — allow app to start even if seeding fails
+            logger.LogError(ex,
+                "Error during database migration or seeding");
         }
     }
 
@@ -880,7 +834,7 @@ finally
 }
 
 // ════════════════════════════════════════════════════════════
-// SEED ADMIN USER — local function
+// SEED ADMIN USER
 // ════════════════════════════════════════════════════════════
 static async Task SeedAdminUserAsync(
     UserManager<ApplicationUser> userManager,
@@ -890,35 +844,39 @@ static async Task SeedAdminUserAsync(
     const string adminEmail = "admin@newsportalpro.com";
     const string adminPassword = "Admin@12345";
 
-    // Ensure all roles exist
     string[] roles = ["Admin", "Editor", "Reporter", "User"];
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
         {
-            var result = await roleManager.CreateAsync(new ApplicationRole
-            {
-                Name = role,
-                Description = role switch
+            var result = await roleManager.CreateAsync(
+                new ApplicationRole
                 {
-                    "Admin" => "Full system access",
-                    "Editor" => "Manage and publish content",
-                    "Reporter" => "Create and submit content",
-                    "User" => "Regular registered user",
-                    _ => string.Empty
-                }
-            });
+                    Name = role,
+                    Description = role switch
+                    {
+                        "Admin" => "Full system access",
+                        "Editor" => "Manage and publish content",
+                        "Reporter" => "Create and submit content",
+                        "User" => "Regular registered user",
+                        _ => string.Empty
+                    }
+                });
 
             if (result.Succeeded)
                 logger.LogInformation("Role created: {Role}", role);
             else
-                logger.LogError("Failed to create role {Role}: {Errors}",
-                    role, string.Join(", ", result.Errors.Select(e => e.Description)));
+                logger.LogError(
+                    "Failed to create role {Role}: {Errors}",
+                    role,
+                    string.Join(", ",
+                        result.Errors.Select(e => e.Description)));
         }
     }
 
-    // Create admin user if it doesn't exist
-    var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
+    var existingAdmin =
+        await userManager.FindByEmailAsync(adminEmail);
+
     if (existingAdmin == null)
     {
         var admin = new ApplicationUser
@@ -932,28 +890,32 @@ static async Task SeedAdminUserAsync(
             CreatedAt = DateTime.UtcNow
         };
 
-        var result = await userManager.CreateAsync(admin, adminPassword);
+        var result =
+            await userManager.CreateAsync(admin, adminPassword);
+
         if (result.Succeeded)
         {
             await userManager.AddToRoleAsync(admin, "Admin");
             logger.LogInformation(
-                "Admin user seeded: {Email} / Password: {Password}",
+                "Admin user seeded: {Email} / {Password}",
                 adminEmail, adminPassword);
         }
         else
         {
             logger.LogError(
-                "Failed to seed admin user: {Errors}",
-                string.Join(", ", result.Errors.Select(e => e.Description)));
+                "Failed to seed admin: {Errors}",
+                string.Join(", ",
+                    result.Errors.Select(e => e.Description)));
         }
     }
     else
     {
-        // Ensure existing admin has the Admin role
         if (!await userManager.IsInRoleAsync(existingAdmin, "Admin"))
         {
             await userManager.AddToRoleAsync(existingAdmin, "Admin");
-            logger.LogInformation("Admin role assigned to existing user: {Email}", adminEmail);
+            logger.LogInformation(
+                "Admin role assigned to existing user: {Email}",
+                adminEmail);
         }
     }
 }

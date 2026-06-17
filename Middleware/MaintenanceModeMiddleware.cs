@@ -6,37 +6,48 @@ namespace NewsPortalPro.Middleware
     {
         private readonly RequestDelegate _next;
 
-        public MaintenanceModeMiddleware(RequestDelegate next) =>
+        public MaintenanceModeMiddleware(RequestDelegate next)
+        {
             _next = next;
+        }
 
         public async Task InvokeAsync(
             HttpContext context,
-            ISettingsService settings)
+            IServiceScopeFactory scopeFactory)
         {
-            var maintenance = await settings.GetAsync("MaintenanceMode");
-
-            if (maintenance == "true")
+            // Admin bypass — always let admin through
+            if (context.Request.Path.StartsWithSegments("/Admin") ||
+                context.Request.Path.StartsWithSegments("/Account") ||
+                context.Request.Path.StartsWithSegments("/health"))
             {
-                var path = context.Request.Path.Value ?? "";
-                var isAdmin = context.User?.IsInRole("Admin") == true;
+                await _next(context);
+                return;
+            }
 
-                if (!isAdmin &&
-                    !path.StartsWith("/Account") &&
-                    !path.StartsWith("/api/auth") &&
-                    !path.StartsWith("/health"))
+            try
+            {
+                using var scope = scopeFactory.CreateScope();
+                var settings = scope.ServiceProvider
+                    .GetRequiredService<ISettingsService>();
+
+                var maintenance = await settings.GetAsync("MaintenanceMode");
+
+                if (maintenance == "true" &&
+                    !context.User.IsInRole("Admin"))
                 {
                     context.Response.StatusCode = 503;
                     context.Response.ContentType = "text/html; charset=utf-8";
-                    await context.Response.WriteAsync(@"
-                        <html>
-                        <head><meta charset='utf-8'></head>
-                        <body style='text-align:center;font-family:sans-serif;padding:80px'>
-                            <h1>সাইটটি রক্ষণাবেক্ষণে রয়েছে</h1>
-                            <p>আমরা শীঘ্রই ফিরে আসব।</p>
-                        </body>
-                        </html>");
+                    await context.Response.WriteAsync(
+                        "<html><body style='text-align:center;margin-top:100px'>" +
+                        "<h1>রক্ষণাবেক্ষণ চলছে</h1>" +
+                        "<p>আমরা শীঘ্রই ফিরে আসব।</p>" +
+                        "</body></html>");
                     return;
                 }
+            }
+            catch
+            {
+                // If settings can't be read, don't block the request
             }
 
             await _next(context);

@@ -1,56 +1,79 @@
 ﻿using NewsPortalPro.Interfaces;
+using System.Security.Claims;
 
 namespace NewsPortalPro.Middleware
 {
     public class AnalyticsMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ILogger<AnalyticsMiddleware> _logger;
 
-        public AnalyticsMiddleware(
-            RequestDelegate next,
-            ILogger<AnalyticsMiddleware> logger)
+        public AnalyticsMiddleware(RequestDelegate next)
         {
             _next = next;
-            _logger = logger;
         }
 
         public async Task InvokeAsync(
             HttpContext context,
-            IAnalyticsService analytics)
+            IServiceScopeFactory scopeFactory)
         {
             await _next(context);
 
-            var path = context.Request.Path.Value ?? "";
+            // Skip non-200 responses
+            if (context.Response.StatusCode != 200)
+                return;
 
-            if (context.Response.StatusCode == 200 &&
-                !path.StartsWith("/api") &&
-                !path.StartsWith("/Admin") &&
-                !path.StartsWith("/hangfire") &&
-                !path.StartsWith("/hubs") &&
-                !path.StartsWith("/health") &&
-                !path.Contains('.'))
+            var path = context.Request.Path.ToString();
+
+            // Skip non-page paths
+            var skipPrefixes = new[]
             {
-                var userId = context.User?
-                    .FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?
-                    .Value;
-                var ip = context.Connection.RemoteIpAddress?.ToString() ?? "";
-                var ua = context.Request.Headers.UserAgent.ToString();
-                var referrer = context.Request.Headers.Referer.ToString();
+                "/api/", "/Admin/", "/hangfire",
+                "/health", "/swagger", "/hubs/",
+                "/uploads/", "/css/", "/js/",
+                "/lib/", "/images/", "/favicon"
+            };
 
-                _ = Task.Run(async () =>
+            if (skipPrefixes.Any(prefix =>
+                    path.StartsWith(prefix,
+                        StringComparison.OrdinalIgnoreCase)))
+                return;
+
+            // ── Capture ALL values from HttpContext BEFORE Task.Run ──
+            // HttpContext is disposed after the request completes.
+            // Accessing it inside Task.Run causes IFeatureCollection
+            // disposed exception.
+            var capturedPath = path;
+            var capturedUserId = context.User
+                                        .FindFirstValue(
+                                            ClaimTypes.NameIdentifier);
+            var capturedIp = context.Connection.RemoteIpAddress
+                                        ?.ToString() ?? "";
+            var capturedUserAgent = context.Request.Headers.UserAgent
+                                        .ToString();
+            var capturedReferrer = context.Request.Headers.Referer
+                                        .ToString();
+
+            // Fire and forget — analytics must never block the response
+            _ = Task.Run(async () =>
+            {
+                try
                 {
-                    try
-                    {
-                        await analytics.RecordVisitAsync(
-                            path, userId, ip, ua, referrer);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogDebug(ex, "Analytics recording failed");
-                    }
-                });
-            }
+                    using var scope = scopeFactory.CreateScope();
+                    var analytics = scope.ServiceProvider
+                        .GetRequiredService<IAnalyticsService>();
+
+                    await analytics.RecordVisitAsync(
+                        page: capturedPath,
+                        userId: capturedUserId,
+                        ip: capturedIp,
+                        userAgent: capturedUserAgent,
+                        referrer: capturedReferrer);
+                }
+                catch
+                {
+                    // Non-critical — swallow all exceptions
+                }
+            });
         }
     }
 }

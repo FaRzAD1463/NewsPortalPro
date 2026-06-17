@@ -1,56 +1,69 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-
-namespace NewsPortalPro.Middleware
+﻿namespace NewsPortalPro.Middleware
 {
     public class RateLimitingMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IMemoryCache _cache;
-        private readonly ILogger<RateLimitingMiddleware> _logger;
 
-        private const int MaxRequests = 100;
-        private const int WindowSeconds = 60;
+        // Simple in-memory rate limiter — no scoped services needed
+        private static readonly Dictionary<string, (int Count, DateTime Reset)>
+            _requests = new();
+        private static readonly object _lock = new();
 
-        public RateLimitingMiddleware(RequestDelegate next, IMemoryCache cache,
-            ILogger<RateLimitingMiddleware> logger)
+        public RateLimitingMiddleware(RequestDelegate next)
         {
             _next = next;
-            _cache = cache;
-            _logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
-            // Only rate limit API endpoints
-            if (!context.Request.Path.StartsWithSegments("/api"))
+            // Skip admin and API (handled by AspNetCoreRateLimit)
+            if (context.Request.Path.StartsWithSegments("/Admin") ||
+                context.Request.Path.StartsWithSegments("/api"))
             {
                 await _next(context);
                 return;
             }
 
-            var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            var key = $"ratelimit:{ip}:{DateTime.UtcNow:yyyyMMddHHmm}";
+            var ip = context.Connection.RemoteIpAddress?.ToString()
+                  ?? "unknown";
 
-            var count = _cache.GetOrCreate(key, entry =>
+            lock (_lock)
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(WindowSeconds);
-                return 0;
-            });
+                var now = DateTime.UtcNow;
 
-            count++;
-            _cache.Set(key, count, TimeSpan.FromSeconds(WindowSeconds));
+                if (_requests.TryGetValue(ip, out var entry))
+                {
+                    if (now > entry.Reset)
+                    {
+                        // Reset window
+                        _requests[ip] = (1, now.AddMinutes(1));
+                    }
+                    else if (entry.Count >= 300)
+                    {
+                        // Too many requests
+                        context.Response.StatusCode = 429;
+                        return;
+                    }
+                    else
+                    {
+                        _requests[ip] = (entry.Count + 1, entry.Reset);
+                    }
+                }
+                else
+                {
+                    _requests[ip] = (1, now.AddMinutes(1));
+                }
 
-            context.Response.Headers["X-RateLimit-Limit"] = MaxRequests.ToString();
-            context.Response.Headers["X-RateLimit-Remaining"] = Math.Max(0, MaxRequests - count).ToString();
-
-            if (count > MaxRequests)
-            {
-                _logger.LogWarning("Rate limit exceeded for IP: {IP}", ip);
-                context.Response.StatusCode = 429;
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(
-                    "{\"error\":\"Too many requests. Please try again later.\"}");
-                return;
+                // Cleanup old entries periodically
+                if (_requests.Count > 10000)
+                {
+                    var expired = _requests
+                        .Where(x => now > x.Value.Reset)
+                        .Select(x => x.Key)
+                        .ToList();
+                    foreach (var key in expired)
+                        _requests.Remove(key);
+                }
             }
 
             await _next(context);
