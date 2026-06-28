@@ -196,10 +196,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ── Delete — ValidateAntiForgeryToken is the critical fix ──
-        // Without it the form post is rejected silently and nothing happens
         [HttpPost]
-        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Editor,Reporter")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -224,16 +221,19 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             }
 
             var deleted = await _news.DeleteAsync(id);
-            if (!deleted)
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+                Request.Headers.Accept.ToString().Contains("application/json"))
             {
-                TempData["Error"] = "সংবাদ মুছে ফেলা যায়নি";
-                return RedirectToAction(nameof(Index));
+                return Ok(new { success = deleted });
             }
 
-            TempData["Success"] = "সংবাদ মুছে ফেলা হয়েছে";
+            TempData[deleted ? "Success" : "Error"] =
+                deleted ? "সংবাদ মুছে ফেলা হয়েছে"
+                        : "সংবাদ মুছে ফেলা যায়নি";
+
             return RedirectToAction(nameof(Index));
         }
-
         // ── Publish ────────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]

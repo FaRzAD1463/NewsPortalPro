@@ -302,22 +302,19 @@
     পৃষ্ঠা @Model.Page / @Model.TotalPages
 </div>
 
-<!-- Hidden delete form with antiforgery token -->
-<form id="delete-form" method="post" style="display:none">
-    @Html.AntiForgeryToken()
-    <input type="hidden" id="delete-news-id" name="id" />
-</form>
+
 
 @section Scripts {
     <script>
-        // ── Publish news ───────────────────────────────────────────
-        async function publishNews(id) {
-            const token = document.querySelector(
-                'input[name="__RequestVerificationToken"]')?.value;
+        function getAdminToken() {
+            return document.querySelector(
+                'input[name="__RequestVerificationToken"]')
+                ?.value ?? '';
+        }
 
-            // Send as FormData so [ValidateAntiForgeryToken] accepts it
+        async function publishNews(id) {
             const formData = new FormData();
-            formData.append('__RequestVerificationToken', token);
+            formData.append('__RequestVerificationToken', getAdminToken());
 
             try {
                 const res = await fetch(`/Admin/News/Publish/${id}`, {
@@ -335,31 +332,6 @@
             } catch (e) {
                 toastr.error('নেটওয়ার্ক ত্রুটি');
             }
-        }
-
-        // ── Delete news ────────────────────────────────────────────
-        async function deleteNews(id, title) {
-            const result = await Swal.fire({
-                title: 'সংবাদ মুছে ফেলবেন?',
-                html:  `<strong>"${title}"</strong><br>
-                        <span class="text-muted small">
-                            এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।
-                        </span>`,
-                icon:              'warning',
-                showCancelButton:   true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor:  '#6c757d',
-                confirmButtonText:  '<i class="bi bi-trash me-1"></i>মুছুন',
-                cancelButtonText:   'বাতিল'
-            });
-
-            if (!result.isConfirmed) return;
-
-            // Submit hidden form — carries antiforgery token automatically
-            document.getElementById('delete-news-id').value = id;
-            const form   = document.getElementById('delete-form');
-            form.action  = `/Admin/News/Delete/${id}`;
-            form.submit();
         }
     </script>
 }

@@ -8,7 +8,6 @@
             $('#admin-sidebar').hasClass('collapsed') ? '1' : '0');
     });
 
-    // Restore sidebar state
     if (localStorage.getItem('sidebarCollapsed') === '1') {
         $('#admin-sidebar').addClass('collapsed');
         $('#admin-main').addClass('expanded');
@@ -20,7 +19,7 @@
         headers: { 'RequestVerificationToken': token }
     });
 
-    // ── DataTables (if available) ────────────────────────
+    // ── DataTables ───────────────────────────────────────
     if ($.fn.DataTable && $('.data-table').length) {
         $('.data-table').DataTable({
             language: {
@@ -41,7 +40,9 @@
             method: 'POST',
             headers: { 'RequestVerificationToken': token }
         });
-        toastr.success(val ? 'ব্রেকিং চালু হয়েছে' : 'ব্রেকিং বন্ধ হয়েছে');
+        toastr.success(val
+            ? 'ব্রেকিং চালু হয়েছে'
+            : 'ব্রেকিং বন্ধ হয়েছে');
     });
 
     $(document).on('change', '.toggle-featured', async function () {
@@ -51,7 +52,9 @@
             method: 'POST',
             headers: { 'RequestVerificationToken': token }
         });
-        toastr.success(val ? 'ফিচার্ড চালু হয়েছে' : 'ফিচার্ড বন্ধ হয়েছে');
+        toastr.success(val
+            ? 'ফিচার্ড চালু হয়েছে'
+            : 'ফিচার্ড বন্ধ হয়েছে');
     });
 
     // ── Comment Actions ──────────────────────────────────
@@ -62,7 +65,8 @@
             headers: { 'RequestVerificationToken': token }
         });
         if (res.ok) {
-            $(this).closest('.comment-row').fadeOut(400, function () { $(this).remove(); });
+            $(this).closest('.comment-row')
+                .fadeOut(400, function () { $(this).remove(); });
             toastr.success('মন্তব্য অনুমোদিত হয়েছে');
         }
     });
@@ -74,25 +78,25 @@
             headers: { 'RequestVerificationToken': token }
         });
         if (res.ok) {
-            $(this).closest('.comment-row').fadeOut(400, function () { $(this).remove(); });
+            $(this).closest('.comment-row')
+                .fadeOut(400, function () { $(this).remove(); });
             toastr.warning('মন্তব্য প্রত্যাখ্যান করা হয়েছে');
         }
     });
 
     // ── Image Upload Preview ─────────────────────────────
-    $(document).on('change', 'input[type="file"][accept="image/*"]', function () {
-        const file = this.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        const previewId = $(this).data('preview');
-        reader.onload = e => {
-            if (previewId) {
-                $(`#${previewId}`).attr('src', e.target.result).show();
-            }
-        };
-        reader.readAsDataURL(file);
-    });
+    $(document).on('change',
+        'input[type="file"][accept="image/*"]', function () {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            const previewId = $(this).data('preview');
+            reader.onload = e => {
+                if (previewId)
+                    $(`#${previewId}`).attr('src', e.target.result).show();
+            };
+            reader.readAsDataURL(file);
+        });
 
     // ── Toastr Config ────────────────────────────────────
     toastr.options = {
@@ -117,3 +121,23 @@
 
     $('#Slug').on('input', function () { slugManuallyEdited = true; });
 });
+
+// ── Delete confirmation with SweetAlert2 ─────────────────
+// Called from form onsubmit — returns false to prevent
+// immediate submit, SweetAlert handles actual submission
+function confirmDelete(form) {
+    Swal.fire({
+        title: 'সংবাদ মুছে ফেলবেন?',
+        text: 'এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'মুছুন',
+        cancelButtonText: 'বাতিল'
+    }).then(result => {
+        if (result.isConfirmed) form.submit();
+    });
+
+    return false;
+}
