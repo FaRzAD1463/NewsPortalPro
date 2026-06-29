@@ -94,13 +94,11 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             {
                 var currentUserId = User.FindFirstValue(
                     ClaimTypes.NameIdentifier);
-
                 if (news.AuthorId != currentUserId)
                 {
                     _logger.LogWarning(
                         "IDOR attempt: User {UserId} tried to edit " +
-                        "news {NewsId} owned by {OwnerId}",
-                        currentUserId, id, news.AuthorId);
+                        "news {NewsId}", currentUserId, id);
                     return Forbid();
                 }
             }
@@ -109,10 +107,22 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             if (!string.IsNullOrEmpty(news.CategorySlug))
             {
                 categoryId = await _db.Categories
-                    .Where(c => c.Slug == news.CategorySlug
-                             && !c.IsDeleted)
+                    .Where(c => c.Slug == news.CategorySlug && !c.IsDeleted)
                     .Select(c => c.Id)
                     .FirstOrDefaultAsync();
+            }
+
+            // ── Determine current status from PublishedAt ──────────────
+            // NewsDetailDto has no Status field so we derive it:
+            // If PublishedAt has a value in the past → Published
+            // If PublishedAt has a value in the future → Scheduled
+            // Otherwise → Draft
+            var currentStatus = Models.NewsStatus.Draft;
+            if (news.PublishedAt.HasValue)
+            {
+                currentStatus = news.PublishedAt.Value <= DateTime.UtcNow
+                    ? Models.NewsStatus.Published
+                    : Models.NewsStatus.Scheduled;
             }
 
             await PopulateCategoryList();
@@ -125,7 +135,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 Content = news.Content,
                 Summary = news.Summary,
                 CategoryId = categoryId,
-                Status = Models.NewsStatus.Draft,
+                Status = currentStatus,  // ← fixed: preserve status
                 IsFeatured = news.IsFeatured,
                 IsBreaking = news.IsBreaking,
                 AllowComments = news.AllowComments,
