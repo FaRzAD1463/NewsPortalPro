@@ -67,13 +67,10 @@
                     </a>
                 </div>
 
-                <!-- Right: Social + E-Paper + Auth -->
+                <!-- Right: E-Paper + Theme + Auth -->
                 <div class="col-3 col-md-2 text-end">
-                    <!-- Social Icons -->
-                    
-                    <!-- E-Paper + Theme + Auth -->
-                    <div class="d-none d-md-flex justify-content-end gap-2 align-items-center flex-wrap">
-                        <a href="#" class="btn btn-sm btn-outline-secondary epaper-btn">
+                    <div class="d-flex justify-content-end gap-2 align-items-center flex-wrap">
+                        <a href="#" class="btn btn-sm btn-outline-secondary epaper-btn d-none d-md-inline-flex">
                             E-Paper
                         </a>
                         <button id="theme-toggle" class="btn btn-sm btn-link text-muted p-0">
@@ -84,22 +81,29 @@
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-link text-muted dropdown-toggle p-0"
                                         data-bs-toggle="dropdown">
-                                    <i class="bi bi-person-circle me-1"></i>@User.Identity.Name
+                                    <i class="bi bi-person-circle"></i>
+                                    <span class="d-none d-md-inline ms-1">@User.Identity.Name</span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item small" href="/Account/Profile">প্রোফাইল</a>
+                                        <a class="dropdown-item small" href="/Account/Profile">
+                                            প্রোফাইল
+                                        </a>
                                     </li>
                                     @if (User.IsInRole("Admin") || User.IsInRole("Editor"))
                                     {
                                         <li>
-                                            <a class="dropdown-item small" href="/Admin/Dashboard">অ্যাডমিন</a>
+                                            <a class="dropdown-item small" href="/Admin/Dashboard">
+                                                অ্যাডমিন
+                                            </a>
                                         </li>
                                     }
                                     <li>
-                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                        <form asp-controller="Account"
+                                              asp-action="Logout" method="post">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="dropdown-item small text-danger">
+                                            <button type="submit"
+                                                    class="dropdown-item small text-danger">
                                                 লগআউট
                                             </button>
                                         </form>
@@ -109,8 +113,12 @@
                         }
                         else
                         {
-                            <a href="/Account/Login" class="btn btn-sm btn-primary">লগইন</a>
-                            <a href="/Account/Register" class="btn btn-sm btn-outline-primary">নিবন্ধন</a>
+                            <a href="/Account/Login"
+                               class="btn btn-sm btn-primary">লগইন</a>
+                            <a href="/Account/Register"
+                               class="btn btn-sm btn-outline-primary d-none d-sm-inline-flex">
+                                নিবন্ধন
+                            </a>
                         }
                     </div>
                 </div>

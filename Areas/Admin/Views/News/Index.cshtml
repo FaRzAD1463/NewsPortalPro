@@ -306,22 +306,36 @@
 
 @section Scripts {
     <script>
-        function getAdminToken() {
-            return document.querySelector(
-                'input[name="__RequestVerificationToken"]')
-                ?.value ?? '';
+        // ── Confirm delete with SweetAlert2 ───────────────────────
+        // Defined here (not admin.js) to guarantee it loads after
+        // SweetAlert2 script in _AdminLayout
+        function confirmDelete(form) {
+            Swal.fire({
+                title:              'সংবাদ মুছে ফেলবেন?',
+                text:               'এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।',
+                icon:               'warning',
+                showCancelButton:   true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor:  '#6c757d',
+                confirmButtonText:  'মুছুন',
+                cancelButtonText:   'বাতিল'
+            }).then(result => {
+                if (result.isConfirmed) form.submit();
+            });
+            return false;
         }
 
+        // ── Publish news ───────────────────────────────────────────
         async function publishNews(id) {
-            const formData = new FormData();
-            formData.append('__RequestVerificationToken', getAdminToken());
+            const token = document.querySelector(
+                'input[name="__RequestVerificationToken"]')?.value ?? '';
+            const fd = new FormData();
+            fd.append('__RequestVerificationToken', token);
 
             try {
-                const res = await fetch(`/Admin/News/Publish/${id}`, {
-                    method: 'POST',
-                    body:   formData
+                const res  = await fetch(`/Admin/News/Publish/${id}`, {
+                    method: 'POST', body: fd
                 });
-
                 const data = await res.json();
                 if (data.success) {
                     toastr.success('সংবাদ প্রকাশিত হয়েছে');
@@ -329,7 +343,7 @@
                 } else {
                     toastr.error('প্রকাশ করা যায়নি');
                 }
-            } catch (e) {
+            } catch {
                 toastr.error('নেটওয়ার্ক ত্রুটি');
             }
         }
