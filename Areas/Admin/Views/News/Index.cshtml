@@ -226,12 +226,9 @@
                                         }
 
                                         <!-- Delete -->
-                                        <button class="btn btn-outline-danger
-                                                               btn-sm"
-                                                onclick="deleteNews(
-                                                            @news.Id,
-                                                            '@news.Title
-                                                                .Replace(" '", "\\' ")')"
+                                        <button type="button"
+                                                class="btn btn-outline-danger btn-sm btn-delete"
+                                                data-id="@news.Id"
                                                 title="মুছুন">
                                             <i class="bi bi-trash"></i>
                                         </button>
@@ -306,10 +303,35 @@
 
 @section Scripts {
     <script>
-        // ── Confirm delete with SweetAlert2 ───────────────────────
-        // Defined here (not admin.js) to guarantee it loads after
-        // SweetAlert2 script in _AdminLayout
-        function confirmDelete(form) {
+        // ── Antiforgery token ──────────────────────────────────────
+        const _token = document.querySelector(
+            'input[name="__RequestVerificationToken"]')?.value ?? '';
+
+        // ── Publish ────────────────────────────────────────────────
+        async function publishNews(id) {
+            const fd = new FormData();
+            fd.append('__RequestVerificationToken', _token);
+            try {
+                const res  = await fetch(`/Admin/News/Publish/${id}`,
+                    { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    toastr.success('সংবাদ প্রকাশিত হয়েছে');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastr.error('প্রকাশ করা যায়নি');
+                }
+            } catch { toastr.error('নেটওয়ার্ক ত্রুটি'); }
+        }
+
+        // ── Delete — event delegation, no inline onclick ───────────
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-delete');
+            if (!btn) return;
+
+            e.preventDefault();
+            const id = btn.dataset.id;
+
             Swal.fire({
                 title:              'সংবাদ মুছে ফেলবেন?',
                 text:               'এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।',
@@ -319,33 +341,28 @@
                 cancelButtonColor:  '#6c757d',
                 confirmButtonText:  'মুছুন',
                 cancelButtonText:   'বাতিল'
-            }).then(result => {
-                if (result.isConfirmed) form.submit();
-            });
-            return false;
-        }
+            }).then(async result => {
+                if (!result.isConfirmed) return;
 
-        // ── Publish news ───────────────────────────────────────────
-        async function publishNews(id) {
-            const token = document.querySelector(
-                'input[name="__RequestVerificationToken"]')?.value ?? '';
-            const fd = new FormData();
-            fd.append('__RequestVerificationToken', token);
+                const fd = new FormData();
+                fd.append('__RequestVerificationToken', _token);
+                fd.append('id', id);
 
-            try {
-                const res  = await fetch(`/Admin/News/Publish/${id}`, {
-                    method: 'POST', body: fd
-                });
-                const data = await res.json();
-                if (data.success) {
-                    toastr.success('সংবাদ প্রকাশিত হয়েছে');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    toastr.error('প্রকাশ করা যায়নি');
+                try {
+                    const res = await fetch(`/Admin/News/Delete/${id}`,
+                        { method: 'POST', body: fd });
+
+                    if (res.ok) {
+                        toastr.success('সংবাদ মুছে ফেলা হয়েছে');
+                        // Remove row from table without page reload
+                        btn.closest('tr')?.remove();
+                    } else {
+                        toastr.error('মুছতে ব্যর্থ — কোড: ' + res.status);
+                    }
+                } catch {
+                    toastr.error('নেটওয়ার্ক ত্রুটি');
                 }
-            } catch {
-                toastr.error('নেটওয়ার্ক ত্রুটি');
-            }
-        }
+            });
+        });
     </script>
 }
