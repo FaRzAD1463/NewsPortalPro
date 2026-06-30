@@ -15,7 +15,9 @@ namespace NewsPortalPro.Services
         private readonly IDistributedCache _cache;
         private const string CacheKey = "categories:all";
 
-        public CategoryService(ApplicationDbContext db, IDistributedCache cache)
+        public CategoryService(
+            ApplicationDbContext db,
+            IDistributedCache cache)
         {
             _db = db;
             _cache = cache;
@@ -27,26 +29,30 @@ namespace NewsPortalPro.Services
             {
                 var cached = await _cache.GetStringAsync(CacheKey);
                 if (cached != null)
-                    return JsonConvert.DeserializeObject<List<CategoryDto>>(cached)!;
+                    return JsonConvert
+                        .DeserializeObject<List<CategoryDto>>(cached)!;
             }
             catch { }
 
-            // Return ALL active categories (not just root ones)
+            // Load flat list — no recursive Include to avoid
+            // circular reference issues with EF Core
             var cats = await _db.Categories
-                .Where(c => c.IsActive)
-                .Include(c => c.Children.Where(ch => ch.IsActive))
+                .Where(c => c.IsActive && !c.IsDeleted)
                 .OrderBy(c => c.DisplayOrder)
+                .AsNoTracking()
                 .ToListAsync();
 
-            var dtos = cats.Select(MapToDto).ToList();
+            var dtos = cats.Select(c => MapToDto(c, cats)).ToList();
 
             try
             {
-                await _cache.SetStringAsync(CacheKey,
+                await _cache.SetStringAsync(
+                    CacheKey,
                     JsonConvert.SerializeObject(dtos),
                     new DistributedCacheEntryOptions
                     {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+                        AbsoluteExpirationRelativeToNow =
+                            TimeSpan.FromHours(1)
                     });
             }
             catch { }
@@ -54,30 +60,32 @@ namespace NewsPortalPro.Services
             return dtos;
         }
 
-        // Separate method for menu only
         public async Task<List<CategoryDto>> GetMenuCategoriesAsync()
         {
             var all = await GetAllActiveAsync();
             return all.Where(c => c.ShowInMenu).ToList();
         }
 
-
-
         public async Task<CategoryDto?> GetBySlugAsync(string slug)
         {
             var cat = await _db.Categories
-                .Include(c => c.Children.Where(ch => ch.IsActive))
-                .FirstOrDefaultAsync(c => c.Slug == slug && c.IsActive);
-            return cat == null ? null : MapToDto(cat);
+                .Where(c => c.Slug == slug
+                         && c.IsActive
+                         && !c.IsDeleted)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            return cat == null ? null : MapToDto(cat, null);
         }
 
         public async Task<CategoryDto?> GetByIdAsync(int id)
         {
             var cat = await _db.Categories
-                .Include(c => c.Children)
-                .Include(c => c.Parent)
-                .FirstOrDefaultAsync(c => c.Id == id);
-            return cat == null ? null : MapToDto(cat);
+                .Where(c => c.Id == id && !c.IsDeleted)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            return cat == null ? null : MapToDto(cat, null);
         }
 
         public async Task<int> CreateAsync(CreateCategoryDto dto)
@@ -86,14 +94,16 @@ namespace NewsPortalPro.Services
             var slug = helper.GenerateSlug(dto.Name);
 
             if (string.IsNullOrEmpty(slug))
-                slug = $"category-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+                slug = $"category-{DateTimeOffset.UtcNow
+                    .ToUnixTimeSeconds()}";
 
             var exists = await _db.Categories
                 .IgnoreQueryFilters()
                 .AnyAsync(c => c.Slug == slug);
 
             if (exists)
-                slug += $"-{DateTimeOffset.UtcNow.ToUnixTimeSeconds() % 1000}";
+                slug += $"-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                    % 1000}";
 
             var cat = new Category
             {
@@ -150,9 +160,10 @@ namespace NewsPortalPro.Services
             return true;
         }
 
-        public async Task<List<CategoryWithCountDto>> GetWithNewsCountAsync() =>
+        public async Task<List<CategoryWithCountDto>>
+            GetWithNewsCountAsync() =>
             await _db.Categories
-                .Where(c => c.IsActive)
+                .Where(c => c.IsActive && !c.IsDeleted)
                 .Select(c => new CategoryWithCountDto
                 {
                     Id = c.Id,
@@ -163,27 +174,48 @@ namespace NewsPortalPro.Services
                     ShowInMenu = c.ShowInMenu,
                     DisplayOrder = c.DisplayOrder,
                     ParentId = c.ParentId,
-                    NewsCount = c.News.Count(n => n.Status == NewsStatus.Published)
+                    NewsCount = c.News.Count(
+                        n => n.Status == NewsStatus.Published
+                          && !n.IsDeleted)
                 })
                 .OrderBy(c => c.DisplayOrder)
                 .ToListAsync();
 
-        private static CategoryDto MapToDto(Category c) => new()
+        // ── MapToDto — flat mapping, children resolved from list ──
+        private static CategoryDto MapToDto(
+            Category c,
+            List<Category>? allCats)
         {
-            Id = c.Id,
-            Name = c.Name,
-            Slug = c.Slug,
-            Description = c.Description,
-            ImageUrl = c.ImageUrl,
-            ColorCode = c.ColorCode,
-            ParentId = c.ParentId,
-            ParentName = c.Parent?.Name,
-            DisplayOrder = c.DisplayOrder,
-            IsActive = c.IsActive,
-            ShowInMenu = c.ShowInMenu,
-            MetaTitle = c.MetaTitle,
-            MetaDescription = c.MetaDescription,
-            Children = c.Children?.Select(MapToDto).ToList() ?? []
-        };
+            var dto = new CategoryDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Slug = c.Slug,
+                Description = c.Description,
+                ImageUrl = c.ImageUrl,
+                ColorCode = c.ColorCode,
+                ParentId = c.ParentId,
+                ParentName = null, // loaded separately if needed
+                DisplayOrder = c.DisplayOrder,
+                IsActive = c.IsActive,
+                ShowInMenu = c.ShowInMenu,
+                MetaTitle = c.MetaTitle,
+                MetaDescription = c.MetaDescription,
+                Children = []
+            };
+
+            // Resolve children from the flat list if available
+            if (allCats != null)
+            {
+                dto.Children = allCats
+                    .Where(ch => ch.ParentId == c.Id
+                              && ch.IsActive
+                              && !ch.IsDeleted)
+                    .Select(ch => MapToDto(ch, null))
+                    .ToList();
+            }
+
+            return dto;
+        }
     }
 }
