@@ -1,5 +1,6 @@
 ﻿using Ganss.Xss;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
@@ -11,12 +12,17 @@ namespace NewsPortalPro.Services
     {
         private readonly ApplicationDbContext _db;
         private readonly ISettingsService _settings;
+        private readonly IDistributedCache _cache;
         private static readonly HtmlSanitizer Sanitizer = new();
 
-        public CommentService(ApplicationDbContext db, ISettingsService settings)
+        public CommentService(
+            ApplicationDbContext db,
+            ISettingsService settings,
+            IDistributedCache cache)
         {
             _db = db;
             _settings = settings;
+            _cache = cache;
         }
 
         public async Task<List<CommentDto>> GetByNewsIdAsync(int newsId) =>
@@ -59,7 +65,8 @@ namespace NewsPortalPro.Services
         public async Task<int> AddAsync(
             CreateCommentDto dto, string userId, string ip)
         {
-            var moderation = await _settings.GetAsync("CommentModeration") ?? "true";
+            var moderation = await _settings.GetAsync("CommentModeration")
+                              ?? "true";
             var status = moderation == "true"
                 ? CommentStatus.Pending
                 : CommentStatus.Approved;
@@ -78,10 +85,16 @@ namespace NewsPortalPro.Services
 
             if (status == CommentStatus.Approved)
                 await _db.Database.ExecuteSqlRawAsync(
-                    "UPDATE News SET CommentCount = CommentCount + 1 WHERE Id = {0}",
-                    dto.NewsId);
+                    "UPDATE News SET CommentCount = CommentCount + 1 " +
+                    "WHERE Id = {0}", dto.NewsId);
 
             await _db.SaveChangesAsync();
+
+            // ── Invalidate article cache so the comment shows
+            //    immediately if auto-approved ──────────────────────
+            if (status == CommentStatus.Approved)
+                await InvalidateNewsCacheAsync(dto.NewsId);
+
             return comment.Id;
         }
 
@@ -89,12 +102,20 @@ namespace NewsPortalPro.Services
         {
             var comment = await _db.Comments.FindAsync(id);
             if (comment == null) return false;
+
             comment.Status = CommentStatus.Approved;
             comment.UpdatedAt = DateTime.UtcNow;
+
             await _db.Database.ExecuteSqlRawAsync(
-                "UPDATE News SET CommentCount = CommentCount + 1 WHERE Id = {0}",
-                comment.NewsId);
+                "UPDATE News SET CommentCount = CommentCount + 1 " +
+                "WHERE Id = {0}", comment.NewsId);
+
             await _db.SaveChangesAsync();
+
+            // ── Critical fix — clear cached article so the newly
+            //    approved comment appears without waiting 5 minutes
+            await InvalidateNewsCacheAsync(comment.NewsId);
+
             return true;
         }
 
@@ -102,9 +123,13 @@ namespace NewsPortalPro.Services
         {
             var comment = await _db.Comments.FindAsync(id);
             if (comment == null) return false;
+
             comment.Status = CommentStatus.Rejected;
             comment.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+
+            await InvalidateNewsCacheAsync(comment.NewsId);
+
             return true;
         }
 
@@ -112,14 +137,39 @@ namespace NewsPortalPro.Services
         {
             var comment = await _db.Comments.FindAsync(id);
             if (comment == null) return false;
+
             comment.IsDeleted = true;
             await _db.SaveChangesAsync();
+
+            await InvalidateNewsCacheAsync(comment.NewsId);
+
             return true;
         }
 
         public async Task<int> GetPendingCountAsync() =>
             await _db.Comments
                 .CountAsync(c => c.Status == CommentStatus.Pending);
+
+        // ── Helper — clears the cached article so updated comment
+        //    data is reflected immediately on next page load ───────
+        private async Task InvalidateNewsCacheAsync(int newsId)
+        {
+            try
+            {
+                var slug = await _db.News
+                    .Where(n => n.Id == newsId)
+                    .Select(n => n.Slug)
+                    .FirstOrDefaultAsync();
+
+                if (!string.IsNullOrEmpty(slug))
+                    await _cache.RemoveAsync($"news:slug:{slug}");
+            }
+            catch
+            {
+                // Cache invalidation failure should never break
+                // the comment approval/rejection flow
+            }
+        }
 
         private static CommentDto MapToDto(Comment c) => new()
         {
