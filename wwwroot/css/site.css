@@ -209,15 +209,16 @@ img {
    BREAKING NEWS TICKER
    ══════════════════════════════════════════════════════ */
 .breaking-ticker {
-    background: var(--primary);
-    color: white;
+    background: #f0f0f0;
+    color: #1a1a1a;
     padding: 6px 0;
     font-size: 13px;
     overflow: hidden;
 }
 
 .ticker-label {
-    background: #8B0000;
+    background: #d0d0d0;
+    color: #1a1a1a;
     padding: 4px 12px;
     font-weight: 700;
     font-size: 12px;
@@ -244,7 +245,7 @@ img {
     }
 
     .ticker-content a {
-        color: white;
+        color: #1a1a1a;
         margin-right: 40px;
         text-decoration: none;
     }
@@ -1821,7 +1822,17 @@ body > *:last-child {
 
 /* ── Breaking ticker ─────────────────────────────────── */
 [data-theme="dark"] .breaking-ticker {
-    background: var(--primary);
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .ticker-label {
+    background: #444;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .ticker-content a {
+    color: #e0e0e0;
 }
 
 /* ── Tags ────────────────────────────────────────────── */
