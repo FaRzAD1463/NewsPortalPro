@@ -735,7 +735,7 @@ body > *:last-child {
         text-decoration: underline;
     }
 
-/* ── Lead story ──────────────────────────────────────── */
+/* ── Lead story ──────────────────────────────────────── *./
 .pb-lead-story {
     display: flex;
     flex-direction: column;
