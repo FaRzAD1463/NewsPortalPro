@@ -1,0 +1,35 @@
+﻿@model NewsPortalPro.DTOs.NewsListDto
+
+<div class="pb-grid-card">
+    <a href="/news/@Model.Slug" class="pb-grid-img-link">
+        <img src="@(Model.FeaturedImage ?? "/images/placeholder.jpg")"
+             alt="@Model.Title"
+             class="pb-grid-img"
+             loading="lazy"
+             onerror="this.src='/images/placeholder.jpg'" />
+    </a>
+    @if (Model.IsBreaking)
+    {
+        <span class="pb-breaking-tag-inline">ব্রেকিং</span>
+    }
+    <h6 class="pb-grid-title mt-2">
+        <a href="/news/@Model.Slug"
+           class="text-dark text-decoration-none">
+            @Model.Title
+        </a>
+    </h6>
+    @if (!string.IsNullOrEmpty(Model.Summary))
+    {
+        <p class="pb-grid-summary">@Model.Summary</p>
+    }
+    <div class="pb-meta-sm">
+        <i class="bi bi-clock me-1"></i>
+        @Model.PublishedAt?.ToString("dd MMM yyyy")
+        @if (Model.ViewCount > 0)
+        {
+            <span class="ms-2">
+                <i class="bi bi-eye me-1"></i>@Model.ViewCount
+            </span>
+        }
+    </div>
+</div>

@@ -1,439 +1,396 @@
-﻿@model HomeViewModel
+﻿@using NewsPortalPro.DTOs
+@using NewsPortalPro.Models
+@model NewsPortalPro.ViewModels.HomeViewModel
 @{
-    ViewData["Title"] = "হোম - নিউজপোর্টাল প্রো";
+    ViewData["Title"] = "হোম";
 }
 
-<!-- ══ HERO SECTION ══════════════════════════════════════ -->
-<section class="hero-section py-3">
-    <div class="container-fluid px-4">
-        <div class="row g-3">
+<div class="pb-home-wrapper">
 
-            <!-- Main Lead Story -->
-            <div class="col-lg-6">
-                @if (Model.FeaturedNews.Any())
-                {
-                    var lead = Model.FeaturedNews[0];
-                    <div class="lead-story position-relative overflow-hidden rounded">
-                        <a href="/news/@lead.Slug">
-                            <img src="@(lead.FeaturedImage ?? "/images/placeholder.jpg")"
-                                 alt="@lead.Title"
-                                 class="lead-story-img w-100" loading="lazy" />
+    <!-- ══ HERO / FEATURED ══════════════════════════════ -->
+    @if (Model.FeaturedNews.Any())
+    {
+        <section class="pb-hero-section container-fluid px-3 px-md-4 mt-3">
+            <div class="row g-2">
+
+                <!-- Main lead — spans 2 rows -->
+                <div class="col-md-6 col-lg-5">
+                    @{
+                        var hero = Model.FeaturedNews[0];
+                    }
+                    <div class="pb-hero-lead position-relative overflow-hidden">
+                        <a href="/news/@hero.Slug">
+                            <img src="@(hero.FeaturedImage ?? "/images/placeholder.jpg")"
+                                 alt="@hero.Title"
+                                 class="pb-hero-lead-img"
+                                 loading="eager"
+                                 onerror="this.src='/images/placeholder.jpg'" />
                         </a>
-                        <div class="lead-story-overlay">
-                            <span class="category-badge mb-2 d-inline-block"
-                                  style="background:@lead.CategoryColor">
-                                @lead.CategoryName
-                            </span>
-                            <h2 class="lead-title">
-                                <a href="/news/@lead.Slug" class="text-white">@lead.Title</a>
+                        <div class="pb-hero-overlay">
+                            <a href="/category/@hero.CategorySlug"
+                               class="pb-hero-cat-tag"
+                               style="background:@(hero.CategoryColor ?? "#c0392b")">
+                                @hero.CategoryName
+                            </a>
+                            <h2 class="pb-hero-title">
+                                <a href="/news/@hero.Slug" class="text-white text-decoration-none">
+                                    @hero.Title
+                                </a>
                             </h2>
-                            <p class="text-white-50 small d-none d-md-block">@lead.Summary</p>
-                            <div class="text-white-50 small">
-                                <i class="bi bi-clock me-1"></i>
-                                @lead.PublishedAt?.ToString("dd MMM yyyy")
-                            </div>
+                            <p class="pb-hero-summary">@hero.Summary</p>
                         </div>
                     </div>
-                }
-            </div>
+                </div>
 
-            <!-- Secondary stories grid -->
-            <div class="col-lg-3">
-                @foreach (var news in Model.FeaturedNews.Skip(1).Take(2))
+                <!-- Right grid — 2 columns x 2 rows -->
+                <div class="col-md-6 col-lg-7">
+                    <div class="row g-2 h-100">
+                        @foreach (var n in Model.FeaturedNews.Skip(1).Take(4))
+                        {
+                            <div class="col-6">
+                                <div class="pb-hero-sub position-relative overflow-hidden">
+                                    <a href="/news/@n.Slug">
+                                        <img src="@(n.FeaturedImage ?? "/images/placeholder.jpg")"
+                                             alt="@n.Title"
+                                             class="pb-hero-sub-img"
+                                             loading="lazy"
+                                             onerror="this.src='/images/placeholder.jpg'" />
+                                    </a>
+                                    <div class="pb-hero-sub-overlay">
+                                        @if (n.IsBreaking)
+                                        {
+                                            <span class="pb-breaking-tag">ব্রেকিং</span>
+                                        }
+                                        <h6 class="pb-hero-sub-title">
+                                            <a href="/news/@n.Slug"
+                                               class="text-white text-decoration-none">
+                                                @n.Title
+                                            </a>
+                                        </h6>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    }
+
+    <!-- ══ LATEST NEWS ROW ══════════════════════════════ -->
+    @if (Model.LatestNews.Any())
+    {
+        <section class="container-fluid px-3 px-md-4 mt-4">
+            <div class="pb-section-hdr">
+                <h2 class="pb-sec-title">সর্বশেষ সংবাদ</h2>
+                <a href="/news" class="pb-sec-more">আরও →</a>
+            </div>
+            <div class="row g-2 mt-2">
+                @foreach (var n in Model.LatestNews.Take(6))
                 {
-                    <div class="secondary-story position-relative overflow-hidden rounded mb-3">
-                        <a href="/news/@news.Slug">
-                            <img src="@(news.FeaturedImage ?? "/images/placeholder.jpg")"
-                                 alt="@news.Title"
-                                 class="secondary-story-img w-100" loading="lazy" />
-                        </a>
-                        <div class="secondary-story-overlay">
-                            <span class="category-badge small mb-1 d-inline-block"
-                                  style="background:@news.CategoryColor">
-                                @news.CategoryName
-                            </span>
-                            <h6 class="text-white mb-0">
-                                <a href="/news/@news.Slug" class="text-white">@news.Title</a>
-                            </h6>
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <!-- Right sidebar stories -->
-            <div class="col-lg-3">
-                <div class="right-stories">
-                    @foreach (var news in Model.FeaturedNews.Skip(3).Take(4))
-                    {
-                        <div class="right-story-item d-flex gap-2 mb-3 pb-3 border-bottom">
-                            <img src="@(news.FeaturedImage ?? "/images/placeholder.jpg")"
-                                 alt="@news.Title"
-                                 class="right-story-thumb rounded flex-shrink-0"
-                                 loading="lazy" />
-                            <div>
-                                <span class="category-badge small"
-                                      style="background:@news.CategoryColor">
-                                    @news.CategoryName
-                                </span>
-                                <h6 class="mt-1 mb-1 small fw-semibold">
-                                    <a href="/news/@news.Slug" class="text-dark">@news.Title</a>
-                                </h6>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i>
-                                    @news.PublishedAt?.ToString("dd MMM")
-                                </small>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-
-        </div>
-    </div>
-</section>
-
-<!-- ══ MAIN CONTENT ══════════════════════════════════════ -->
-<div class="container-fluid px-4 mt-2">
-    <div class="row g-4">
-
-        <!-- Left: Main Feed -->
-        <div class="col-lg-8 col-xl-9">
-
-            <!-- Latest News -->
-            <section class="news-section mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2 class="section-title">সর্বশেষ সংবাদ</h2>
-                    <a href="/news" class="small text-primary">আরও দেখুন →</a>
-                </div>
-
-                <div class="row g-4" id="latest-news-container">
-                    @foreach (var news in Model.LatestNews)
-                    {
-                        <div class="col-6 col-md-4 col-lg-3">
-                            @await Html.PartialAsync("_NewsCard", news)
-                        </div>
-                    }
-                </div>
-
-                <div class="text-center mt-3" id="infinite-scroll-trigger">
-                    <div id="loading-spinner" class="d-none">
-                        <div class="spinner-border spinner-border-sm text-primary"></div>
-                    </div>
-                    <button id="load-more-btn"
-                            class="btn btn-outline-secondary btn-sm px-4">
-                        আরও দেখুন
-                    </button>
-                </div>
-            </section>
-
-            @foreach (var block in Model.CategoryNewsBlocks)
-            {
-                var cat = block.Value.Category;
-                var catNews = block.Value.News;
-                if (!catNews.Any()) continue;
-
-                <section class="pb-category-section mb-5" id="cat-@cat.Slug">
-
-                    <!-- Section header with colored left border -->
-                    <div class="pb-section-header mb-3">
-                        <h2 class="pb-section-title">
-                            <span style="border-left:4px solid @(cat.ColorCode ?? "var(--primary)");
-                                 padding-left:10px;
-                                 color:@(cat.ColorCode ?? "var(--primary)")">
-                                @cat.Name
-                            </span>
-                        </h2>
-                        <a href="/category/@cat.Slug"
-                           class="pb-more-link"
-                           style="color:@(cat.ColorCode ?? "var(--primary)")">
-                            আরও দেখুন →
-                        </a>
-                    </div>
-
-                    <div class="row g-0">
-
-                        <!-- Lead story — big image + title + summary -->
-                        <div class="col-md-6 col-lg-5 pe-md-3 mb-3 mb-md-0">
-                            <div class="pb-lead-story">
-                                <a href="/news/@catNews[0].Slug"
-                                   class="pb-lead-img-link">
-                                    <img src="@(catNews[0].FeaturedImage
-                                                                             ?? "/images/placeholder.jpg")"
-                                     alt="@catNews[0].Title"
-                                     class="pb-lead-img"
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="pb-mini-card">
+                            <a href="/news/@n.Slug" class="pb-mini-img-link">
+                                <img src="@(n.FeaturedImage ?? "/images/placeholder.jpg")"
+                                     alt="@n.Title"
+                                     class="pb-mini-img"
                                      loading="lazy"
                                      onerror="this.src='/images/placeholder.jpg'" />
                             </a>
-                            <div class="pb-lead-body">
-                                <a href="/category/@cat.Slug"
-                                   class="pb-cat-badge"
-                                   style="color:@(cat.ColorCode
-                                                                     ?? "var(--primary)")">
-                                    @cat.Name
+                            <h6 class="pb-mini-title">
+                                <a href="/news/@n.Slug"
+                                   class="text-dark text-decoration-none">
+                                    @n.Title
                                 </a>
-                                <h3 class="pb-lead-title">
+                            </h6>
+                            <div class="pb-mini-meta">
+                                <i class="bi bi-clock me-1"></i>
+                                @n.PublishedAt?.ToString("dd MMM")
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    <!-- ══ MAIN CONTENT + SIDEBAR ═══════════════════════ -->
+    <div class="container-fluid px-3 px-md-4 mt-4">
+        <div class="row g-4">
+
+            <!-- Left: Category blocks -->
+            <div class="col-lg-9">
+                @foreach (var block in Model.CategoryNewsBlocks)
+                {
+                    var cat = block.Value.Category;
+                    var catNews = block.Value.News;
+                    if (!catNews.Any()) continue;
+
+                    var count = catNews.Count;
+
+                    <section class="pb-cat-block mb-4" id="cat-@cat.Slug">
+
+                        <!-- Section header -->
+                        <div class="pb-section-hdr">
+                            <h2 class="pb-sec-title"
+                                style="border-left:4px solid @(cat.ColorCode
+                                                                       ?? "#c0392b");
+                                       padding-left:8px">
+                            <a href="/category/@cat.Slug"
+                               class="text-dark text-decoration-none">
+                                @cat.Name
+                            </a>
+                        </h2>
+                        <a href="/category/@cat.Slug"
+                           class="pb-sec-more"
+                           style="color:@(cat.ColorCode ?? "#c0392b")">
+                            আরও →
+                        </a>
+                    </div>
+
+                    @if (count == 1)
+                        {
+                            <!-- Single item -->
+                            <div class="row g-2 mt-1">
+                                <div class="col-md-4">
+                                    @await Html.PartialAsync(
+                                    "_PbCard", catNews[0])
+                        </div>
+                    </div>
+                                        }
+                        else if (count >= 5)
+                        {
+                            <!-- Lead + right list layout (জাতীয় style) -->
+                            <div class="row g-2 mt-1">
+                                <div class="col-md-5">
+                                    <div class="pb-lead2">
+                                        <a href="/news/@catNews[0].Slug"
+                                           class="pb-lead2-img-link">
+                                            <img src="@(catNews[0].FeaturedImage
+                                                                                                         ?? "/images/placeholder.jpg")"
+                                         alt="@catNews[0].Title"
+                                         class="pb-lead2-img"
+                                         loading="lazy"
+                                         onerror="this.src='/images/placeholder.jpg'" />
+                                </a>
+                                <h3 class="pb-lead2-title mt-2">
                                     <a href="/news/@catNews[0].Slug"
                                        class="text-dark text-decoration-none">
                                         @catNews[0].Title
                                     </a>
                                 </h3>
-                                @if (!string.IsNullOrEmpty(catNews[0].Summary))
-                                    {
-                                        <p class="pb-lead-summary">
-                                            @catNews[0].Summary
-                                        </p>
-                                    }
-                                    <div class="pb-lead-meta">
-                                        <i class="bi bi-clock me-1"></i>
-                                        @catNews[0].PublishedAt?.ToString("dd MMM yyyy")
-                                    </div>
+                                <p class="pb-lead2-summary">
+                                    @catNews[0].Summary
+                                </p>
+                                <div class="pb-meta-sm">
+                                    <i class="bi bi-clock me-1"></i>
+                                    @catNews[0].PublishedAt
+                                    ?.ToString("dd MMM yyyy")
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Divider -->
-                        <div class="d-none d-md-block"
-                             style="width:1px;background:#e5e5e5;
-                            margin:0 16px"></div>
-
-                        <!-- List of smaller stories -->
-                        <div class="col-md pb-list-col">
-                            @foreach (var n in catNews.Skip(1).Take(5))
-                            {
-                                <div class="pb-list-item">
-                                    <a href="/news/@n.Slug"
-                                       class="pb-list-thumb-link flex-shrink-0">
-                                        <img src="@(n.FeaturedImage
-                                                                                     ?? "/images/placeholder.jpg")"
-                                     alt="@n.Title"
-                                     class="pb-list-thumb"
-                                     loading="lazy"
-                                     onerror="this.src='/images/placeholder.jpg'" />
-                            </a>
-                            <div class="pb-list-body">
-                                <h6 class="pb-list-title">
+                        <div class="col-md-7">
+                            <div class="row g-2">
+                                @foreach (var n in catNews.Skip(1).Take(4))
+                                        {
+                                            <div class="col-6">
+                                                <div class="pb-grid-card">
+                                                    <a href="/news/@n.Slug"
+                                                       class="pb-grid-img-link">
+                                                        <img src="@(n.FeaturedImage
+                                                                                                                                 ?? "/images/placeholder.jpg")"
+                                                 alt="@n.Title"
+                                                 class="pb-grid-img"
+                                                 loading="lazy"
+                                                 onerror="this.src='/images/placeholder.jpg'" />
+                                        </a>
+                                        <h6 class="pb-grid-title">
+                                            <a href="/news/@n.Slug"
+                                               class="text-dark text-decoration-none">
+                                                @n.Title
+                                            </a>
+                                        </h6>
+                                        <div class="pb-meta-sm">
+                                            @n.PublishedAt
+                                            ?.ToString("dd MMM")
+                                        </div>
+                                    </div>
+                                </div>
+                                                                }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else if (count >= 3)
+                        {
+                            <!-- Equal 3-4 column grid (আন্তর্জাতিক style) -->
+                            <div class="row g-2 mt-1">
+                                @foreach (var n in catNews.Take(4))
+                                {
+                                    <div class="col-6 col-md-3">
+                                        <div class="pb-grid-card">
+                                            <a href="/news/@n.Slug"
+                                               class="pb-grid-img-link">
+                                                <img src="@(n.FeaturedImage
+                                                                                                                 ?? "/images/placeholder.jpg")"
+                                         alt="@n.Title"
+                                         class="pb-grid-img"
+                                         loading="lazy"
+                                         onerror="this.src='/images/placeholder.jpg'" />
+                                </a>
+                                <h6 class="pb-grid-title">
                                     <a href="/news/@n.Slug"
                                        class="text-dark text-decoration-none">
                                         @n.Title
                                     </a>
                                 </h6>
-                                <div class="pb-list-meta">
+                                <p class="pb-grid-summary">
+                                    @n.Summary
+                                </p>
+                                <div class="pb-meta-sm">
                                     <i class="bi bi-clock me-1"></i>
                                     @n.PublishedAt?.ToString("dd MMM")
                                 </div>
                             </div>
                         </div>
                                                 }
-                        </div>
-
-                    </div>
-
-                    <!-- Bottom border -->
-                    <hr class="mt-4 mb-0"
-                        style="border-color:#e5e5e5;opacity:1" />
-
-                </section>
-            }
-
-        </div>
-
-        <!-- Right: Sidebar -->
-        <div class="col-lg-4 col-xl-3">
-            <div class="sticky-sidebar">
-
-                <!-- Trending -->
-                <div class="sidebar-widget mb-4">
-                    <h5 class="widget-title">
-                        <i class="bi bi-fire text-danger me-2"></i>সর্বাধিক পঠিত
-                    </h5>
-                    @foreach (var (news, i) in Model.TrendingNews
-                                        .Select((n, i) => (n, i + 1)).Take(7))
-                    {
-                        <div class="d-flex gap-2 mb-3 pb-3 border-bottom">
-                            <span class="trending-num fw-bold text-muted">@i</span>
-                            <div>
-                                <h6 class="mb-1 small">
-                                    <a href="/news/@news.Slug" class="text-dark text-decoration-none">
-                                        @news.Title
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- 2 items -->
+                            <div class="row g-2 mt-1">
+                                @foreach (var n in catNews.Take(2))
+                                {
+                                    <div class="col-6">
+                                        <div class="pb-grid-card">
+                                            <a href="/news/@n.Slug"
+                                               class="pb-grid-img-link">
+                                                <img src="@(n.FeaturedImage
+                                                                                                                 ?? "/images/placeholder.jpg")"
+                                         alt="@n.Title"
+                                         class="pb-grid-img"
+                                         loading="lazy"
+                                         onerror="this.src='/images/placeholder.jpg'" />
+                                </a>
+                                <h6 class="pb-grid-title">
+                                    <a href="/news/@n.Slug"
+                                       class="text-dark text-decoration-none">
+                                        @n.Title
                                     </a>
                                 </h6>
-                                <small class="text-muted">
+                                <div class="pb-meta-sm">
                                     <i class="bi bi-clock me-1"></i>
-                                    @news.PublishedAt?.ToString("dd MMM")
-                                </small>
+                                    @n.PublishedAt?.ToString("dd MMM")
+                                </div>
                             </div>
                         </div>
-                    }
-                </div>
+                                                }
+                            </div>
+                        }
 
-                <!-- Ads -->
-                @foreach (var ad in Model.SidebarAds.Take(2))
-                {
-                    <div class="sidebar-widget mb-4 text-center">
-                        @if (!string.IsNullOrEmpty(ad.HtmlCode))
-                        {
-                            @Html.Raw(ad.HtmlCode)
-                        }
-                        else if (!string.IsNullOrEmpty(ad.ImageUrl))
-                        {
-                            <a href="@ad.TargetUrl" target="_blank">
-                                <img src="@ad.ImageUrl" alt="@ad.Title"
-                                     class="img-fluid rounded" />
-                            </a>
-                        }
-                    </div>
+                        <hr class="pb-divider" />
+                    </section>
                 }
-
-                <!-- Newsletter -->
-                <div class="sidebar-widget mb-4">
-                    <h5 class="widget-title">নিউজলেটার</h5>
-                    <p class="small text-muted">সর্বশেষ সংবাদ ইনবক্সে পান</p>
-                    <div class="input-group input-group-sm">
-                        <input type="email" id="newsletter-email"
-                               class="form-control"
-                               placeholder="আপনার ইমেইল" />
-                        <button class="btn btn-primary"
-                                onclick="subscribeNewsletter()">
-                            সাবস্ক্রাইব
-                        </button>
-                    </div>
-                </div>
-
             </div>
-        </div>
 
+            <!-- Right: Sidebar -->
+            <div class="col-lg-3">
+                <div class="pb-sidebar">
+
+                    <!-- Most read -->
+                    <div class="pb-widget mb-4">
+                        <div class="pb-section-hdr mb-3">
+                            <h2 class="pb-sec-title">
+                                <i class="bi bi-fire text-danger me-1"></i>
+                                সর্বাধিক পঠিত
+                            </h2>
+                        </div>
+                        @foreach (var (n, i) in Model.TrendingNews
+                                                .Select((x, idx) => (x, idx + 1)).Take(8))
+                        {
+                            <div class="pb-trending-item">
+                                <span class="pb-trending-num">@i</span>
+                                <div class="flex-grow-1">
+                                    <a href="/news/@n.Slug"
+                                       class="pb-trending-title
+                                                  text-dark text-decoration-none">
+                                        @n.Title
+                                    </a>
+                                    <div class="pb-meta-sm mt-1">
+                                        <i class="bi bi-clock me-1"></i>
+                                        @n.PublishedAt?.ToString("dd MMM")
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Ads -->
+                    @foreach (var ad in Model.SidebarAds.Take(3))
+                    {
+                        <div class="pb-widget mb-3 text-center p-0
+                                        overflow-hidden">
+                            @if (!string.IsNullOrEmpty(ad.HtmlCode))
+                            {
+                                @Html.Raw(ad.HtmlCode)
+                            }
+                            else if (!string.IsNullOrEmpty(ad.ImageUrl))
+                            {
+                                <a href="@ad.TargetUrl" target="_blank"
+                                   onclick="trackAdClick(@ad.Id)">
+                                    <img src="@ad.ImageUrl"
+                                         alt="@ad.Title"
+                                         class="img-fluid w-100" />
+                                </a>
+                            }
+                        </div>
+                    }
+
+                    <!-- Newsletter -->
+                    <div class="pb-widget mb-4">
+                        <div class="pb-section-hdr mb-3">
+                            <h2 class="pb-sec-title">নিউজলেটার</h2>
+                        </div>
+                        <p class="small text-muted mb-2">
+                            সর্বশেষ সংবাদ সরাসরি ইনবক্সে পান
+                        </p>
+                        <div class="input-group input-group-sm">
+                            <input type="email" id="newsletter-email"
+                                   class="form-control"
+                                   placeholder="আপনার ইমেইল" />
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="subscribeNewsletter()">
+                                সাবস্ক্রাইব
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
     </div>
+
 </div>
 
 @section Scripts {
     <script>
-        $(document).ready(function () {
-            // Load mega menu news on hover
-            $('.dropdown-hover').on('mouseenter', function () {
-                const slug = $(this).find('.nav-link-custom').attr('href').replace('/category/', '');
-                const container = $(`#mega-news-${slug}`);
-                if (container.length && container.data('loaded') !== true) {
-                    container.data('loaded', true);
-                    fetch(`/api/news?categorySlug=${slug}&pageSize=4&page=1`)
-                        .then(r => r.json())
-                        .then(data => {
-                            if (!data.items || data.items.length === 0) {
-                                container.html('<p class="text-muted small p-3">কোনো সংবাদ নেই</p>');
-                                return;
-                            }
-                            let html = '<div class="row g-2">';
-                            data.items.forEach(n => {
-                                html += `
-                                <div class="col-6">
-                                    <div class="d-flex gap-2">
-                                        <img src="${n.featuredImage || '/images/placeholder.jpg'}"
-                                             class="rounded flex-shrink-0"
-                                             style="width:70px;height:52px;object-fit:cover"
-                                             loading="lazy" />
-                                        <div>
-                                            <a href="/news/${n.slug}"
-                                               class="small text-dark text-decoration-none fw-medium
-                                                      d-block"
-                                               style="-webkit-line-clamp:3;display:-webkit-box;
-                                                      -webkit-box-orient:vertical;overflow:hidden">
-                                                ${n.title}
-                                            </a>
-                                            <small class="text-muted">
-                                                ${n.publishedAt ? new Date(n.publishedAt)
-                                                    .toLocaleDateString('bn-BD') : ''}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>`;
-                            });
-                            html += '</div>';
-                            html += `<div class="mt-2 text-end">
-                                <a href="/category/${slug}"
-                                   class="small text-primary text-decoration-none">
-                                    আরও দেখুন →
-                                </a>
-                            </div>`;
-                            container.html(html);
-                        })
-                        .catch(() => container.html(''));
-                }
-            });
+        async function subscribeNewsletter() {
+            const email = document.getElementById('newsletter-email')
+                ?.value?.trim();
+            if (!email) { toastr.warning('ইমেইল লিখুন'); return; }
 
-            // Infinite scroll
-            let currentPage = 2;
-            let isLoading = false;
-
-            $('#load-more-btn').on('click', loadMoreNews);
-
-            const observer = new IntersectionObserver(entries => {
-                if (entries[0].isIntersecting && !isLoading) loadMoreNews();
-            }, { threshold: 0.1 });
-
-            const trigger = document.getElementById('infinite-scroll-trigger');
-            if (trigger) observer.observe(trigger);
-
-            async function loadMoreNews() {
-                if (isLoading) return;
-                isLoading = true;
-                $('#load-more-btn').hide();
-                $('#loading-spinner').removeClass('d-none');
-
-                try {
-                    const res = await fetch(`/api/news?page=${currentPage}&pageSize=9`);
-                    const data = await res.json();
-                    if (data.items && data.items.length > 0) {
-                        data.items.forEach(n => {
-                            $('#latest-news-container').append(`
-                                <div class="col-6 col-md-4 col-lg-3">
-                                    <div class="news-card card h-100 border-0 shadow-sm">
-                                        <a href="/news/${n.slug}">
-                                            <img src="${n.featuredImage || '/images/placeholder.jpg'}"
-                                                 class="card-img-top"
-                                                 alt="${n.title}" loading="lazy"
-                                                 style="height:180px;object-fit:cover" />
-                                        </a>
-                                        <div class="card-body p-3">
-                                            <span class="category-badge small"
-                                                  style="background:${n.categoryColor || '#6c757d'}">
-                                                ${n.categoryName}
-                                            </span>
-                                            <h6 class="card-title mt-2 small fw-semibold">
-                                                <a href="/news/${n.slug}"
-                                                   class="text-dark text-decoration-none">
-                                                    ${n.title}
-                                                </a>
-                                            </h6>
-                                            <small class="text-muted">
-                                                <i class="bi bi-clock me-1"></i>
-                                                ${n.publishedAt ? new Date(n.publishedAt)
-                                                    .toLocaleDateString('bn-BD') : ''}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>`);
-                        });
-                        currentPage++;
-                        if (currentPage <= data.totalPages) $('#load-more-btn').show();
-                    }
-                } catch(e) { console.error(e); }
-                finally {
-                    isLoading = false;
-                    $('#loading-spinner').addClass('d-none');
-                }
-            }
-
-            function subscribeNewsletter() {
-                const email = $('#newsletter-email').val();
-                if (!email) return;
-                fetch('/api/newsletter/subscribe', {
+            try {
+                const res = await fetch('/api/newsletter/subscribe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
-                }).then(r => r.json()).then(d => {
-                    if (d.success) toastr.success('সাবস্ক্রিপশন সফল!');
-                    else toastr.error(d.message);
                 });
-            }
-        });
+                if (res.ok) toastr.success('সাবস্ক্রাইব সফল হয়েছে!');
+                else        toastr.error('সাবস্ক্রাইব ব্যর্থ হয়েছে');
+            } catch { toastr.error('নেটওয়ার্ক ত্রুটি'); }
+        }
     </script>
 }
