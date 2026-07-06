@@ -76,6 +76,12 @@ namespace NewsPortalPro.Controllers.Api
         [Authorize]
         public async Task<IActionResult> React([FromBody] ReactRequestDto dto)
         {
+            // FIX: Enum.Parse threw an unhandled exception (→ 500) if the
+            // client sent an invalid ReactionType string. Using TryParse
+            // and returning a clean 400 instead.
+            if (!Enum.TryParse<ReactionType>(dto.ReactionType, true, out var reactionType))
+                return BadRequest(new { success = false, message = "অবৈধ রিঅ্যাকশন টাইপ" });
+
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             var existing = await _db.Reactions
@@ -84,10 +90,10 @@ namespace NewsPortalPro.Controllers.Api
 
             if (existing != null)
             {
-                if (existing.Type.ToString() == dto.ReactionType)
+                if (existing.Type == reactionType)
                     _db.Reactions.Remove(existing);
                 else
-                    existing.Type = Enum.Parse<ReactionType>(dto.ReactionType);
+                    existing.Type = reactionType;
             }
             else
             {
@@ -95,7 +101,7 @@ namespace NewsPortalPro.Controllers.Api
                 {
                     NewsId = dto.NewsId,
                     UserId = userId,
-                    Type = Enum.Parse<ReactionType>(dto.ReactionType)
+                    Type = reactionType
                 });
             }
 

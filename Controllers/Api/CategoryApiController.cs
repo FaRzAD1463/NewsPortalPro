@@ -50,7 +50,18 @@ namespace NewsPortalPro.Controllers.Api
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var id = await _categories.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetBySlug), new { slug = dto.Name }, new { id });
+
+            // FIX: previously used CreatedAtAction(nameof(GetBySlug), new { slug = dto.Name }, ...)
+            // — dto.Name is not guaranteed to equal the actual generated slug
+            // (spaces/casing/transliteration), so the response's Location
+            // header could point to a URL that 404s. Returning Ok with the
+            // id instead, since ICategoryService doesn't expose a way to
+            // fetch the entity's real slug by id here. If you want a proper
+            // 201 + correct Location header, add a GetByIdAsync method to
+            // ICategoryService and swap this back to CreatedAtAction using
+            // the returned entity's actual slug.
+
+            return Ok(ApiResponse<object>.Ok(new { id }));
         }
 
         [HttpPut("{id:int}")]

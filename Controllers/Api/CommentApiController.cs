@@ -36,8 +36,13 @@ namespace NewsPortalPro.Controllers.Api
             return Ok(ApiResponse<object>.Ok(new { id }, "মন্তব্য জমা দেওয়া হয়েছে"));
         }
 
+        // FIX: was [Authorize] only — any logged-in user could delete any
+        // comment by id. Restricted to Admin/Editor, same as Approve/Reject
+        // below. If you also want the comment's own author to be able to
+        // delete it, ICommentService needs a way to fetch the comment's
+        // UserId first (e.g. GetByIdAsync) so we can compare it here.
         [HttpDelete("{id:int}")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Editor")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _comments.DeleteAsync(id);
