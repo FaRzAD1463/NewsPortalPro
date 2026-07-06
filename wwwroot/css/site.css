@@ -17,6 +17,7 @@
     --radius: 8px;
     --font-bn: 'Noto Sans Bengali', sans-serif;
     --font-bn-serif: 'Noto Serif Bengali', serif;
+    --header-height: 68px; /* FIXED: used for scroll-margin + dropdown top anchor */
 }
 
 [data-theme="dark"] {
@@ -363,25 +364,21 @@ img {
    FIX 1 — NAVBAR OVERLAPPING PAGE CONTENT
    ══════════════════════════════════════════════════════ */
 
-/* Main content fills remaining height and never collapses */
 main {
     flex: 1 0 auto;
     min-height: 400px;
     padding-top: 0;
 }
 
-/* Prevent anchor scrolling from hiding content */
 [id] {
     scroll-margin-top: 80px;
 }
 
-/* Fix Bootstrap containers starting under navbar */
 .container-fluid.mt-4,
 .container-fluid.px-4.mt-4 {
     margin-top: 24px !important;
 }
 
-/* Contact page spacing fixes */
 .contact-page,
 form.contact-form {
     margin-top: 20px;
@@ -392,27 +389,23 @@ form.contact-form {
    FIX 1 — DROPDOWN MENU CUTTING OFF
    ══════════════════════════════════════════════════════ */
 
-/* Proper right alignment for user/account dropdowns */
 .dropdown-menu-end {
     right: 0 !important;
     left: auto !important;
 }
 
-/* Ensure dropdowns appear above all content */
 .site-header .dropdown-menu {
     position: absolute;
     z-index: 1060;
     min-width: 160px;
 }
 
-/* Prevent dropdown clipping from parent containers */
 .site-header,
 .main-nav,
 .nav-item-custom {
     overflow: visible !important;
 }
 
-/* Better dropdown rendering */
 .dropdown-menu {
     border: none;
     box-shadow: 0 8px 24px rgba(0,0,0,.12);
@@ -420,7 +413,6 @@ form.contact-form {
     padding: 8px 0;
 }
 
-/* Dropdown item styling */
 .dropdown-item {
     padding: 10px 16px;
     font-size: 14px;
@@ -436,10 +428,8 @@ form.contact-form {
    FIX 3 — FOOTER TOO HIGH / BLANK SPACE BELOW FOOTER
    ══════════════════════════════════════════════════════ */
 
-.site-footer {
-    flex-shrink: 0;
-    margin-top: auto;
-}
+/* FIXED: removed duplicate .site-footer rule that lived here —
+   flex-shrink/margin-top now live once, in the FOOTER section below */
 
 /* Remove blank space below footer caused by last child margin */
 body > *:last-child {
@@ -447,14 +437,8 @@ body > *:last-child {
     padding-bottom: 0;
 }
 
-/* Fix blank space caused by notification bell widget */
-.notification-bell-widget {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 1000;
-    margin: 0;
-}
+/* FIXED: removed duplicate .notification-bell-widget rule that lived here —
+   it's declared once now, in the NOTIFICATION WIDGET section below */
 
 
 /* ══════════════════════════════════════════════════════
@@ -709,7 +693,6 @@ body > *:last-child {
    PROTIDINERBANGLADESH STYLE HOME PAGE
    ══════════════════════════════════════════════════════ */
 
-/* ── Section header ──────────────────────────────────── */
 .pb-section-hdr {
     display: flex;
     justify-content: space-between;
@@ -744,16 +727,18 @@ body > *:last-child {
 }
 
 /* ── Hero section ────────────────────────────────────── */
+/* FIXED: .pb-hero-lead now uses a fixed height matching .pb-hero-lead-img
+   (was height:100%, which collapses to 0 if the parent has no explicit
+   height — the two elements now always agree on size, at every breakpoint,
+   defined once below in the "FIX IMAGE CUTTING" section). */
 .pb-hero-lead {
     border-radius: 4px;
-    height: 100%;
-    min-height: 300px;
+    height: 380px;
 }
 
 .pb-hero-lead-img {
     width: 100%;
     height: 100%;
-    min-height: 300px;
     object-fit: cover;
     display: block;
     transition: transform .35s;
@@ -813,15 +798,20 @@ body > *:last-child {
     text-transform: uppercase;
     margin-top: 6px;
 }
+
 /* ── Hero sub cards ──────────────────────────────────── */
+/* FIXED: .pb-hero-sub was 148px while .pb-hero-sub-img was 184px —
+   container clipped the image back down. Both now match at 184px,
+   and stay matched at every breakpoint below. */
 .pb-hero-sub {
     border-radius: 4px;
-    height: 148px;
+    height: 184px;
+    overflow: hidden;
 }
 
 .pb-hero-sub-img {
     width: 100%;
-    height: 148px;
+    height: 100%;
     object-fit: cover;
     display: block;
     transition: transform .3s;
@@ -1051,14 +1041,13 @@ body > *:last-child {
 }
 
 /* ══════════════════════════════════════════════════════
-   PAGE CONTAINER — centered with side gaps like
-   protidinerbangladesh.com
+   PAGE CONTAINER
    ══════════════════════════════════════════════════════ */
 
 .pb-page-container {
-    max-width: 1200px; /* matches protidiner layout width */
-    margin: 0 auto; /* center horizontally */
-    padding: 0 16px; /* side gaps on all screens */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
 }
 
 @media (min-width: 1400px) {
@@ -1075,9 +1064,12 @@ body > *:last-child {
 
 /* ══════════════════════════════════════════════════════
    FIX IMAGE CUTTING — images must never overflow
+   (FIXED: this is now the single canonical block for hero-lead,
+   hero-sub, mini, lead2 and grid heights across all breakpoints —
+   the old duplicate rules further down the file have been merged
+   in here instead of living separately)
    ══════════════════════════════════════════════════════ */
 
-/* All card image wrappers clip overflow */
 .pb-hero-lead,
 .pb-hero-sub,
 .pb-mini-img-link,
@@ -1086,21 +1078,12 @@ body > *:last-child {
     overflow: hidden;
 }
 
-/* Images fill container without cutting content */
 .pb-hero-lead-img {
-    width: 100%;
-    height: 380px; /* fixed height — no cutting */
-    object-fit: cover; /* crop centre, never stretch */
     object-position: center top;
-    display: block;
 }
 
 .pb-hero-sub-img {
-    width: 100%;
-    height: 184px;
-    object-fit: cover;
     object-position: center;
-    display: block;
 }
 
 .pb-mini-img {
@@ -1127,12 +1110,15 @@ body > *:last-child {
     display: block;
 }
 
-/* Responsive height adjustments */
+/* Responsive height adjustments — hero-lead/hero-sub containers
+   and their images always move together */
 @media (max-width: 991px) {
+    .pb-hero-lead,
     .pb-hero-lead-img {
         height: 280px;
     }
 
+    .pb-hero-sub,
     .pb-hero-sub-img {
         height: 135px;
     }
@@ -1147,10 +1133,12 @@ body > *:last-child {
 }
 
 @media (max-width: 767px) {
+    .pb-hero-lead,
     .pb-hero-lead-img {
         height: 220px;
     }
 
+    .pb-hero-sub,
     .pb-hero-sub-img {
         height: 105px;
     }
@@ -1169,10 +1157,12 @@ body > *:last-child {
 }
 
 @media (max-width: 480px) {
+    .pb-hero-lead,
     .pb-hero-lead-img {
         height: 180px;
     }
 
+    .pb-hero-sub,
     .pb-hero-sub-img {
         height: 85px;
     }
@@ -1229,67 +1219,15 @@ body > *:last-child {
 }
 
 /* ── Responsive ──────────────────────────────────────── */
+/* FIXED: removed the old duplicate .pb-hero-lead / .pb-hero-sub /
+   .pb-lead2-img / .pb-grid-img media queries that used to live here —
+   they conflicted with the "FIX IMAGE CUTTING" block above and are
+   now consolidated there. .pb-sidebar static-positioning kept. */
 @media (max-width: 991px) {
     .pb-sidebar {
         position: static;
     }
-
-    .pb-hero-lead,
-    .pb-hero-lead-img {
-        min-height: 240px;
-    }
-
-    .pb-lead2-img {
-        height: 170px;
-    }
 }
-
-@media (max-width: 767px) {
-    .pb-hero-lead,
-    .pb-hero-lead-img {
-        min-height: 200px;
-    }
-
-    .pb-hero-sub {
-        height: 110px;
-    }
-
-    .pb-hero-sub-img {
-        height: 110px;
-    }
-
-    .pb-mini-img {
-        height: 90px;
-    }
-
-    .pb-lead2-img {
-        height: 150px;
-    }
-
-    .pb-grid-img {
-        height: 100px;
-    }
-}
-
-@media (max-width: 480px) {
-    .pb-hero-lead,
-    .pb-hero-lead-img {
-        min-height: 180px;
-    }
-
-    .pb-hero-sub {
-        height: 90px;
-    }
-
-    .pb-hero-sub-img {
-        height: 90px;
-    }
-
-    .pb-hero-title {
-        font-size: .95rem;
-    }
-}
-
 
 /* ══════════════════════════════════════════════════════
    SIDEBAR (RIGHT)
@@ -1491,6 +1429,8 @@ body > *:last-child {
 
 /* ══════════════════════════════════════════════════════
    NOTIFICATION WIDGET
+   (FIXED: this is now the only .notification-bell-widget rule
+   in the file — the duplicate under "FIX 3" was removed)
    ══════════════════════════════════════════════════════ */
 .notification-bell-widget {
     position: fixed;
@@ -1543,6 +1483,8 @@ body > *:last-child {
 
 /* ══════════════════════════════════════════════════════
    FOOTER
+   (FIXED: merged the duplicate .site-footer declaration that used
+   to live under "FIX 3" into this single rule)
    ══════════════════════════════════════════════════════ */
 .site-footer {
     background: var(--secondary);
@@ -1760,7 +1702,6 @@ body > *:last-child {
    DARK MODE — ADDITIONAL TEXT FIXES
    ══════════════════════════════════════════════════════ */
 
-/* ── General text ────────────────────────────────────── */
 [data-theme="dark"] body {
     color: var(--text);
 }
@@ -1785,7 +1726,6 @@ body > *:last-child {
     color: var(--text-muted);
 }
 
-/* ── Headings ────────────────────────────────────────── */
 [data-theme="dark"] h1,
 [data-theme="dark"] h2,
 [data-theme="dark"] h3,
@@ -1795,7 +1735,6 @@ body > *:last-child {
     color: var(--text);
 }
 
-/* ── Links ───────────────────────────────────────────── */
 [data-theme="dark"] a {
     color: var(--primary);
 }
@@ -1809,7 +1748,6 @@ body > *:last-child {
         color: var(--text) !important;
     }
 
-/* ── News cards ──────────────────────────────────────── */
 [data-theme="dark"] .pb-news-card {
     background: var(--surface);
     border-color: var(--border);
@@ -1839,7 +1777,6 @@ body > *:last-child {
     color: inherit;
 }
 
-/* ── Bootstrap cards ─────────────────────────────────── */
 [data-theme="dark"] .card {
     color: var(--text);
 }
@@ -1856,7 +1793,6 @@ body > *:last-child {
     color: var(--text);
 }
 
-/* ── Section titles ──────────────────────────────────── */
 [data-theme="dark"] .section-title {
     color: var(--text);
 }
@@ -1869,7 +1805,6 @@ body > *:last-child {
     color: var(--text);
 }
 
-/* ── Sidebar widgets ─────────────────────────────────── */
 [data-theme="dark"] .sidebar-widget {
     background: var(--surface);
 }
@@ -1886,7 +1821,6 @@ body > *:last-child {
     color: var(--text-muted);
 }
 
-/* ── Site header ─────────────────────────────────────── */
 [data-theme="dark"] .site-header {
     background: var(--surface);
 }
@@ -1903,7 +1837,6 @@ body > *:last-child {
     color: var(--text-muted);
 }
 
-/* ── News card (bootstrap variant) ──────────────────── */
 [data-theme="dark"] .news-card {
     background: var(--surface);
 }
@@ -1920,7 +1853,6 @@ body > *:last-child {
                 color: var(--primary) !important;
             }
 
-/* ── Article page ────────────────────────────────────── */
 [data-theme="dark"] .article-title {
     color: var(--text);
 }
@@ -1955,7 +1887,6 @@ body > *:last-child {
     color: var(--text-muted);
 }
 
-/* ── Breadcrumb ──────────────────────────────────────── */
 [data-theme="dark"] .breadcrumb-item {
     color: var(--text-muted);
 }
@@ -1972,7 +1903,6 @@ body > *:last-child {
         color: var(--text-muted);
     }
 
-/* ── Comments ────────────────────────────────────────── */
 [data-theme="dark"] .comment-item {
     background: var(--surface) !important;
 }
@@ -1997,7 +1927,6 @@ body > *:last-child {
         color: var(--text);
     }
 
-/* ── Reactions ───────────────────────────────────────── */
 [data-theme="dark"] .reaction-bar {
     background: var(--surface) !important;
     color: var(--text);
@@ -2009,7 +1938,6 @@ body > *:last-child {
     color: var(--text);
 }
 
-/* ── Author box ──────────────────────────────────────── */
 [data-theme="dark"] .author-box {
     background: var(--surface) !important;
 }
@@ -2022,7 +1950,6 @@ body > *:last-child {
         color: var(--text-muted);
     }
 
-/* ── Category page ───────────────────────────────────── */
 [data-theme="dark"] .category-page-header h1 {
     color: var(--text);
 }
@@ -2043,7 +1970,6 @@ body > *:last-child {
     color: var(--text-muted);
 }
 
-/* ── Right story list items ──────────────────────────── */
 [data-theme="dark"] .right-story-item h6 a {
     color: var(--text) !important;
 }
@@ -2052,7 +1978,6 @@ body > *:last-child {
     color: var(--text-muted);
 }
 
-/* ── Lead/secondary story overlays already white ─────── */
 [data-theme="dark"] .lead-story-overlay * {
     color: white;
 }
@@ -2061,7 +1986,6 @@ body > *:last-child {
     color: white;
 }
 
-/* ── Home page blocks ────────────────────────────────── */
 [data-theme="dark"] .news-section h5 a {
     color: var(--text) !important;
 }
@@ -2078,7 +2002,6 @@ body > *:last-child {
     color: var(--text-muted);
 }
 
-/* ── Horizontal cards ────────────────────────────────── */
 [data-theme="dark"] .pb-news-card-horizontal .pb-card-title a {
     color: var(--text) !important;
 }
@@ -2087,7 +2010,6 @@ body > *:last-child {
     color: var(--text-muted);
 }
 
-/* ── Offcanvas sidebar ───────────────────────────────── */
 [data-theme="dark"] .offcanvas {
     background: var(--surface);
     color: var(--text);
@@ -2105,7 +2027,6 @@ body > *:last-child {
         color: var(--primary);
     }
 
-/* ── Forms ───────────────────────────────────────────── */
 [data-theme="dark"] input,
 [data-theme="dark"] textarea,
 [data-theme="dark"] select {
@@ -2127,7 +2048,6 @@ body > *:last-child {
     color: var(--text);
 }
 
-/* ── Alerts ──────────────────────────────────────────── */
 [data-theme="dark"] .alert {
     color: var(--text);
 }
@@ -2156,13 +2076,11 @@ body > *:last-child {
     color: #ef9a9a;
 }
 
-/* ── Badges ──────────────────────────────────────────── */
 [data-theme="dark"] .badge.bg-secondary {
     background: #444 !important;
     color: #ccc !important;
 }
 
-/* ── Pagination ──────────────────────────────────────── */
 [data-theme="dark"] .page-link {
     background: var(--surface);
     border-color: var(--border);
@@ -2180,7 +2098,6 @@ body > *:last-child {
     color: var(--text-muted);
 }
 
-/* ── Border and dividers ─────────────────────────────── */
 [data-theme="dark"] .border-bottom {
     border-color: var(--border) !important;
 }
@@ -2193,7 +2110,6 @@ body > *:last-child {
     border-color: var(--border);
 }
 
-/* ── Breaking ticker ─────────────────────────────────── */
 [data-theme="dark"] .breaking-ticker {
     background: #2d2d2d;
     color: #e0e0e0;
@@ -2208,20 +2124,17 @@ body > *:last-child {
     color: #e0e0e0;
 }
 
-/* ── Tags ────────────────────────────────────────────── */
 [data-theme="dark"] .article-tags a {
     background: #444 !important;
     color: #ddd !important;
 }
 
-/* ── Bootstrap list group ────────────────────────────── */
 [data-theme="dark"] .list-group-item {
     background: var(--surface);
     color: var(--text);
     border-color: var(--border);
 }
 
-/* ── Modal ───────────────────────────────────────────── */
 [data-theme="dark"] .modal-content {
     background: var(--surface);
     color: var(--text);
@@ -2243,7 +2156,6 @@ body > *:last-child {
     filter: invert(1);
 }
 
-/* ── All categories dropdown dark mode ───────────────── */
 [data-theme="dark"] .all-categories-dropdown {
     background: var(--surface);
 }
@@ -2272,7 +2184,6 @@ body > *:last-child {
         color: var(--primary);
     }
 
-/* ── Mega news items ─────────────────────────────────── */
 [data-theme="dark"] .mega-news-item {
     color: var(--text);
 }
@@ -2285,14 +2196,12 @@ body > *:last-child {
     color: var(--primary);
 }
 
-/* ── Input group ─────────────────────────────────────── */
 [data-theme="dark"] .input-group-text {
     background: #252836;
     border-color: var(--border);
     color: var(--text);
 }
 
-/* ── Navbar search input ─────────────────────────────── */
 [data-theme="dark"] .search-box-nav input {
     color: rgba(255,255,255,.8);
 }
@@ -2377,22 +2286,25 @@ body > *:last-child {
 
 /* ══════════════════════════════════════════════════════
    ALL CATEGORIES MEGA DROPDOWN — VIEWPORT-SAFE
+   (FIXED: `top: auto` on a fixed-position element was relying on
+   the browser's static-position fallback, which is inconsistent.
+   Now anchored explicitly to the header height via var(--header-height).
+   Adjust that variable at the top of the file if your header's real
+   height differs — or better, set it with JS reading the navbar's
+   getBoundingClientRect().bottom for pixel-perfect accuracy.)
    ══════════════════════════════════════════════════════ */
 .all-categories-dropdown {
     min-width: 760px;
     max-width: 98vw;
-    width: 98vw;
-    /* Pin to left edge of the navbar, not the nav item */
     position: fixed !important;
     left: 1vw !important;
     right: 1vw !important;
     width: auto !important;
-    top: auto;
+    top: var(--header-height);
     transform: none !important;
     transform-origin: top left;
 }
 
-    /* Hover open state — no translateX needed since fixed positioning */
     .dropdown-hover:hover .all-categories-dropdown,
     .all-categories-dropdown:hover {
         opacity: 1;
@@ -2400,10 +2312,10 @@ body > *:last-child {
         transform: none !important;
     }
 
-/* Hidden state */
 .nav-item-custom:not(:hover) .all-categories-dropdown {
     transform: translateY(-8px) !important;
 }
+
 .all-cat-sidebar {
     background: #f8f9fa;
     min-width: 140px;
@@ -2447,7 +2359,6 @@ body > *:last-child {
         display: none !important;
     }
 
-/* ── Mega news container ─────────────────────────────── */
 .mega-news-container .row {
     gap: 0;
 }
@@ -2488,7 +2399,6 @@ body > *:last-child {
     color: var(--primary);
 }
 
-/* ── Dark mode ───────────────────────────────────────── */
 [data-theme="dark"] .all-cat-sidebar {
     background: #252836;
 }

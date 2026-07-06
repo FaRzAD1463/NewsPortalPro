@@ -39,11 +39,7 @@ namespace NewsPortalPro.Data.Migrations
                 table: "NewsViews",
                 columns: new[] { "NewsId", "ViewedAt" });
 
-            // ── Visitor analytics ──────────────────────────────
-            migrationBuilder.CreateIndex(
-                name: "IX_VisitorAnalytics_VisitedAt",
-                table: "VisitorAnalytics",
-                columns: new[] { "VisitedAt" });
+          
 
             // ── Comments by news + status ──────────────────────
             migrationBuilder.CreateIndex(
@@ -70,8 +66,6 @@ namespace NewsPortalPro.Data.Migrations
                 "IX_Categories_Slug_IsActive", "Categories");
             migrationBuilder.DropIndex(
                 "IX_NewsViews_NewsId_ViewedAt", "NewsViews");
-            migrationBuilder.DropIndex(
-                "IX_VisitorAnalytics_VisitedAt", "VisitorAnalytics");
             migrationBuilder.DropIndex(
                 "IX_Comments_NewsId_Status_IsDeleted", "Comments");
             migrationBuilder.DropIndex(
