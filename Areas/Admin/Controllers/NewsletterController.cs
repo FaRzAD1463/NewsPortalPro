@@ -50,7 +50,11 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpPost]
+        // FIX: added [ValidateAntiForgeryToken] — this triggers an actual
+        // mass email send to every subscriber. A CSRF request against this
+        // endpoint could blast an unintended newsletter to your entire
+        // list, so this was the highest-impact missing token in this file.
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Send(int id)
         {
             var newsletter = await _db.Newsletters.FindAsync(id);
@@ -77,7 +81,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpPost]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             var newsletter = await _db.Newsletters.FindAsync(id);

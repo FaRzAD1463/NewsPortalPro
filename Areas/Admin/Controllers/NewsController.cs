@@ -244,32 +244,103 @@ namespace NewsPortalPro.Areas.Admin.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
         // ── Publish ────────────────────────────────────────────────
+        // FIX: added the same Reporter-ownership check that Edit/Delete
+        // already enforce. Previously any Reporter could publish ANY
+        // article, not just their own — inconsistent with the IDOR
+        // protection already built elsewhere in this controller.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Publish(int id)
         {
+            if (User.IsInRole("Reporter")
+                && !User.IsInRole("Admin")
+                && !User.IsInRole("Editor"))
+            {
+                var newsOwner = await _news.GetByIdAsync(id);
+                if (newsOwner == null) return NotFound();
+
+                var currentUserId = User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+                if (newsOwner.AuthorId != currentUserId)
+                {
+                    _logger.LogWarning(
+                        "IDOR publish attempt: User {UserId} tried " +
+                        "to publish news {NewsId}",
+                        currentUserId, id);
+                    return Forbid();
+                }
+            }
+
             await _news.PublishAsync(id);
             return Ok(new { success = true });
         }
 
+        // FIX: same ownership check added — a Reporter could previously
+        // flag any article (not just their own) as breaking news.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleBreaking(int id, bool value)
         {
+            if (User.IsInRole("Reporter")
+                && !User.IsInRole("Admin")
+                && !User.IsInRole("Editor"))
+            {
+                var newsOwner = await _news.GetByIdAsync(id);
+                if (newsOwner == null) return NotFound();
+
+                var currentUserId = User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+                if (newsOwner.AuthorId != currentUserId)
+                {
+                    _logger.LogWarning(
+                        "IDOR breaking-toggle attempt: User {UserId} " +
+                        "tried to modify news {NewsId}",
+                        currentUserId, id);
+                    return Forbid();
+                }
+            }
+
             await _news.SetBreakingAsync(id, value);
             return Ok(new { success = true });
         }
 
+        // FIX: same ownership check added — a Reporter could previously
+        // feature/unfeature any article, not just their own.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleFeatured(int id, bool value)
         {
+            if (User.IsInRole("Reporter")
+                && !User.IsInRole("Admin")
+                && !User.IsInRole("Editor"))
+            {
+                var newsOwner = await _news.GetByIdAsync(id);
+                if (newsOwner == null) return NotFound();
+
+                var currentUserId = User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+                if (newsOwner.AuthorId != currentUserId)
+                {
+                    _logger.LogWarning(
+                        "IDOR featured-toggle attempt: User {UserId} " +
+                        "tried to modify news {NewsId}",
+                        currentUserId, id);
+                    return Forbid();
+                }
+            }
+
             await _news.SetFeaturedAsync(id, value);
             return Ok(new { success = true });
         }
 
-        [HttpPost]
+        // FIX: added [ValidateAntiForgeryToken] — was missing on an
+        // authenticated file-upload endpoint.
+        [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
         public async Task<IActionResult> UploadImage(IFormFile file)

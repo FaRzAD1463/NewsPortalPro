@@ -19,21 +19,24 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return View(result);
         }
 
-        [HttpPost]
+        // FIX: added [ValidateAntiForgeryToken] — moderation actions
+        // (approve/reject/delete) were CSRF-exploitable against an active
+        // Admin/Editor session.
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Approve(int id)
         {
             await _comments.ApproveAsync(id);
             return Ok(new { success = true });
         }
 
-        [HttpPost]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Reject(int id)
         {
             await _comments.RejectAsync(id);
             return Ok(new { success = true });
         }
 
-        [HttpPost]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             await _comments.DeleteAsync(id);

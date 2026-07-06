@@ -74,18 +74,47 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                     thumbnail = result.ThumbnailUrl
                 });
             }
+            catch (ArgumentException ex)
+            {
+                // Validation-type errors (bad file type, too large, etc.)
+                // are safe to relay — they describe the input, not internals.
+                return BadRequest(new { success = false, message = ex.Message });
+            }
             catch (Exception ex)
             {
-                return BadRequest(new { success = false, message = ex.Message });
+                // FIX: previously returned ex.Message directly to the client,
+                // which can leak storage paths, provider details, or other
+                // internal info. Logged server-side instead; client gets a
+                // generic message.
+                _logger.LogError(ex, "Media upload failed");
+                return BadRequest(new { success = false, message = "আপলোড ব্যর্থ হয়েছে, পরে আবার চেষ্টা করুন" });
             }
         }
 
+        // FIX: added the same Reporter-ownership check used in
+        // NewsController — previously any Reporter could delete media
+        // uploaded by any other user, not just their own.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             var photo = await _db.Photos.FindAsync(id);
             if (photo == null) return NotFound();
+
+            if (User.IsInRole("Reporter")
+                && !User.IsInRole("Admin")
+                && !User.IsInRole("Editor"))
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (photo.UploadedById != currentUserId)
+                {
+                    _logger.LogWarning(
+                        "IDOR attempt: User {UserId} tried to delete " +
+                        "photo {PhotoId}", currentUserId, id);
+                    return Forbid();
+                }
+            }
+
             _db.Photos.Remove(photo);
             await _db.SaveChangesAsync();
             return Ok(new { success = true });
