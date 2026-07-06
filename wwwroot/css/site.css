@@ -885,6 +885,174 @@ body > *:last-child {
     letter-spacing: .3px;
 }
 
+/* ══════════════════════════════════════════════════════
+   CATEGORY PAGE — Protidinerbangladesh style
+   ══════════════════════════════════════════════════════ */
+
+/* ── Category header ─────────────────────────────────── */
+.cat-page-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+}
+
+/* ── Top 4 grid cards ────────────────────────────────── */
+.cat-top-card {
+    background: #fff;
+}
+
+.cat-top-img-link {
+    display: block;
+    overflow: hidden;
+    border-radius: 3px;
+}
+
+.cat-top-img {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    display: block;
+    transition: transform .3s;
+}
+
+.cat-top-img-link:hover .cat-top-img {
+    transform: scale(1.04);
+}
+
+.cat-top-title {
+    font-size: .85rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+    .cat-top-title a:hover {
+        color: #c0392b !important;
+    }
+
+.cat-top-summary {
+    font-size: .75rem;
+    color: #555;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+/* ── List style items ────────────────────────────────── */
+.cat-list-item {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: flex-start;
+}
+
+    .cat-list-item:last-child {
+        border-bottom: none;
+    }
+
+.cat-list-thumb-link {
+    display: block;
+    flex-shrink: 0;
+}
+
+.cat-list-thumb {
+    width: 140px;
+    height: 95px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: block;
+    transition: opacity .2s;
+}
+
+.cat-list-thumb-link:hover .cat-list-thumb {
+    opacity: .88;
+}
+
+.cat-list-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.cat-list-title {
+    font-size: .95rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+    .cat-list-title a:hover {
+        color: #c0392b !important;
+    }
+
+.cat-list-summary {
+    font-size: .8rem;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ── Dark mode ───────────────────────────────────────── */
+[data-theme="dark"] .cat-page-title {
+    color: var(--text);
+}
+
+[data-theme="dark"] .cat-top-title a,
+[data-theme="dark"] .cat-list-title a {
+    color: var(--text) !important;
+}
+
+[data-theme="dark"] .cat-top-summary,
+[data-theme="dark"] .cat-list-summary {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .cat-list-item {
+    border-color: var(--border);
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 767px) {
+    .cat-top-img {
+        height: 100px;
+    }
+
+    .cat-list-thumb {
+        width: 110px;
+        height: 75px;
+    }
+
+    .cat-list-title {
+        font-size: .88rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .cat-top-img {
+        height: 85px;
+    }
+
+    .cat-list-thumb {
+        width: 90px;
+        height: 62px;
+    }
+}
 
 
 /* ══════════════════════════════════════════════════════

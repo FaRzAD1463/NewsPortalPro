@@ -1,284 +1,268 @@
 ﻿@using NewsPortalPro.DTOs
-@model PagedResult<NewsListDto>
+@using NewsPortalPro.Models
+@model NewsPortalPro.DTOs.PagedResult<NewsPortalPro.DTOs.NewsListDto>
 @{
-    var category = ViewBag.Category as CategoryDto;
-    ViewData["Title"] = $"{category?.Name} - নিউজপোর্টাল প্রো";
+    var cat = ViewBag.Category as CategoryDto;
+    var sort = ViewBag.Sort as string ?? "latest";
+    var trending = ViewBag.Trending as List<NewsListDto>
+               ?? new List<NewsListDto>();
+
+    ViewData["Title"] = cat?.Name ?? "বিভাগ";
 }
 
-<div class="container-fluid px-4 mt-4">
+<div class="pb-page-container">
+    <div class="row g-4 mt-1">
 
-    <!-- Category Header -->
-    <div class="category-page-header mb-4"
-         style="border-bottom: 3px solid @(category?.ColorCode ?? "#e74c3c")">
-        <h1 class="h2 fw-bold pb-2"
-            style="color:@(category?.ColorCode ?? "#e74c3c")">
-            @category?.Name
-        </h1>
-    </div>
-
-    <div class="row g-4">
+        <!-- ══ MAIN CONTENT ═══════════════════════════════════ -->
         <div class="col-lg-9">
 
-            <!-- Sort filters -->
-            <div class="d-flex gap-2 mb-4 flex-wrap">
-                <button class="btn btn-sm btn-primary active"
-                        onclick="filterSort('latest', this)">
-                    সর্বশেষ
-                </button>
-                <button class="btn btn-sm btn-outline-secondary"
-                        onclick="filterSort('popular', this)">
-                    জনপ্রিয়
-                </button>
-                <button class="btn btn-sm btn-outline-secondary"
-                        onclick="filterSort('comments', this)">
-                    আলোচিত
-                </button>
+            <!-- Category header -->
+            <div class="cat-page-header mb-3">
+                <h1 class="cat-page-title"
+                    style="border-left:4px solid #111;padding-left:10px">
+                    @cat?.Name
+                </h1>
+                <hr class="mt-2 mb-0" style="border-color:#e5e5e5;opacity:1" />
             </div>
 
-            <!-- News Grid -->
-            <div class="row g-4" id="cat-news-grid">
-                @if (Model.Items.Any())
-                {
-                    <!-- Lead story -->
-                    <div class="col-12 col-md-6">
-                        <div class="pb-news-card pb-news-card-lead">
-                            <a href="/news/@Model.Items[0].Slug"
-                               class="pb-card-img-link">
-                                <div class="pb-card-img-wrapper">
-                                    <img src="@(Model.Items[0].FeaturedImage ?? "/images/placeholder.jpg")"
-                                         alt="@Model.Items[0].Title"
-                                         class="pb-card-img" loading="lazy" />
-                                </div>
-                            </a>
-                            <div class="pb-card-body">
-                                <a href="/category/@Model.Items[0].CategorySlug"
-                                   class="pb-card-category"
-                                   style="color:@(category?.ColorCode ?? "#c0392b")">
-                                    @Model.Items[0].CategoryName
-                                </a>
-                                <h3 class="pb-card-title">
-                                    <a href="/news/@Model.Items[0].Slug">@Model.Items[0].Title</a>
-                                </h3>
-                                <p class="pb-card-summary">@Model.Items[0].Summary</p>
-                                <div class="pb-card-meta">
-                                    <span><i class="bi bi-person me-1"></i>@Model.Items[0].AuthorName</span>
-                                    <span>
-                                        <i class="bi bi-clock me-1"></i>
-                                        @Model.Items[0].PublishedAt?.ToString("dd MMM yyyy")
-                                    </span>
-                                    <span><i class="bi bi-eye me-1"></i>@Model.Items[0].ViewCount</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Sort tabs -->
+            <div class="d-flex gap-2 mb-4">
+                <a href="/category/@cat?.Slug?sort=latest"
+                   class="btn btn-sm @(sort == "latest" || sort == null
+                                      ? "btn-dark" : "btn-outline-secondary")">
+                    সর্বশেষ
+                </a>
+                <a href="/category/@cat?.Slug?sort=popular"
+                   class="btn btn-sm @(sort == "popular"
+                                      ? "btn-dark" : "btn-outline-secondary")">
+                    জনপ্রিয়
+                </a>
+                <a href="/category/@cat?.Slug?sort=comments"
+                   class="btn btn-sm @(sort == "comments"
+                                      ? "btn-dark" : "btn-outline-secondary")">
+                    আলোচিত
+                </a>
+            </div>
 
-                    <!-- Right side list -->
-                    <div class="col-12 col-md-6">
-                        @foreach (var news in Model.Items.Skip(1).Take(4))
-                        {
-                            <div class="pb-news-card-horizontal">
-                                <a href="/news/@news.Slug" class="pb-card-img-link">
-                                    <div class="pb-card-img-wrapper">
-                                        <img src="@(news.FeaturedImage ?? "/images/placeholder.jpg")"
-                                             alt="@news.Title"
-                                             class="pb-card-img" loading="lazy" />
-                                    </div>
-                                </a>
-                                <div class="pb-card-body flex-grow-1">
-                                    <h3 class="pb-card-title">
-                                        <a href="/news/@news.Slug">@news.Title</a>
-                                    </h3>
-                                    <p class="pb-card-summary">@news.Summary</p>
-                                    <div class="pb-card-meta">
-                                        <span>
-                                            <i class="bi bi-clock me-1"></i>
-                                            @news.PublishedAt?.ToString("dd MMM yyyy")
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-
-                    <!-- Rest in 4-column grid -->
-                    @foreach (var news in Model.Items.Skip(5))
+            @if (!Model.Items.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-newspaper fs-1 text-muted"></i>
+                    <p class="text-muted mt-3">এই বিভাগে কোনো সংবাদ নেই।</p>
+                    <a href="/" class="btn btn-outline-secondary btn-sm">
+                        হোমে ফিরুন
+                    </a>
+                </div>
+            }
+            else
+            {
+                <!-- ── Top 4 cards grid ─────────────────────────── -->
+                <div class="row g-3 mb-4">
+                    @foreach (var n in Model.Items.Take(4))
                     {
-                        <div class="col-6 col-md-4 col-lg-3">
-                            @await Html.PartialAsync("_NewsCard", news)
+                        <div class="col-6 col-md-3">
+                            <div class="cat-top-card">
+                                <a href="/news/@n.Slug"
+                                   class="cat-top-img-link">
+                                    <img src="@(n.FeaturedImage
+                                                                                     ?? "/images/placeholder.jpg")"
+                                 alt="@n.Title"
+                                 class="cat-top-img"
+                                 loading="lazy"
+                                 onerror="this.src='/images/placeholder.jpg'" />
+                        </a>
+                        <h6 class="cat-top-title mt-2">
+                            <a href="/news/@n.Slug"
+                               class="text-dark text-decoration-none">
+                                @n.Title
+                            </a>
+                        </h6>
+                        @if (!string.IsNullOrEmpty(n.Summary))
+                                {
+                                    <p class="cat-top-summary">@n.Summary</p>
+                                }
+                                <div class="pb-meta-sm">
+                                    <i class="bi bi-clock me-1"></i>
+                                    @n.PublishedAt?.ToString("dd MMM yyyy")
+                                </div>
+                            </div>
                         </div>
                     }
-                }
-                else
+                </div>
+
+                <hr style="border-color:#e5e5e5;opacity:1" />
+
+                <!-- ── List style items ────────────────────────── -->
+                <div id="cat-news-list">
+                    @foreach (var n in Model.Items.Skip(4))
+                    {
+                        <div class="cat-list-item">
+                            <a href="/news/@n.Slug"
+                               class="cat-list-thumb-link flex-shrink-0">
+                                <img src="@(n.FeaturedImage
+                                                                             ?? "/images/placeholder.jpg")"
+                             alt="@n.Title"
+                             class="cat-list-thumb"
+                             loading="lazy"
+                             onerror="this.src='/images/placeholder.jpg'" />
+                    </a>
+                    <div class="cat-list-body">
+                        <h5 class="cat-list-title">
+                            <a href="/news/@n.Slug"
+                               class="text-dark text-decoration-none">
+                                @n.Title
+                            </a>
+                        </h5>
+                        @if (!string.IsNullOrEmpty(n.Summary))
+                                {
+                                    <p class="cat-list-summary">@n.Summary</p>
+                                }
+                                <div class="pb-meta-sm d-flex gap-3">
+                                    @if (!string.IsNullOrEmpty(n.AuthorName))
+                                    {
+                                        <span>
+                                            <i class="bi bi-person me-1"></i>
+                                            @n.AuthorName
+                                        </span>
+                                    }
+                                    <span>
+                                        <i class="bi bi-clock me-1"></i>
+                                        @n.PublishedAt?.ToString("dd MMM yyyy")
+                                    </span>
+                                    @if (n.ViewCount > 0)
+                                    {
+                                        <span>
+                                            <i class="bi bi-eye me-1"></i>
+                                            @n.ViewCount
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- ── Load more ───────────────────────────────── -->
+                @if (Model.TotalPages > 1)
                 {
-                    <div class="col-12 text-center py-5">
-                        <i class="bi bi-newspaper fs-1 text-muted"></i>
-                        <p class="text-muted mt-3">এই বিভাগে কোনো সংবাদ নেই।</p>
+                    <div class="text-center mt-4" id="load-more-wrap">
+                        <button class="btn btn-outline-secondary px-5"
+                                id="load-more-btn"
+                                data-page="2"
+                                data-slug="@cat?.Slug"
+                                data-sort="@sort"
+                                onclick="loadMore(this)">
+                            আরও দেখুন
+                            <i class="bi bi-chevron-down ms-1"></i>
+                        </button>
                     </div>
                 }
-            </div>
-
-            <!-- Pagination -->
-            @if (Model.TotalPages > 1)
-            {
-                <nav class="mt-5">
-                    <ul class="pagination justify-content-center">
-                        @if (Model.HasPreviousPage)
-                        {
-                            <li class="page-item">
-                                <a class="page-link"
-                                   href="/category/@(category?.Slug)/@(Model.Page - 1)">
-                                    পূর্ববর্তী
-                                </a>
-                            </li>
-                        }
-                        @for (int i = Math.Max(1, Model.Page - 2);
-                                            i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
-                        {
-                            <li class="page-item @(i == Model.Page ? "active" : "")">
-                                <a class="page-link"
-                                   href="/category/@(category?.Slug)/@(i)">@i</a>
-                            </li>
-                        }
-                        @if (Model.HasNextPage)
-                        {
-                            <li class="page-item">
-                                <a class="page-link"
-                                   href="/category/@(category?.Slug)/@(Model.Page + 1)">
-                                    পরবর্তী
-                                </a>
-                            </li>
-                        }
-                    </ul>
-                </nav>
             }
 
         </div>
 
-        <!-- Sidebar -->
+        <!-- ══ RIGHT SIDEBAR ══════════════════════════════════ -->
         <div class="col-lg-3">
-            <div class="sticky-sidebar">
+            <div class="pb-sidebar">
+
+                <!-- Trending in this category -->
+                @if (trending.Any())
+                {
+                    <div class="pb-widget mb-4">
+                        <div class="pb-section-hdr mb-3">
+                            <h6 class="pb-sec-title mb-0">
+                                <i class="bi bi-fire text-danger me-1"></i>
+                                সর্বাধিক পঠিত
+                            </h6>
+                        </div>
+                        @foreach (var (n, i) in trending
+                                            .Select((x, idx) => (x, idx + 1)))
+                        {
+                            <div class="pb-trending-item">
+                                <span class="pb-trending-num">@i</span>
+                                <div class="flex-grow-1">
+                                    <a href="/news/@n.Slug"
+                                       class="pb-trending-title text-dark
+                                                  text-decoration-none">
+                                        @n.Title
+                                    </a>
+                                    <div class="pb-meta-sm mt-1">
+                                        <i class="bi bi-clock me-1"></i>
+                                        @n.PublishedAt?.ToString("dd MMM")
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Sidebar ads -->
                 @if (ViewBag.SidebarAds != null)
                 {
-                    foreach (var ad in (List<AdvertisementDto>)ViewBag.SidebarAds)
+                    foreach (var ad in
+                    (IEnumerable<AdvertisementDto>)ViewBag.SidebarAds)
                     {
-                        <div class="sidebar-widget ad-widget mb-4">
-                            @if (!string.IsNullOrEmpty(ad.ImageUrl))
+                        <div class="pb-widget mb-3 p-0 text-center overflow-hidden">
+                            @if (!string.IsNullOrEmpty(ad.HtmlCode))
+                            {
+                                @Html.Raw(ad.HtmlCode)
+                            }
+                            else if (!string.IsNullOrEmpty(ad.ImageUrl))
                             {
                                 <a href="@ad.TargetUrl" target="_blank">
-                                    <img src="@ad.ImageUrl" alt="@ad.Title"
-                                         class="img-fluid rounded w-100" />
+                                    <img src="@ad.ImageUrl"
+                                         class="img-fluid w-100" />
                                 </a>
                             }
                         </div>
                     }
                 }
+
             </div>
         </div>
+
     </div>
 </div>
 
 @section Scripts {
     <script>
-        async function filterSort(sort, btn) {
-            document.querySelectorAll('.btn[onclick^="filterSort"]').forEach(b => {
-                b.className = 'btn btn-sm btn-outline-secondary';
-            });
-            btn.className = 'btn btn-sm btn-primary active';
+        var _totalPages = @Model.TotalPages;
 
-            const slug = '@category?.Slug';
-            const res = await fetch(`/api/news?categorySlug=${slug}&sort=${sort}&pageSize=12&page=1`);
-            const data = await res.json();
-            const grid = document.getElementById('cat-news-grid');
-            grid.innerHTML = '';
+        async function loadMore(btn) {
+            var page = parseInt(btn.dataset.page);
+            var slug = btn.dataset.slug;
+            var sort = btn.dataset.sort;
 
-            if (!data.items || data.items.length === 0) {
-                grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">কোনো সংবাদ নেই</div>';
-                return;
-            }
+            btn.disabled = true;
+            btn.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-2"></span>' +
+                'লোড হচ্ছে...';
 
-            data.items.forEach((n, i) => {
-                if (i === 0) {
-                    grid.innerHTML += `
-                    <div class="col-12 col-md-6">
-                        <div class="pb-news-card pb-news-card-lead">
-                            <a href="/news/${n.slug}" class="pb-card-img-link">
-                                <div class="pb-card-img-wrapper">
-                                    <img src="${n.featuredImage || '/images/placeholder.jpg'}"
-                                         alt="${n.title}" class="pb-card-img" loading="lazy" />
-                                </div>
-                            </a>
-                            <div class="pb-card-body">
-                                <span class="pb-card-category"
-                                      style="color:${n.categoryColor || '#c0392b'}">
-                                    ${n.categoryName}
-                                </span>
-                                <h3 class="pb-card-title">
-                                    <a href="/news/${n.slug}">${n.title}</a>
-                                </h3>
-                                <p class="pb-card-summary">${n.summary || ''}</p>
-                                <div class="pb-card-meta">
-                                    <span>
-                                        <i class="bi bi-clock me-1"></i>
-                                        ${n.publishedAt ? new Date(n.publishedAt)
-                                            .toLocaleDateString('bn-BD') : ''}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
-                } else if (i >= 1 && i <= 4) {
-                    if (i === 1) grid.innerHTML += '<div class="col-12 col-md-6">';
-                    grid.innerHTML += `
-                        <div class="pb-news-card-horizontal">
-                            <a href="/news/${n.slug}" class="pb-card-img-link">
-                                <div class="pb-card-img-wrapper">
-                                    <img src="${n.featuredImage || '/images/placeholder.jpg'}"
-                                         alt="${n.title}" class="pb-card-img" loading="lazy" />
-                                </div>
-                            </a>
-                            <div class="pb-card-body flex-grow-1">
-                                <h3 class="pb-card-title">
-                                    <a href="/news/${n.slug}">${n.title}</a>
-                                </h3>
-                                <p class="pb-card-summary">${n.summary || ''}</p>
-                                <div class="pb-card-meta">
-                                    <span>
-                                        <i class="bi bi-clock me-1"></i>
-                                        ${n.publishedAt ? new Date(n.publishedAt)
-                                            .toLocaleDateString('bn-BD') : ''}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>`;
-                    if (i === 4) grid.innerHTML += '</div>';
+            try {
+                var res  = await fetch(
+                    '/category/' + slug + '/more?page=' + page +
+                    '&sort=' + sort);
+                var html = await res.text();
+
+                document.getElementById('cat-news-list')
+                    .insertAdjacentHTML('beforeend', html);
+
+                btn.dataset.page = page + 1;
+
+                if (page + 1 > _totalPages) {
+                    document.getElementById('load-more-wrap')
+                        .style.display = 'none';
                 } else {
-                    grid.innerHTML += `
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="news-card card h-100 border-0 shadow-sm">
-                            <a href="/news/${n.slug}">
-                                <img src="${n.featuredImage || '/images/placeholder.jpg'}"
-                                     class="card-img-top" alt="${n.title}"
-                                     style="height:175px;object-fit:cover" loading="lazy" />
-                            </a>
-                            <div class="card-body p-3">
-                                <span class="category-badge small"
-                                      style="background:${n.categoryColor || '#6c757d'}">
-                                    ${n.categoryName}
-                                </span>
-                                <h6 class="card-title mt-2 small fw-semibold">
-                                    <a href="/news/${n.slug}"
-                                       class="text-dark text-decoration-none">${n.title}</a>
-                                </h6>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i>
-                                    ${n.publishedAt ? new Date(n.publishedAt)
-                                        .toLocaleDateString('bn-BD') : ''}
-                                </small>
-                            </div>
-                        </div>
-                    </div>`;
+                    btn.disabled = false;
+                    btn.innerHTML =
+                        'আরও দেখুন <i class="bi bi-chevron-down ms-1"></i>';
                 }
-            });
+            } catch (e) {
+                btn.disabled = false;
+                btn.innerHTML =
+                    'আরও দেখুন <i class="bi bi-chevron-down ms-1"></i>';
+                toastr.error('লোড ব্যর্থ হয়েছে');
+            }
         }
     </script>
 }

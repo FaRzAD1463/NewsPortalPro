@@ -1,0 +1,45 @@
+﻿@using NewsPortalPro.DTOs
+@model List<NewsListDto>
+
+@foreach (var n in Model)
+{
+    <div class="cat-list-item">
+        <a href="/news/@n.Slug" class="cat-list-thumb-link flex-shrink-0">
+            <img src="@(n.FeaturedImage ?? "/images/placeholder.jpg")"
+                 alt="@n.Title"
+                 class="cat-list-thumb"
+                 loading="lazy"
+                 onerror="this.src='/images/placeholder.jpg'" />
+        </a>
+        <div class="cat-list-body">
+            <h5 class="cat-list-title">
+                <a href="/news/@n.Slug"
+                   class="text-dark text-decoration-none">
+                    @n.Title
+                </a>
+            </h5>
+            @if (!string.IsNullOrEmpty(n.Summary))
+            {
+                <p class="cat-list-summary">@n.Summary</p>
+            }
+            <div class="pb-meta-sm d-flex gap-3">
+                @if (!string.IsNullOrEmpty(n.AuthorName))
+                {
+                    <span>
+                        <i class="bi bi-person me-1"></i>@n.AuthorName
+                    </span>
+                }
+                <span>
+                    <i class="bi bi-clock me-1"></i>
+                    @n.PublishedAt?.ToString("dd MMM yyyy")
+                </span>
+                @if (n.ViewCount > 0)
+                {
+                    <span>
+                        <i class="bi bi-eye me-1"></i>@n.ViewCount
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+}

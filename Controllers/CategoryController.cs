@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
-using NewsPortalPro.Services;
 
 namespace NewsPortalPro.Controllers
 {
@@ -12,14 +11,18 @@ namespace NewsPortalPro.Controllers
         private readonly INewsService _news;
         private readonly IAdsService _ads;
 
-        public CategoryController(ICategoryService categories, INewsService news, IAdsService ads)
+        public CategoryController(
+            ICategoryService categories,
+            INewsService news,
+            IAdsService ads)
         {
             _categories = categories;
             _news = news;
             _ads = ads;
         }
 
-        public async Task<IActionResult> Index(string slug, int page = 1)
+        public async Task<IActionResult> Index(
+            string slug, int page = 1, string sort = "latest")
         {
             var category = await _categories.GetBySlugAsync(slug);
             if (category == null) return NotFound();
@@ -28,22 +31,35 @@ namespace NewsPortalPro.Controllers
             {
                 CategorySlug = slug,
                 Page = page,
-                PageSize = 20
+                PageSize = 16,
+                Sort = sort
             };
 
             var news = await _news.GetPublishedAsync(filter);
+            var trending = await _news.GetTrendingAsync(8);
+
             ViewBag.Category = category;
-            ViewBag.SidebarAds = await _ads.GetByPositionAsync(Models.AdPosition.Sidebar, category.Id);
+            ViewBag.Sort = sort;
+            ViewBag.Trending = trending;
+            ViewBag.SidebarAds = await _ads.GetByPositionAsync(
+                Models.AdPosition.Sidebar);
 
             return View(news);
         }
 
         [HttpGet("more")]
-        public async Task<IActionResult> LoadMore(string slug, int page)
+        public async Task<IActionResult> LoadMore(
+            string slug, int page, string sort = "latest")
         {
-            var filter = new NewsFilterDto { CategorySlug = slug, Page = page, PageSize = 10 };
+            var filter = new NewsFilterDto
+            {
+                CategorySlug = slug,
+                Page = page,
+                PageSize = 10,
+                Sort = sort
+            };
             var news = await _news.GetPublishedAsync(filter);
-            return PartialView("_NewsCardList", news.Items);
+            return PartialView("_CatNewsListItem", news.Items);
         }
     }
 }
