@@ -48,12 +48,20 @@ namespace NewsPortalPro.Controllers
             // Notify admin
             try
             {
+                // FIX: dto.Name / dto.Email / dto.Message were being
+                // interpolated directly into HTML with no encoding —
+                // a submitted <script>/<img onerror> payload would
+                // render in the admin's email client. HTML-encoded below.
+                var safeName = System.Net.WebUtility.HtmlEncode(dto.Name);
+                var safeEmail = System.Net.WebUtility.HtmlEncode(dto.Email);
+                var safeMessage = System.Net.WebUtility.HtmlEncode(dto.Message);
+
                 await _email.SendAsync(
                     "admin@newsportalpro.com",
                     $"নতুন যোগাযোগ: {dto.Subject}",
-                    $"<p><strong>নাম:</strong> {dto.Name}</p>" +
-                    $"<p><strong>ইমেইল:</strong> {dto.Email}</p>" +
-                    $"<p><strong>বার্তা:</strong> {dto.Message}</p>"
+                    $"<p><strong>নাম:</strong> {safeName}</p>" +
+                    $"<p><strong>ইমেইল:</strong> {safeEmail}</p>" +
+                    $"<p><strong>বার্তা:</strong> {safeMessage}</p>"
                 );
             }
             catch (Exception ex)
