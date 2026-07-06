@@ -703,9 +703,7 @@ body > *:last-child {
     letter-spacing: .3px;
 }
 
-/* ══════════════════════════════════════════════════════
-   CATEGORY SECTION — Protidinerbangladesh style
-   ══════════════════════════════════════════════════════ */
+
 
 /* ══════════════════════════════════════════════════════
    PROTIDINERBANGLADESH STYLE HOME PAGE
@@ -1050,6 +1048,146 @@ body > *:last-child {
 
 .pb-cat-block {
     background: transparent;
+}
+
+/* ══════════════════════════════════════════════════════
+   PAGE CONTAINER — centered with side gaps like
+   protidinerbangladesh.com
+   ══════════════════════════════════════════════════════ */
+
+.pb-page-container {
+    max-width: 1200px; /* matches protidiner layout width */
+    margin: 0 auto; /* center horizontally */
+    padding: 0 16px; /* side gaps on all screens */
+}
+
+@media (min-width: 1400px) {
+    .pb-page-container {
+        max-width: 1320px;
+    }
+}
+
+@media (max-width: 768px) {
+    .pb-page-container {
+        padding: 0 10px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════
+   FIX IMAGE CUTTING — images must never overflow
+   ══════════════════════════════════════════════════════ */
+
+/* All card image wrappers clip overflow */
+.pb-hero-lead,
+.pb-hero-sub,
+.pb-mini-img-link,
+.pb-lead2-img-link,
+.pb-grid-img-link {
+    overflow: hidden;
+}
+
+/* Images fill container without cutting content */
+.pb-hero-lead-img {
+    width: 100%;
+    height: 380px; /* fixed height — no cutting */
+    object-fit: cover; /* crop centre, never stretch */
+    object-position: center top;
+    display: block;
+}
+
+.pb-hero-sub-img {
+    width: 100%;
+    height: 184px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.pb-mini-img {
+    width: 100%;
+    height: 115px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.pb-lead2-img {
+    width: 100%;
+    height: 210px;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+.pb-grid-img {
+    width: 100%;
+    height: 125px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+/* Responsive height adjustments */
+@media (max-width: 991px) {
+    .pb-hero-lead-img {
+        height: 280px;
+    }
+
+    .pb-hero-sub-img {
+        height: 135px;
+    }
+
+    .pb-lead2-img {
+        height: 180px;
+    }
+
+    .pb-grid-img {
+        height: 110px;
+    }
+}
+
+@media (max-width: 767px) {
+    .pb-hero-lead-img {
+        height: 220px;
+    }
+
+    .pb-hero-sub-img {
+        height: 105px;
+    }
+
+    .pb-mini-img {
+        height: 90px;
+    }
+
+    .pb-lead2-img {
+        height: 160px;
+    }
+
+    .pb-grid-img {
+        height: 95px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pb-hero-lead-img {
+        height: 180px;
+    }
+
+    .pb-hero-sub-img {
+        height: 85px;
+    }
+
+    .pb-mini-img {
+        height: 80px;
+    }
+
+    .pb-lead2-img {
+        height: 140px;
+    }
+
+    .pb-grid-img {
+        height: 85px;
+    }
 }
 
 /* ── Dark mode ───────────────────────────────────────── */
