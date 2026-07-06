@@ -1,346 +1,585 @@
-﻿@model NewsDetailDto
+﻿@using NewsPortalPro.DTOs
+@using NewsPortalPro.Models
+@model NewsDetailDto
 @{
-    ViewData["Title"] = Model.MetaTitle ?? Model.Title;
-    ViewData["MetaDescription"] = Model.MetaDescription;
-    ViewData["MetaKeywords"] = Model.MetaKeywords;
-    ViewData["OgTitle"] = Model.Title;
-    ViewData["OgDescription"] = Model.Summary;
+    ViewData["Title"] = Model.Title;
+    ViewData["Description"] = Model.MetaDescription ?? Model.Summary;
+    ViewData["Keywords"] = Model.MetaKeywords;
     ViewData["OgImage"] = Model.FeaturedImage;
-    ViewData["ShowShareBar"] = true;
-    ViewData["CanonicalUrl"] = Model.CanonicalUrl ?? $"https://newsportalpro.com/news/{Model.Slug}";
 }
 
-@functions {
-    string FormatBdTime(DateTime? dt)
-    {
-        if (!dt.HasValue) return "";
-        try
-        {
-            var bdTime = TimeZoneInfo.ConvertTimeFromUtc(
-                DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc),
-                TimeZoneInfo.FindSystemTimeZoneById("Bangladesh Standard Time")
-            );
-            return bdTime.ToString("dd MMMM yyyy, hh:mm tt");
-        }
-        catch
-        {
-            return dt.Value.AddHours(6).ToString("dd MMMM yyyy, hh:mm tt");
-        }
-    }
-}
+<div class="pb-page-container">
+    <div class="row g-0 mt-3">
 
-<article class="news-detail" itemscope itemtype="https://schema.org/NewsArticle">
-    <div class="container-fluid px-4 mt-4">
-        <div class="row g-4">
+        <!-- ══ LEFT SIDEBAR — Table of Contents ═══════════════ -->
+        <div class="col-lg-2 d-none d-lg-block pe-3">
+            <div class="article-toc-panel">
+                <div class="toc-title">এই সংবাদে</div>
+                <ul class="toc-list" id="toc-list">
+                    <!-- Populated by JS from h2/h3 in article -->
+                </ul>
+            </div>
+        </div>
 
-            <!-- Article -->
-            <div class="col-lg-8 col-xl-9">
+        <!-- ══ MAIN ARTICLE ════════════════════════════════════ -->
+        <div class="col-lg-7 col-md-8 px-0 px-md-3">
 
-                <!-- Breadcrumb -->
-                <nav aria-label="breadcrumb" class="mb-3">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/">হোম</a></li>
-                        <li class="breadcrumb-item">
-                            <a href="/category/@Model.CategorySlug">@Model.CategoryName</a>
-                        </li>
-                        <li class="breadcrumb-item active" aria-current="page">
-                            @Model.Title[..Math.Min(40, Model.Title.Length)]...
-                        </li>
-                    </ol>
-                </nav>
+            <!-- Breadcrumb -->
+            <nav class="article-breadcrumb mb-2">
+                <a href="/">হোম</a>
+                <span class="sep">›</span>
+                <a href="/category/@Model.CategorySlug">@Model.CategoryName</a>
+                <span class="sep">›</span>
+                <span class="text-muted">@Model.Title</span>
+            </nav>
 
-                @Html.AntiForgeryToken()
+            <!-- Title -->
+            <h1 class="article-main-title">@Model.Title</h1>
 
-                <!-- Category Badge -->
-                <span class="category-badge fs-6 mb-2 d-inline-block" style="background:@Model.CategoryColor">
-                    @Model.CategoryName
-                </span>
-                @if (Model.IsBreaking)
-                {
-                    <span class="badge bg-danger ms-2">ব্রেকিং নিউজ</span>
-                }
+            @if (!string.IsNullOrEmpty(Model.Subtitle))
+            {
+                <p class="article-subtitle">@Model.Subtitle</p>
+            }
 
-                <!-- Title -->
-                <h1 class="article-title" itemprop="headline">@Model.Title</h1>
-
-                @if (!string.IsNullOrEmpty(Model.Subtitle))
-                {
-                    <h2 class="article-subtitle text-muted fs-5 fw-normal">@Model.Subtitle</h2>
-                }
-
-                <!-- Meta -->
-                <div class="article-meta d-flex flex-wrap gap-3 align-items-center my-3 pb-3 border-bottom">
-                    <div class="d-flex align-items-center gap-2">
-                        @if (!string.IsNullOrEmpty(Model.AuthorPicture))
-                        {
-                            <img src="@Model.AuthorPicture" alt="@Model.AuthorName"
-                                 class="rounded-circle" width="36" height="36" />
-                        }
-                        <div>
-                            <span class="fw-medium">@Model.AuthorName</span>
-                        </div>
-                    </div>
-
-                    <!-- FIXED: Published date now uses FormatBdTime for correct BD timezone display -->
-                    <div class="text-muted small">
-                        <i class="bi bi-calendar3 me-1"></i>
-                        <time itemprop="datePublished" datetime="@Model.PublishedAt?.ToString("o")">
-                            @FormatBdTime(Model.PublishedAt)
-                        </time>
-                    </div>
-
-                    <div class="text-muted small">
-                        <i class="bi bi-clock me-1"></i>@Model.ReadTimeMinutes মিনিট পড়ার সময়
-                    </div>
-                    <div class="text-muted small">
-                        <i class="bi bi-eye me-1"></i>@Model.ViewCount বার পড়া হয়েছে
-                    </div>
-                </div>
-
-                <!-- Featured Image -->
-                @if (!string.IsNullOrEmpty(Model.FeaturedImage))
-                {
-                    <figure class="article-figure mb-4">
-                        <img src="@Model.FeaturedImage" alt="@Model.FeaturedImageAlt"
-                             class="img-fluid w-100 rounded" itemprop="image" />
-                        @if (!string.IsNullOrEmpty(Model.FeaturedImageCaption))
-                        {
-                            <figcaption class="text-muted small mt-1 text-center">
-                                @Model.FeaturedImageCaption
-                            </figcaption>
-                        }
-                    </figure>
-                }
-
-                <!-- Video -->
-                @if (!string.IsNullOrEmpty(Model.VideoUrl))
-                {
-                    <div class="video-embed mb-4 ratio ratio-16x9">
-                        <iframe src="@Model.VideoUrl" allowfullscreen class="rounded"></iframe>
-                    </div>
-                }
-
-                <!-- Content -->
-                <div class="article-content" itemprop="articleBody">
-                    @Html.Raw(Model.Content)
-                </div>
-
-                <!-- Tags -->
-                @if (Model.Tags.Any())
-                {
-                    <div class="article-tags mt-4 pt-3 border-top">
-                        <span class="fw-medium me-2"><i class="bi bi-tags me-1"></i>ট্যাগ:</span>
-                        @foreach (var tag in Model.Tags)
-                        {
-                            <a href="/tag/@tag.ToLower().Replace(" ", "-")"
-                               class="badge bg-secondary text-decoration-none me-1">@tag</a>
-                        }
-                    </div>
-                }
-
-                <!-- Share Bar (mobile) -->
-                <div class="share-bar-mobile d-flex gap-2 mt-4 d-lg-none">
-                    <span class="me-2 fw-medium">শেয়ার করুন:</span>
-                    <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(ViewData["CanonicalUrl"]?.ToString() ?? "")"
-                       class="btn btn-sm btn-primary" target="_blank"><i class="bi bi-facebook"></i></a>
-                    <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString(ViewData["CanonicalUrl"]?.ToString() ?? "")"
-                       class="btn btn-sm btn-dark" target="_blank"><i class="bi bi-twitter-x"></i></a>
-                    <a href="https://wa.me/?text=@Uri.EscapeDataString(Model.Title + " " + ViewData["CanonicalUrl"]?.ToString() ?? "")"
-                       class="btn btn-sm btn-success" target="_blank"><i class="bi bi-whatsapp"></i></a>
-                </div>
-
-                <!-- Reactions -->
-                <div class="reaction-bar mt-4 p-3 bg-light rounded">
-                    <span class="fw-medium me-3">আপনার প্রতিক্রিয়া:</span>
-                    @foreach (var (emoji, name, type) in new[] {
-                                        ("👍", "পছন্দ", "Like"), ("❤️", "ভালোবাসা", "Love"),
-                                        ("😆", "মজার", "Haha"), ("😢", "দুঃখজনক", "Sad"),
-                                        ("😠", "রাগান্বিত", "Angry"), ("😲", "অবাক", "Wow")
-                                        })
+            <!-- Meta row -->
+            <div class="article-meta-row">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    @if (!string.IsNullOrEmpty(Model.AuthorName))
                     {
-                        <button class="btn btn-reaction me-2"
-                                onclick="reactToNews(@Model.Id, '@type')"
-                                data-reaction="@type">
-                            <span class="emoji">@emoji</span>
-                            <span class="count" id="reaction-@type">
-                                @(Model.Reactions.ContainsKey(type) ? Model.Reactions[type] : 0)
-                            </span>
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrEmpty(Model.AuthorPicture))
+                            {
+                                <img src="@Model.AuthorPicture"
+                                     class="author-avatar-sm rounded-circle"
+                                     style="width:32px;height:32px;object-fit:cover" />
+                            }
+                            else
+                            {
+                                <div class="author-avatar-sm rounded-circle
+                                                bg-secondary d-flex align-items-center
+                                                justify-content-center text-white"
+                                     style="width:32px;height:32px;font-size:12px">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                            }
+                            <span class="article-author">@Model.AuthorName</span>
+                        </div>
+                    }
+                    <span class="article-date">
+                        <i class="bi bi-clock me-1"></i>
+                        @Model.PublishedAt?.ToString("dd MMMM yyyy, hh:mm tt")
+                    </span>
+                    <span class="article-views">
+                        <i class="bi bi-eye me-1"></i>@Model.ViewCount
+                    </span>
+                    @if (Model.ReadTimeMinutes > 0)
+                    {
+                        <span class="article-read-time">
+                            <i class="bi bi-book me-1"></i>
+                            @Model.ReadTimeMinutes মিনিট পড়া
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <!-- Share bar — top -->
+            <div class="article-share-bar my-3">
+                <span class="share-label">শেয়ার করুন:</span>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")"
+                   target="_blank"
+                   class="share-btn share-fb">
+                    <i class="bi bi-facebook"></i>
+                </a>
+                <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")&text=@Uri.EscapeDataString(Model.Title)"
+                   target="_blank"
+                   class="share-btn share-tw">
+                    <i class="bi bi-twitter-x"></i>
+                </a>
+                <a href="https://wa.me/?text=@Uri.EscapeDataString($"{Model.Title} {Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")"
+                   target="_blank"
+                   class="share-btn share-wa">
+                    <i class="bi bi-whatsapp"></i>
+                </a>
+                <a href="https://www.linkedin.com/shareArticle?url=@Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")"
+                   target="_blank"
+                   class="share-btn share-li">
+                    <i class="bi bi-linkedin"></i>
+                </a>
+                <button class="share-btn share-copy"
+                        onclick="copyLink()"
+                        title="লিঙ্ক কপি">
+                    <i class="bi bi-link-45deg"></i>
+                </button>
+                <button class="share-btn share-print"
+                        onclick="window.print()"
+                        title="প্রিন্ট">
+                    <i class="bi bi-printer"></i>
+                </button>
+            </div>
+
+            <!-- Featured image -->
+            @if (!string.IsNullOrEmpty(Model.FeaturedImage))
+            {
+                <div class="article-featured-img-wrap mb-3">
+                    <img src="@Model.FeaturedImage"
+                         alt="@(Model.FeaturedImageAlt ?? Model.Title)"
+                         class="article-featured-img"
+                         loading="eager" />
+                    @if (!string.IsNullOrEmpty(Model.FeaturedImageCaption))
+                    {
+                        <p class="article-img-caption">
+                            @Model.FeaturedImageCaption
+                        </p>
+                    }
+                </div>
+            }
+
+            <!-- Reading progress bar -->
+            <div class="reading-progress-wrap">
+                <div class="reading-progress-bar" id="reading-progress"></div>
+            </div>
+
+            <!-- Article content -->
+            <div class="article-body" id="article-body">
+                @Html.Raw(Model.Content)
+            </div>
+
+            <!-- Video -->
+            @if (!string.IsNullOrEmpty(Model.VideoUrl))
+            {
+                <div class="article-video-wrap my-4">
+                    <div class="ratio ratio-16x9">
+                        <iframe src="@Model.VideoUrl"
+                                allowfullscreen
+                                title="@Model.Title"></iframe>
+                    </div>
+                </div>
+            }
+
+            <!-- Tags -->
+            @if (Model.Tags.Any())
+            {
+                <div class="article-tags my-4">
+                    <span class="tags-label">ট্যাগ:</span>
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <a href="/tag/@tag.ToLower().Replace(" ", "-")"
+                           class="article-tag">@tag</a>
+                    }
+                </div>
+            }
+
+            <!-- Share bar — bottom -->
+            <div class="article-share-bar border-top border-bottom py-3 my-3">
+                <span class="share-label">শেয়ার করুন:</span>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")"
+                   target="_blank"
+                   class="share-btn share-fb">
+                    <i class="bi bi-facebook"></i>
+                </a>
+                <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")&text=@Uri.EscapeDataString(Model.Title)"
+                   target="_blank"
+                   class="share-btn share-tw">
+                    <i class="bi bi-twitter-x"></i>
+                </a>
+                <a href="https://wa.me/?text=@Uri.EscapeDataString($"{Model.Title} {Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")"
+                   target="_blank"
+                   class="share-btn share-wa">
+                    <i class="bi bi-whatsapp"></i>
+                </a>
+                <a href="https://www.linkedin.com/shareArticle?url=@Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")"
+                   target="_blank"
+                   class="share-btn share-li">
+                    <i class="bi bi-linkedin"></i>
+                </a>
+                <button class="share-btn share-copy"
+                        onclick="copyLink()">
+                    <i class="bi bi-link-45deg"></i>
+                </button>
+            </div>
+
+            <!-- Reactions -->
+            <div class="article-reactions my-4">
+                <div class="reactions-label">এই সংবাদে আপনার প্রতিক্রিয়া:</div>
+                <div class="d-flex gap-2 flex-wrap mt-2">
+                    @{
+                        var reactions = new[]
+                        {
+                                        ("Like",     "👍", "পছন্দ"),
+                                        ("Love",     "❤️",  "ভালোবাসা"),
+                                        ("Haha",     "😄", "মজাদার"),
+                                        ("Wow",      "😮", "অবাক"),
+                                        ("Sad",      "😢", "দুঃখজনক"),
+                                        ("Angry",    "😡", "রাগান্বিত")
+                                        };
+                    }
+                    @foreach (var (type, emoji, label) in reactions)
+                    {
+                        var count = Model.Reactions.TryGetValue(type, out var c)
+                        ? c : 0;
+                        <button class="btn-reaction"
+                                data-reaction="@type"
+                                onclick="reactToNews(@Model.Id, '@type')">
+                            <span class="reaction-emoji">@emoji</span>
+                            <span class="reaction-label">@label</span>
+                            <span class="reaction-count"
+                                  id="reaction-@type">@count</span>
                         </button>
                     }
                 </div>
+            </div>
 
-                <!-- Author Box -->
-                <div class="author-box mt-4 p-4 bg-light rounded">
-                    <div class="d-flex gap-3">
-                        @if (!string.IsNullOrEmpty(Model.AuthorPicture))
-                        {
-                            <img src="@Model.AuthorPicture" alt="@Model.AuthorName"
-                                 class="rounded-circle flex-shrink-0"
-                                 width="80" height="80" />
-                        }
-                        <div>
-                            <h5 class="mb-1">@Model.AuthorName</h5>
-                            @if (!string.IsNullOrEmpty(Model.AuthorBio))
-                            {
-                                <p class="text-muted small mb-0">@Model.AuthorBio</p>
-                            }
+            <!-- Author box -->
+            @if (!string.IsNullOrEmpty(Model.AuthorName))
+            {
+                <div class="article-author-box my-4">
+                    @if (!string.IsNullOrEmpty(Model.AuthorPicture))
+                    {
+                        <img src="@Model.AuthorPicture"
+                             class="author-box-avatar"
+                             alt="@Model.AuthorName" />
+                    }
+                    else
+                    {
+                        <div class="author-box-avatar bg-secondary
+                                        d-flex align-items-center
+                                        justify-content-center text-white">
+                            <i class="bi bi-person fs-3"></i>
                         </div>
+                    }
+                    <div class="author-box-info">
+                        <div class="author-box-name">@Model.AuthorName</div>
+                        @if (!string.IsNullOrEmpty(Model.AuthorBio))
+                        {
+                            <p class="author-box-bio">@Model.AuthorBio</p>
+                        }
                     </div>
                 </div>
+            }
 
-                <!-- Related News -->
-                @if (Model.RelatedNews.Any())
-                {
-                    <div class="related-news mt-5">
-                        <h4 class="section-title mb-3"><span>সম্পর্কিত</span> সংবাদ</h4>
-                        <div class="row g-3">
-                            @foreach (var rel in Model.RelatedNews)
-                            {
-                                <div class="col-sm-6 col-md-4">
-                                    @await Html.PartialAsync("_NewsCard", rel)
-                                </div>
-                            }
+            <!-- Comments section -->
+            @if (Model.AllowComments)
+            {
+                <div class="article-comments my-4" id="comments-section">
+                    <h5 class="comments-title">
+                        মন্তব্য
+                        <span class="badge bg-secondary ms-2"
+                              style="font-size:.75rem">
+                            @Model.CommentCount
+                        </span>
+                    </h5>
+
+                    <!-- Comment form -->
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="comment-form-wrap mb-4">
+                            <textarea id="comment-text"
+                              class="form-control mb-2"
+                              rows="3"
+                              placeholder="আপনার মন্তব্য লিখুন..."></textarea>
+                            <button class="btn btn-danger btn-sm px-4"
+                                    onclick="submitComment(@Model.Id)">
+                                <i class="bi bi-send me-1"></i>মন্তব্য পাঠান
+                            </button>
                         </div>
-                    </div>
-                }
+                    }
+                    else
+                    {
+                        <div class="alert alert-light border mb-4 small">
+                            মন্তব্য করতে
+                            <a href="/Account/Login?returnUrl=/news/@Model.Slug"
+                               class="text-danger fw-bold">লগইন করুন</a>
+                        </div>
+                    }
 
-                <!-- Comments -->
-                @if (Model.AllowComments)
-                {
-                    <div class="comments-section mt-5" id="comments">
-                        <h4 class="section-title mb-3">
-                            <span>মন্তব্য</span>
-                            <span class="badge bg-primary ms-2">@Model.CommentCount</span>
-                        </h4>
-
-                        @if (User.Identity?.IsAuthenticated == true)
+                    <!-- Comments list -->
+                    <div id="comments-list">
+                        @if (Model.Comments.Any())
                         {
-                            <div class="comment-form mb-4">
-                                <textarea id="comment-text" class="form-control" rows="3"
-                                  placeholder="আপনার মন্তব্য লিখুন..."></textarea>
-                                <button class="btn btn-primary mt-2" onclick="submitComment(@Model.Id)">
-                                    <i class="bi bi-send me-2"></i>মন্তব্য করুন
-                                </button>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="alert alert-info">
-                                মন্তব্য করতে <a href="/Account/Login">লগইন</a> করুন।
-                            </div>
-                        }
-
-                        <div id="comments-list">
                             @foreach (var comment in Model.Comments)
                             {
-                                <div class="comment-item mb-3 p-3 bg-light rounded">
-                                    <div class="d-flex gap-2">
-                                        @if (!string.IsNullOrEmpty(comment.UserAvatar))
-                                        {
-                                            <img src="@comment.UserAvatar" class="rounded-circle flex-shrink-0"
-                                                 width="40" height="40" alt="@comment.UserName" />
-                                        }
-                                        else
-                                        {
-                                            <div class="avatar-placeholder rounded-circle flex-shrink-0">
-                                                @comment.UserName[0]
-                                            </div>
-                                        }
+                                <div class="comment-item" id="comment-@comment.Id">
+                                    <div class="d-flex gap-3">
+                                        <div class="comment-avatar">
+                                            @if (!string.IsNullOrEmpty(
+                                                                            comment.UserAvatar))
+                                            {
+                                                <img src="@comment.UserAvatar"
+                                                     class="rounded-circle"
+                                                     style="width:36px;height:36px;
+                                                                        object-fit:cover" />
+                                            }
+                                            else
+                                            {
+                                                <div class="rounded-circle bg-secondary
+                                                                        d-flex align-items-center
+                                                                        justify-content-center
+                                                                        text-white"
+                                                     style="width:36px;height:36px">
+                                                    <i class="bi bi-person"></i>
+                                                </div>
+                                            }
+                                        </div>
                                         <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between">
-                                                <strong>@comment.UserName</strong>
+                                            <div class="d-flex justify-content-between
+                                                                align-items-center mb-1">
+                                                <strong class="small">
+                                                    @comment.UserName
+                                                </strong>
                                                 <small class="text-muted">
-                                                    @comment.CreatedAt.ToString("dd MMM yyyy")
+                                                    @comment.CreatedAt
+                                                    .ToString("dd MMM yyyy")
                                                 </small>
                                             </div>
-                                            <p class="mb-1 mt-1">@comment.Content</p>
-                                            <button class="btn btn-sm btn-link p-0 text-primary"
-                                                    onclick="showReplyForm(@comment.Id)">
-                                                <i class="bi bi-reply me-1"></i>উত্তর
-                                            </button>
-                                            <div id="reply-form-@comment.Id" class="d-none mt-2">
-                                                <textarea class="form-control form-control-sm" rows="2"
-                                                  id="reply-text-@comment.Id"
-                                                  placeholder="উত্তর লিখুন..."></textarea>
-                                                <button class="btn btn-sm btn-primary mt-1"
-                                                        onclick="submitReply(@Model.Id, @comment.Id)">
+                                            <p class="mb-1 small">
+                                                @comment.Content
+                                            </p>
+                                            @if (User.Identity?.IsAuthenticated == true)
+                                            {
+                                                <button class="btn btn-link btn-sm
+                                                                           p-0 text-muted"
+                                                        onclick="showReplyForm(
+                                                                        @comment.Id)">
+                                                    <i class="bi bi-reply me-1"></i>
+                                                    উত্তর দিন
+                                                </button>
+                                            }
+
+                                            <!-- Reply form -->
+                                            <div id="reply-form-@comment.Id"
+                                                 class="d-none mt-2">
+                                                <textarea id="reply-text-@comment.Id"
+                                              class="form-control form-control-sm mb-1"
+                                              rows="2"
+                                              placeholder="উত্তর লিখুন...">
+                                            </textarea>
+                                                <button class="btn btn-danger btn-sm"
+                                                        onclick="submitReply(
+                                                                    @Model.Id,
+                                                                    @comment.Id)">
                                                     পাঠান
                                                 </button>
                                             </div>
 
-                                            @foreach (var reply in comment.Replies)
+                                            <!-- Replies -->
+                                            @if (comment.Replies.Any())
                                             {
-                                                <div class="reply-item mt-2 ps-3 border-start">
-                                                    <strong class="small">@reply.UserName</strong>
-                                                    <span class="text-muted ms-2 small">
-                                                        @reply.CreatedAt.ToString("dd MMM")
-                                                    </span>
-                                                    <p class="mb-0 small">@reply.Content</p>
+                                                <div class="comment-replies mt-2">
+                                                    @foreach (var reply in
+                                                                                        comment.Replies)
+                                                    {
+                                                        <div class="d-flex gap-2 mt-2">
+                                                            <div class="rounded-circle
+                                                                                        bg-secondary
+                                                                                        d-flex align-items-center
+                                                                                        justify-content-center
+                                                                                        text-white flex-shrink-0"
+                                                                 style="width:28px;
+                                                                                        height:28px;
+                                                                                        font-size:11px">
+                                                                <i class="bi bi-person">
+                                                                </i>
+                                                            </div>
+                                                            <div>
+                                                                <strong class="small">
+                                                                    @reply.UserName
+                                                                </strong>
+                                                                <p class="mb-0 small">
+                                                                    @reply.Content
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    }
                                                 </div>
                                             }
                                         </div>
                                     </div>
                                 </div>
                             }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4 small">
+                                <i class="bi bi-chat-dots fs-2 d-block mb-2"></i>
+                                এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্য করুন!
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        <!-- ══ RIGHT SIDEBAR ═══════════════════════════════════ -->
+        <div class="col-lg-3 col-md-4 ps-md-3 d-none d-md-block">
+            <div class="article-right-sidebar">
+
+                <!-- Related news -->
+                @if (Model.RelatedNews.Any())
+                {
+                    <div class="sidebar-widget mb-4">
+                        <div class="sidebar-widget-title">সম্পর্কিত সংবাদ</div>
+                        @foreach (var n in Model.RelatedNews.Take(5))
+                        {
+                            <div class="sidebar-news-item">
+                                <a href="/news/@n.Slug"
+                                   class="sidebar-news-thumb-link">
+                                    <img src="@(n.FeaturedImage
+                                                                                     ?? "/images/placeholder.jpg")"
+                                 alt="@n.Title"
+                                 class="sidebar-news-thumb"
+                                 onerror="this.src='/images/placeholder.jpg'" />
+                        </a>
+                        <div class="sidebar-news-body">
+                            <a href="/news/@n.Slug"
+                               class="sidebar-news-title
+                                          text-dark text-decoration-none">
+                                @n.Title
+                            </a>
+                            <div class="pb-meta-sm mt-1">
+                                <i class="bi bi-clock me-1"></i>
+                                @n.PublishedAt?.ToString("dd MMM")
+                            </div>
                         </div>
+                    </div>
+                                        }
                     </div>
                 }
 
-            </div>
-
-            <!-- Sidebar -->
-            <div class="col-lg-4 col-xl-3">
-                <div class="sticky-sidebar">
-
-                    <!-- Sidebar Ad -->
-                    @if (ViewBag.SidebarAds != null)
-                    {
-                        foreach (var ad in (List<AdvertisementDto>)ViewBag.SidebarAds)
-                        {
-                            <div class="sidebar-widget ad-widget mb-4">
-                                @if (!string.IsNullOrEmpty(ad.ImageUrl))
-                                {
-                                    <a href="@ad.TargetUrl" target="_blank" onclick="trackAdClick(@ad.Id)">
-                                        <img src="@ad.ImageUrl" alt="@ad.Title" class="img-fluid rounded" />
-                                    </a>
-                                }
-                            </div>
-                        }
-                    }
-
+                <!-- Latest news widget -->
+                <div class="sidebar-widget mb-4" id="sidebar-latest">
+                    <div class="sidebar-widget-title">সর্বশেষ সংবাদ</div>
+                    <div id="sidebar-latest-list">
+                        <!-- Loaded by JS -->
+                    </div>
                 </div>
+
             </div>
         </div>
-    </div>
-</article>
 
+    </div>
+
+    <!-- ══ RELATED NEWS BOTTOM GRID ═══════════════════════════ -->
+    @if (Model.RelatedNews.Any())
+    {
+        <div class="mt-5 pt-3 border-top">
+            <div class="pb-section-hdr mb-3">
+                <h5 class="pb-sec-title">আরও পড়ুন</h5>
+            </div>
+            <div class="row g-3">
+                @foreach (var n in Model.RelatedNews.Take(4))
+                {
+                    <div class="col-6 col-md-3">
+                        <div class="pb-grid-card">
+                            <a href="/news/@n.Slug" class="pb-grid-img-link">
+                                <img src="@(n.FeaturedImage
+                                                                             ?? "/images/placeholder.jpg")"
+                             alt="@n.Title"
+                             class="pb-grid-img"
+                             loading="lazy"
+                             onerror="this.src='/images/placeholder.jpg'" />
+                    </a>
+                    <h6 class="pb-grid-title mt-2">
+                        <a href="/news/@n.Slug"
+                           class="text-dark text-decoration-none">
+                            @n.Title
+                        </a>
+                    </h6>
+                    <div class="pb-meta-sm">
+                        <i class="bi bi-clock me-1"></i>
+                        @n.PublishedAt?.ToString("dd MMM yyyy")
+                    </div>
+                </div>
+            </div>
+                        }
+            </div>
+        </div>
+    }
+
+</div><!-- /pb-page-container -->
 @section Scripts {
     <script>
-        // ── Reading Progress ──────────────────────────────────────
+        // ── Reading progress ───────────────────────────────────────
         window.addEventListener('scroll', function () {
-            const article = document.querySelector('.article-content');
-            if (!article) return;
-            const total    = article.offsetTop + article.offsetHeight - window.innerHeight;
-            const scrolled = window.scrollY - article.offsetTop;
-            const progress = Math.min(Math.max((scrolled / total) * 100, 0), 100);
-            const bar = document.getElementById('reading-progress');
-            if (bar) bar.style.width = progress + '%';
+            var body   = document.getElementById('article-body');
+            if (!body) return;
+            var start  = body.offsetTop;
+            var end    = start + body.offsetHeight - window.innerHeight;
+            var pct    = Math.min(Math.max(
+                (window.scrollY - start) / (end - start) * 100, 0), 100);
+            var bar = document.getElementById('reading-progress');
+            if (bar) bar.style.width = pct + '%';
         });
 
-        // ── Get antiforgery token ─────────────────────────────────
+        // ── Table of contents ──────────────────────────────────────
+        (function buildToc() {
+            var body = document.getElementById('article-body');
+            var list = document.getElementById('toc-list');
+            if (!body || !list) return;
+
+            var headings = body.querySelectorAll('h2, h3');
+            if (!headings.length) return;
+
+            headings.forEach(function(h, i) {
+                h.id = 'heading-' + i;
+                var li = document.createElement('li');
+                li.className = 'toc-item ' +
+                    (h.tagName === 'H3' ? 'toc-sub' : '');
+                li.innerHTML =
+                    '<a href="#heading-' + i + '" class="toc-link">' +
+                    h.textContent + '</a>';
+                list.appendChild(li);
+            });
+        })();
+
+        // ── Antiforgery token ──────────────────────────────────────
         function getToken() {
             return document.querySelector(
-                'input[name="__RequestVerificationToken"]')?.value ?? '';
+                'input[name="__RequestVerificationToken"]')
+                ?.value ?? '';
         }
 
-        // ── Submit comment ────────────────────────────────────────
+        // ── Load sidebar latest news ───────────────────────────────
+        (async function loadSidebarLatest() {
+            var container = document.getElementById('sidebar-latest-list');
+            if (!container) return;
+            try {
+                var res  = await fetch('/api/news?pageSize=6&page=1');
+                var data = await res.json();
+                if (!data.items) return;
+                container.innerHTML = data.items.map(function(n) {
+                    var img = n.featuredImage || '/images/placeholder.jpg';
+                    var date = n.publishedAt
+                        ? new Date(n.publishedAt).toLocaleDateString('bn-BD')
+                        : '';
+                    return '<div class="sidebar-news-item">' +
+                        '<a href="/news/' + n.slug + '" ' +
+                           'class="sidebar-news-thumb-link">' +
+                            '<img src="' + img + '" ' +
+                                 'onerror="this.src=\'/images/placeholder.jpg\'" ' +
+                                 'class="sidebar-news-thumb" />' +
+                        '</a>' +
+                        '<div class="sidebar-news-body">' +
+                            '<a href="/news/' + n.slug + '" ' +
+                               'class="sidebar-news-title text-dark ' +
+                               'text-decoration-none">' +
+                                n.title +
+                            '</a>' +
+                            '<div class="pb-meta-sm mt-1">' + date + '</div>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            } catch(e) { }
+        })();
+
+        // ── Submit comment ─────────────────────────────────────────
         async function submitComment(newsId) {
-            const textarea = document.getElementById('comment-text');
-            const content  = textarea?.value?.trim();
+            var textarea = document.getElementById('comment-text');
+            var content  = textarea?.value?.trim();
             if (!content) { toastr.warning('মন্তব্য লিখুন'); return; }
 
             try {
-                const res = await fetch('/News/AddComment', {
+                var res = await fetch('/News/AddComment', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -355,67 +594,60 @@
 
                 if (res.status === 401) {
                     toastr.info('মন্তব্য করতে লগইন করুন');
-                    window.location.href = '/Account/Login';
                     return;
                 }
 
-                if (res.status === 404) {
-                    toastr.error('রুট পাওয়া যায়নি');
-                    return;
-                }
-
-                let data;
+                var data;
                 try   { data = await res.json(); }
-                catch { data = { success: false, message: 'সার্ভার ত্রুটি' }; }
+                catch { data = { success: false }; }
 
                 if (data.success) {
                     toastr.success(data.message);
                     textarea.value = '';
-
-                    const list = document.getElementById('comments-list');
+                    var list = document.getElementById('comments-list');
                     if (list) {
-                        const div = document.createElement('div');
-                        div.className = 'comment-item mb-3 p-3 bg-light rounded';
-                        div.innerHTML = `
-                            <div class="d-flex gap-2">
-                                <div class="avatar-placeholder rounded-circle flex-shrink-0
-                                            d-flex align-items-center justify-content-center
-                                            fw-bold"
-                                     style="width:40px;height:40px;
-                                            background:var(--primary);color:white">
-                                    <i class="bi bi-person"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <strong>আপনি</strong>
-                                        <small class="text-muted">এইমাত্র</small>
-                                    </div>
-                                    <p class="mb-1 mt-1">${content}</p>
-                                    ${data.isPending
-                                        ? '<small class="text-warning"><i class="bi bi-clock me-1"></i>অনুমোদনের অপেক্ষায়</small>'
-                                        : '<small class="text-success"><i class="bi bi-check-circle me-1"></i>প্রকাশিত</small>'
-                                    }
-                                </div>
-                            </div>`;
+                        var div = document.createElement('div');
+                        div.className = 'comment-item';
+                        div.innerHTML =
+                            '<div class="d-flex gap-3">' +
+                                '<div class="rounded-circle bg-secondary ' +
+                                     'd-flex align-items-center ' +
+                                     'justify-content-center text-white ' +
+                                     'flex-shrink-0" ' +
+                                     'style="width:36px;height:36px">' +
+                                    '<i class="bi bi-person"></i>' +
+                                '</div>' +
+                                '<div class="flex-grow-1">' +
+                                    '<div class="d-flex justify-content-between mb-1">' +
+                                        '<strong class="small">আপনি</strong>' +
+                                        '<small class="text-muted">এইমাত্র</small>' +
+                                    '</div>' +
+                                    '<p class="mb-0 small">' + content + '</p>' +
+                                    (data.isPending
+                                        ? '<small class="text-warning">' +
+                                          '<i class="bi bi-clock me-1"></i>' +
+                                          'অনুমোদনের অপেক্ষায়</small>'
+                                        : '') +
+                                '</div>' +
+                            '</div>';
                         list.prepend(div);
                     }
                 } else {
                     toastr.error(data.message || 'মন্তব্য করা যায়নি');
                 }
-            } catch (e) {
-                console.error('Comment error:', e);
-                toastr.error('নেটওয়ার্ক ত্রুটি হয়েছে');
+            } catch(e) {
+                toastr.error('নেটওয়ার্ক ত্রুটি');
             }
         }
 
-        // ── Submit reply ──────────────────────────────────────────
+        // ── Submit reply ───────────────────────────────────────────
         async function submitReply(newsId, parentId) {
-            const textarea = document.getElementById(`reply-text-${parentId}`);
-            const content  = textarea?.value?.trim();
+            var textarea = document.getElementById('reply-text-' + parentId);
+            var content  = textarea?.value?.trim();
             if (!content) { toastr.warning('উত্তর লিখুন'); return; }
 
             try {
-                const res = await fetch('/News/AddComment', {
+                var res = await fetch('/News/AddComment', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -428,106 +660,124 @@
                     })
                 });
 
-                if (res.status === 401) {
-                    toastr.info('উত্তর করতে লগইন করুন');
-                    return;
-                }
-
-                let data;
+                var data;
                 try   { data = await res.json(); }
-                catch { data = { success: false, message: 'সার্ভার ত্রুটি' }; }
+                catch { data = { success: false }; }
 
                 if (data.success) {
                     toastr.success('উত্তর পাঠানো হয়েছে');
                     if (textarea) textarea.value = '';
-                    document.getElementById(`reply-form-${parentId}`)
-                        ?.classList.add('d-none');
+                    var form = document.getElementById(
+                        'reply-form-' + parentId);
+                    if (form) form.classList.add('d-none');
                 } else {
                     toastr.error(data.message || 'উত্তর পাঠানো যায়নি');
                 }
-            } catch (e) {
-                console.error('Reply error:', e);
+            } catch(e) {
                 toastr.error('নেটওয়ার্ক ত্রুটি');
             }
         }
 
         // ── Show/hide reply form ───────────────────────────────────
         function showReplyForm(id) {
-            const form = document.getElementById(`reply-form-${id}`);
+            var form = document.getElementById('reply-form-' + id);
             if (form) form.classList.toggle('d-none');
         }
 
-        // ── Reactions ─────────────────────────────────────────────
-        let userReaction = null;
+        // ── Reactions ──────────────────────────────────────────────
+        var userReaction = null;
+
+        (async function initReactions() {
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                    <text>
+                    try {
+                        var res = await fetch('/api/news/@Model.Id/my-reaction');
+                        if (res.ok) {
+                            var data = await res.json();
+                            if (data.reactionType) {
+                                userReaction = data.reactionType;
+                                var btn = document.querySelector(
+                                    '.btn-reaction[data-reaction="' +
+                                    userReaction + '"]');
+                                if (btn) btn.classList.add('reacted');
+                            }
+                        }
+                    } catch(e) { }
+                    </text>
+            }
+        })();
 
         async function reactToNews(newsId, type) {
+            @if (User.Identity?.IsAuthenticated == false)
+            {
+                    <text>
+                    toastr.info('প্রতিক্রিয়া জানাতে লগইন করুন');
+                    window.location.href = '/Account/Login?returnUrl=' +
+                        encodeURIComponent(window.location.pathname);
+                    return;
+                    </text>
+            }
+
             try {
-                const res = await fetch('/api/news/react', {
+                var res = await fetch('/api/news/react', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': getToken()
                     },
                     body: JSON.stringify({
-                        newsId:       newsId,
-                        reactionType: type
+                        newsId: newsId, reactionType: type
                     })
                 });
 
                 if (res.status === 401) {
-                    toastr.info('প্রতিক্রিয়া জানাতে লগইন করুন');
+                    toastr.info('লগইন করুন');
                     return;
                 }
 
-                const data = await res.json();
+                var data = await res.json();
                 if (!data.success) return;
 
-                // Update counts
+                document.querySelectorAll('.btn-reaction').forEach(function(b) {
+                    b.classList.remove('reacted');
+                });
+
                 if (data.counts) {
-                    Object.entries(data.counts).forEach(([t, c]) => {
-                        const el = document.getElementById(`reaction-${t}`);
-                        if (el) el.textContent = c;
+                    Object.entries(data.counts).forEach(function(entry) {
+                        var el = document.getElementById('reaction-' + entry[0]);
+                        if (el) el.textContent = entry[1];
                     });
                 }
 
-                // Toggle button active state
-                document.querySelectorAll('.btn-reaction').forEach(btn => {
-                    btn.classList.remove('reacted');
-                    btn.style.background = '';
-                    btn.style.color      = '';
-                    btn.style.transform  = '';
-                });
-
                 if (userReaction === type) {
-                    // Same type clicked again — undo reaction
                     userReaction = null;
                 } else {
-                    // New reaction
                     userReaction = type;
-                    const activeBtn = document.querySelector(
-                        `.btn-reaction[data-reaction="${type}"]`);
-                    if (activeBtn) {
-                        activeBtn.classList.add('reacted');
-                        activeBtn.style.background = 'var(--primary)';
-                        activeBtn.style.color      = 'white';
-                        activeBtn.style.transform  = 'scale(1.15)';
-                    }
+                    var activeBtn = document.querySelector(
+                        '.btn-reaction[data-reaction="' + type + '"]');
+                    if (activeBtn) activeBtn.classList.add('reacted');
                 }
-            } catch (e) {
-                console.error('Reaction error:', e);
+            } catch(e) {
+                toastr.error('নেটওয়ার্ক ত্রুটি');
             }
         }
 
-        // ── Copy article link ─────────────────────────────────────
+        // ── Copy link ──────────────────────────────────────────────
         function copyLink() {
             navigator.clipboard.writeText(window.location.href)
-                .then(() => toastr.info('লিঙ্ক কপি হয়েছে'))
-                .catch(() => toastr.error('কপি করা যায়নি'));
+                .then(function() { toastr.info('লিঙ্ক কপি হয়েছে'); })
+                .catch(function() { toastr.error('কপি করা যায়নি'); });
         }
 
-        // ── Track ad click ────────────────────────────────────────
-        function trackAdClick(adId) {
-            fetch(`/api/ads/${adId}/click`, { method: 'POST' }).catch(() => {});
-        }
+        // ── Smooth scroll for TOC links ────────────────────────────
+        document.querySelectorAll('.toc-link').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                var target = document.querySelector(
+                    this.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
     </script>
 }

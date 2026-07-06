@@ -2649,6 +2649,552 @@ body > *:last-child {
         }
 }
 
+/* ══════════════════════════════════════════════════════
+   ARTICLE DETAIL PAGE — Protidinerbangladesh style
+   ══════════════════════════════════════════════════════ */
+
+/* ── Reading progress bar ────────────────────────────── */
+.reading-progress-wrap {
+    height: 3px;
+    background: #f0f0f0;
+    border-radius: 2px;
+    margin-bottom: 20px;
+}
+
+.reading-progress-bar {
+    height: 100%;
+    background: #c0392b;
+    width: 0%;
+    transition: width .1s linear;
+    border-radius: 2px;
+}
+
+/* ── Breadcrumb ──────────────────────────────────────── */
+.article-breadcrumb {
+    font-size: .78rem;
+    color: #888;
+}
+
+    .article-breadcrumb a {
+        color: #555;
+        text-decoration: none;
+    }
+
+        .article-breadcrumb a:hover {
+            color: #c0392b;
+        }
+
+    .article-breadcrumb .sep {
+        margin: 0 5px;
+        color: #bbb;
+    }
+
+/* ── Title ───────────────────────────────────────────── */
+.article-main-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.4;
+    color: #111;
+    margin-bottom: 8px;
+}
+
+.article-subtitle {
+    font-size: 1rem;
+    color: #444;
+    font-weight: 400;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+/* ── Meta row ────────────────────────────────────────── */
+.article-meta-row {
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 12px;
+    font-size: .8rem;
+    color: #666;
+}
+
+.article-author {
+    font-weight: 600;
+    color: #333;
+}
+
+.article-date,
+.article-views,
+.article-read-time {
+    color: #888;
+}
+
+/* ── Share bar ───────────────────────────────────────── */
+.article-share-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.share-label {
+    font-size: .8rem;
+    color: #666;
+    font-weight: 600;
+}
+
+.share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: .9rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity .2s, transform .2s;
+}
+
+    .share-btn:hover {
+        opacity: .85;
+        transform: scale(1.1);
+    }
+
+.share-fb {
+    background: #1877f2;
+}
+
+.share-tw {
+    background: #000;
+}
+
+.share-wa {
+    background: #25d366;
+}
+
+.share-li {
+    background: #0a66c2;
+}
+
+.share-copy {
+    background: #666;
+}
+
+.share-print {
+    background: #888;
+}
+
+/* ── Featured image ──────────────────────────────────── */
+.article-featured-img-wrap {
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.article-featured-img {
+    width: 100%;
+    max-height: 420px;
+    object-fit: cover;
+    display: block;
+}
+
+.article-img-caption {
+    font-size: .75rem;
+    color: #777;
+    text-align: center;
+    margin-top: 6px;
+    font-style: italic;
+}
+
+/* ── Article body ────────────────────────────────────── */
+.article-body {
+    font-size: 1rem;
+    line-height: 1.85;
+    color: #222;
+}
+
+    .article-body p {
+        margin-bottom: 16px;
+    }
+
+    .article-body h2 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 24px 0 12px;
+        color: #111;
+    }
+
+    .article-body h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin: 20px 0 10px;
+        color: #222;
+    }
+
+    .article-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        margin: 12px 0;
+    }
+
+    .article-body blockquote {
+        border-left: 4px solid #c0392b;
+        padding: 12px 16px;
+        margin: 20px 0;
+        background: #fef5f5;
+        color: #444;
+        font-style: italic;
+    }
+
+    .article-body a {
+        color: #c0392b;
+        text-decoration: underline;
+    }
+
+    .article-body table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+    }
+
+        .article-body table td,
+        .article-body table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+            font-size: .9rem;
+        }
+
+/* ── Tags ────────────────────────────────────────────── */
+.article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.tags-label {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.article-tag {
+    display: inline-block;
+    background: #f4f4f4;
+    color: #333;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: .75rem;
+    text-decoration: none;
+    border: 1px solid #e0e0e0;
+    transition: background .2s;
+}
+
+    .article-tag:hover {
+        background: #c0392b;
+        color: white;
+        border-color: #c0392b;
+    }
+
+/* ── Reactions ───────────────────────────────────────── */
+.article-reactions {
+}
+
+.reactions-label {
+    font-size: .85rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 8px;
+}
+
+.btn-reaction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    transition: all .2s;
+    min-width: 60px;
+}
+
+    .btn-reaction:hover {
+        border-color: #c0392b;
+        background: #fef5f5;
+    }
+
+    .btn-reaction.reacted {
+        border-color: #c0392b;
+        background: #fef5f5;
+    }
+
+.reaction-emoji {
+    font-size: 1.3rem;
+}
+
+.reaction-label {
+    font-size: .65rem;
+    color: #555;
+}
+
+.reaction-count {
+    font-size: .75rem;
+    font-weight: 700;
+    color: #333;
+}
+
+/* ── Author box ──────────────────────────────────────── */
+.article-author-box {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.author-box-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.author-box-name {
+    font-weight: 700;
+    font-size: .95rem;
+    margin-bottom: 4px;
+}
+
+.author-box-bio {
+    font-size: .8rem;
+    color: #555;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ── Comments ────────────────────────────────────────── */
+.comments-title {
+    font-size: 1rem;
+    font-weight: 700;
+    border-bottom: 2px solid #e5e5e5;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+
+.comment-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .comment-item:last-child {
+        border-bottom: none;
+    }
+
+.comment-replies {
+    padding-left: 16px;
+    border-left: 2px solid #f0f0f0;
+    margin-left: 4px;
+}
+
+/* ── Left sidebar TOC ────────────────────────────────── */
+.article-toc-panel {
+    position: sticky;
+    top: 80px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+.toc-title {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: .5px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #eee;
+}
+
+.toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.toc-item {
+    margin-bottom: 6px;
+}
+
+.toc-sub {
+    padding-left: 10px;
+}
+
+.toc-link {
+    font-size: .78rem;
+    color: #444;
+    text-decoration: none;
+    line-height: 1.4;
+    display: block;
+}
+
+    .toc-link:hover {
+        color: #c0392b;
+    }
+
+/* ── Right sidebar ───────────────────────────────────── */
+.article-right-sidebar {
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.sidebar-widget {
+}
+
+.sidebar-widget-title {
+    font-size: .85rem;
+    font-weight: 700;
+    border-left: 3px solid #c0392b;
+    padding-left: 8px;
+    margin-bottom: 12px;
+    color: #111;
+}
+
+.sidebar-news-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .sidebar-news-item:last-child {
+        border-bottom: none;
+    }
+
+.sidebar-news-thumb-link {
+    flex-shrink: 0;
+}
+
+.sidebar-news-thumb {
+    width: 72px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 3px;
+    display: block;
+}
+
+.sidebar-news-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.sidebar-news-title {
+    font-size: .78rem;
+    font-weight: 600;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+    .sidebar-news-title:hover {
+        color: #c0392b !important;
+    }
+
+/* ── Dark mode ───────────────────────────────────────── */
+[data-theme="dark"] .article-main-title {
+    color: var(--text);
+}
+
+[data-theme="dark"] .article-subtitle {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .article-body {
+    color: var(--text);
+}
+
+    [data-theme="dark"] .article-body p {
+        color: var(--text);
+    }
+
+    [data-theme="dark"] .article-body h2,
+    [data-theme="dark"] .article-body h3 {
+        color: var(--text);
+    }
+
+[data-theme="dark"] .article-toc-panel {
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .toc-link {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .article-author-box {
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .btn-reaction {
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .comment-item {
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .sidebar-news-title {
+    color: var(--text) !important;
+}
+
+[data-theme="dark"] .sidebar-news-item {
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .article-tag {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 767px) {
+    .article-main-title {
+        font-size: 1.2rem;
+    }
+
+    .article-featured-img {
+        max-height: 220px;
+    }
+
+    .article-body {
+        font-size: .92rem;
+    }
+
+    .btn-reaction {
+        min-width: 50px;
+        padding: 6px 8px;
+    }
+
+    .reaction-emoji {
+        font-size: 1.1rem;
+    }
+}
 
 /* ══════════════════════════════════════════════════════
    ALL CATEGORIES MEGA DROPDOWN — VIEWPORT-SAFE
