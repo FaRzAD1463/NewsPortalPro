@@ -192,10 +192,45 @@ try
     builder.Services.Configure<JwtSettings>(
         builder.Configuration.GetSection("JwtSettings"));
 
+    // FIX: DefaultScheme/DefaultChallengeScheme were both set to
+    // "Identity.Application" (the cookie scheme), and every [Authorize]
+    // in the API controllers (NotificationApiController,
+    // CommentApiController.Add/Delete, CategoryApiController writes,
+    // NewsApiController.React, etc.) uses plain [Authorize] with no
+    // AuthenticationSchemes specified. That meant those endpoints were
+    // being authenticated against the COOKIE, not the JWT — so a client
+    // that only has a Bearer token from AuthApiController.Login (a
+    // mobile app or external API consumer) would get 401 on every one
+    // of those endpoints, since there's no cookie attached to the
+    // request. The JWT issuance in AuthApiController was effectively
+    // decorative for anything outside the MVC/cookie-based browser flow.
+    //
+    // Fix: introduce a policy scheme that inspects the incoming request
+    // and forwards to JwtBearer when an "Authorization: Bearer ..."
+    // header is present, and falls back to the cookie scheme otherwise.
+    // This is applied as the default scheme, so existing plain
+    // [Authorize] attributes across all controllers keep working
+    // unmodified — MVC/Razor requests still use the cookie, API/mobile
+    // requests carrying a Bearer token now correctly authenticate via
+    // JWT, with no per-controller/per-action changes required.
+    const string JwtOrCookieScheme = "JwtOrCookie";
+
     builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = "Identity.Application";
-        options.DefaultChallengeScheme = "Identity.Application";
+        options.DefaultScheme = JwtOrCookieScheme;
+        options.DefaultChallengeScheme = JwtOrCookieScheme;
+    })
+    .AddPolicyScheme(JwtOrCookieScheme, "JWT or Cookie", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            var authHeader = context.Request.Headers.Authorization.ToString();
+            if (!string.IsNullOrEmpty(authHeader) &&
+                authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                return JwtBearerDefaults.AuthenticationScheme;
+
+            return IdentityConstants.ApplicationScheme;
+        };
     })
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
@@ -255,9 +290,38 @@ try
     var redisConnection =
         builder.Configuration.GetConnectionString("Redis");
 
-    if (!string.IsNullOrEmpty(redisConnection) &&
-        !redisConnection.Contains("localhost") ||
-        builder.Environment.IsProduction())
+    // FIX: original condition was
+    //   (!string.IsNullOrEmpty(redisConnection) && !redisConnection.Contains("localhost")) || builder.Environment.IsProduction()
+    // due to && binding tighter than ||. That meant: in Production, this
+    // was ALWAYS true regardless of whether redisConnection was actually
+    // configured. If ConnectionStrings:Redis was missing or empty in a
+    // production deployment, AddStackExchangeRedisCache would still run
+    // with options.Configuration = null, which throws at startup or on
+    // first cache access — a hard crash from a missing config value that
+    // should have been a clear, actionable error instead.
+    //
+    // Fix: require Redis explicitly in Production with a clear startup
+    // exception (matching the same pattern already used for the JWT
+    // secret above), and keep the original non-production behavior
+    // (use Redis if a non-localhost connection string is present,
+    // otherwise fall back to in-memory cache with a warning).
+    if (builder.Environment.IsProduction())
+    {
+        if (string.IsNullOrWhiteSpace(redisConnection))
+            throw new InvalidOperationException(
+                "CRITICAL: Redis connection string is not configured. " +
+                "Set ConnectionStrings:Redis for production.");
+
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConnection;
+            options.InstanceName =
+                builder.Configuration["RedisSettings:InstanceName"]
+                ?? "NewsPortalPro_";
+        });
+    }
+    else if (!string.IsNullOrEmpty(redisConnection) &&
+             !redisConnection.Contains("localhost"))
     {
         builder.Services.AddStackExchangeRedisCache(options =>
         {
@@ -625,9 +689,20 @@ try
             "camera=(), microphone=(), geolocation=(), " +
             "payment=(), usb=(), magnetometer=(), gyroscope=()";
 
+        // FIX: removed 'unsafe-eval' from script-src. Nothing in the
+        // shipped JS (admin.js / main.js) calls eval() or the Function
+        // constructor, and none of the third-party libs referenced
+        // (DataTables, Toastr, SweetAlert2, AOS) require it either — so
+        // this was pure unnecessary attack surface. 'unsafe-inline' is
+        // left in place for now: main.js injects inline onclick="..."
+        // handlers into notification list items and category dropdowns
+        // via template strings, so removing it would break those without
+        // a broader refactor to nonce- or event-delegation-based
+        // handlers. Flagging that as a good follow-up, not done here to
+        // avoid changing runtime behavior.
         headers["Content-Security-Policy"] =
             "default-src 'self'; " +
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' " +
+            "script-src 'self' 'unsafe-inline' " +
                 "https://cdnjs.cloudflare.com " +
                 "https://cdn.jsdelivr.net; " +
             "style-src 'self' 'unsafe-inline' " +
@@ -811,7 +886,8 @@ try
                 logger.LogInformation("Migrations applied successfully");
             }
 
-            await SeedAdminUserAsync(userManager, roleManager, logger);
+            await SeedAdminUserAsync(
+                userManager, roleManager, logger, app.Environment);
         }
         catch (Exception ex)
         {
@@ -836,13 +912,45 @@ finally
 // ════════════════════════════════════════════════════════════
 // SEED ADMIN USER
 // ════════════════════════════════════════════════════════════
+// FIX: SeedAdminUserAsync now takes IHostEnvironment so it can tell
+// dev/prod apart, mirroring the pattern already used for the JWT secret
+// above. The seed password source and the logging of that password
+// were both changed — see comments inline below.
 static async Task SeedAdminUserAsync(
     UserManager<ApplicationUser> userManager,
     RoleManager<ApplicationRole> roleManager,
-    ILogger<Program> logger)
+    ILogger<Program> logger,
+    IHostEnvironment environment)
 {
     const string adminEmail = "admin@newsportalpro.com";
-    const string adminPassword = "Admin@12345";
+
+    // FIX: the password was a hardcoded literal used in every
+    // environment, AND it was written to disk in plaintext via the log
+    // line further down (Logs/log-*.txt, 30-day retention) every single
+    // time the app seeded an admin — meaning a known credential for a
+    // full-admin account persisted in log files, which are typically
+    // less access-controlled than the database itself.
+    //
+    // Fix: read the seed password from an environment variable first
+    // (same convention as NEWSPORTAL__JwtSettings__SecretKey), and only
+    // fall back to a fixed literal in Development. In Production with
+    // no env var set, fail loudly instead of silently using a known
+    // default — consistent with how the JWT secret is already handled.
+    var adminPassword =
+        Environment.GetEnvironmentVariable("NEWSPORTAL__Seed__AdminPassword");
+
+    if (string.IsNullOrWhiteSpace(adminPassword))
+    {
+        if (environment.IsProduction())
+            throw new InvalidOperationException(
+                "CRITICAL: Admin seed password is not configured. " +
+                "Set env var: NEWSPORTAL__Seed__AdminPassword");
+
+        adminPassword = "Admin@12345";
+        logger.LogWarning(
+            "NEWSPORTAL__Seed__AdminPassword not set — using default " +
+            "development seed password. Do not use this in production.");
+    }
 
     string[] roles = ["Admin", "Editor", "Reporter", "User"];
     foreach (var role in roles)
@@ -896,9 +1004,10 @@ static async Task SeedAdminUserAsync(
         if (result.Succeeded)
         {
             await userManager.AddToRoleAsync(admin, "Admin");
+            // FIX: previously logged "{Email} / {Password}" — the
+            // plaintext password no longer appears in the log output.
             logger.LogInformation(
-                "Admin user seeded: {Email} / {Password}",
-                adminEmail, adminPassword);
+                "Admin user seeded: {Email}", adminEmail);
         }
         else
         {
