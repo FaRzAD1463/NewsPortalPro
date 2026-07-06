@@ -823,6 +823,11 @@ try
         defaults: new { controller = "News", action = "ByTag" });
 
     app.MapControllerRoute(
+    name: "epaper",
+    pattern: "Epaper/{action=Index}/{id?}",
+    defaults: new { controller = "Epaper" });
+
+    app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
 

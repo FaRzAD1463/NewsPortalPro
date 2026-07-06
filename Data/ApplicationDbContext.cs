@@ -44,6 +44,8 @@ namespace NewsPortalPro.Data
         public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
         public DbSet<UserFollowCategory> UserFollowCategories => Set<UserFollowCategory>();
 
+        public DbSet<Epaper> Epapers { get; set; }
+
         // ══════════════════════════════════════════════════════
         // MODEL CONFIGURATION
         // ══════════════════════════════════════════════════════

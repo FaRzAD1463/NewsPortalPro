@@ -1,0 +1,58 @@
+﻿@{
+    ViewData["Title"] = "নতুন ই-পেপার";
+}
+
+<div class="card border-0 shadow-sm" style="max-width:600px">
+    <div class="card-body p-4">
+        <h5 class="fw-bold mb-4">নতুন ই-পেপার আপলোড</h5>
+
+        <form method="post" enctype="multipart/form-data"
+              asp-action="Create">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label fw-medium">শিরোনাম</label>
+                <input type="text" name="title"
+                       class="form-control"
+                       placeholder="যেমন: প্রথম আলো - ৬ জুলাই ২০২৬"
+                       required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-medium">প্রকাশের তারিখ</label>
+                <input type="date" name="publishedDate"
+                       class="form-control"
+                       value="@DateTime.Today.ToString("yyyy-MM-dd")"
+                       required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-medium">
+                    PDF ফাইল
+                    <span class="text-muted small">(সর্বোচ্চ ৫০MB)</span>
+                </label>
+                <input type="file" name="pdfFile"
+                       class="form-control"
+                       accept=".pdf" required />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-medium">
+                    কভার ছবি
+                    <span class="text-muted small">(ঐচ্ছিক)</span>
+                </label>
+                <input type="file" name="coverImage"
+                       class="form-control"
+                       accept="image/*" />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-cloud-upload me-2"></i>আপলোড করুন
+                </button>
+                <a href="/Admin/Epaper"
+                   class="btn btn-outline-secondary">বাতিল</a>
+            </div>
+        </form>
+    </div>
+</div>

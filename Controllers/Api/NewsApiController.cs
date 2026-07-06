@@ -134,7 +134,34 @@ namespace NewsPortalPro.Controllers.Api
             var related = await _news.GetRelatedAsync(id, categoryId, count);
             return Ok(related);
         }
+
+        [HttpGet("{id:int}/detail")]
+        public async Task<IActionResult> GetDetail(int id)
+        {
+            var news = await _db.News
+                .Where(n => n.Id == id && n.Status == NewsStatus.Published)
+                .Include(n => n.Category)
+                .Select(n => new
+                {
+                    n.Id,
+                    n.Title,
+                    n.Slug,
+                    n.Summary,
+                    n.Content,
+                    n.FeaturedImage,
+                    n.PublishedAt,
+                    CategoryName = n.Category.Name,
+                    CategorySlug = n.Category.Slug,
+                    CategoryColor = n.Category.ColorCode
+                })
+                .FirstOrDefaultAsync();
+
+            if (news == null) return NotFound();
+            return Ok(news);
+        }
     }
+
+
 
     public class ReactRequestDto
     {

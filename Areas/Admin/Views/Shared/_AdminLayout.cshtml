@@ -46,6 +46,13 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
+                           ?.ToString() == "Epaper" ? "active" : "")"
+                   href="/Admin/Epaper">
+                    <i class="bi bi-newspaper"></i><span>ই-পেপার</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(ViewContext.RouteData.Values["controller"]
                                        ?.ToString() == "Category" ? "active" : "")"
                    href="/Admin/Category">
                     <i class="bi bi-folder"></i><span>বিভাগ</span>
