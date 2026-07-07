@@ -117,6 +117,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             // If PublishedAt has a value in the past → Published
             // If PublishedAt has a value in the future → Scheduled
             // Otherwise → Draft
+
             var currentStatus = Models.NewsStatus.Draft;
             if (news.PublishedAt.HasValue)
             {
@@ -250,6 +251,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         // already enforce. Previously any Reporter could publish ANY
         // article, not just their own — inconsistent with the IDOR
         // protection already built elsewhere in this controller.
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Publish(int id)
@@ -280,6 +282,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
 
         // FIX: same ownership check added — a Reporter could previously
         // flag any article (not just their own) as breaking news.
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleBreaking(int id, bool value)
@@ -310,6 +313,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
 
         // FIX: same ownership check added — a Reporter could previously
         // feature/unfeature any article, not just their own.
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleFeatured(int id, bool value)
@@ -340,6 +344,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
 
         // FIX: added [ValidateAntiForgeryToken] — was missing on an
         // authenticated file-upload endpoint.
+
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]

@@ -65,6 +65,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         // FIX: added [ValidateAntiForgeryToken] — previously any page that
         // could get an authenticated Admin's browser to POST here could
         // silently flip a user's active status (CSRF).
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(string id)
         {
@@ -81,6 +82,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         // FIX: added RoleExistsAsync check — previously a bad/typo'd role
         // string would either throw or silently fail deep inside Identity
         // with no friendly error surfaced to the admin.
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignRole(string userId, string role)
         {
@@ -104,6 +106,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         // FIX: added [ValidateAntiForgeryToken] — this soft-deletes/disables
         // a user account; without CSRF protection any external page could
         // trigger it against an admin's session.
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string id)
         {
@@ -126,6 +129,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         //    account that ever got reset without a custom password. Now a
         //    random password is generated per reset and shown to the admin
         //    via TempData so it can be relayed to the user out of band.
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(string id, string? newPassword = null)
         {
@@ -148,6 +152,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             TempData["Success"] = "পাসওয়ার্ড রিসেট হয়েছে";
             // Only shown once, immediately after reset, so the admin can
             // securely relay it to the user — never stored anywhere.
+
             TempData["GeneratedPassword"] = passwordToSet;
             return RedirectToAction(nameof(Index));
         }

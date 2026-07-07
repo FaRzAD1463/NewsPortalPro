@@ -64,6 +64,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
 
         // FIX: added [ValidateAntiForgeryToken] — was missing, allowing a
         // CSRF request to delete any ad while an admin session is active.
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {

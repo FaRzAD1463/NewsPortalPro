@@ -70,6 +70,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         // FIX: added [ValidateAntiForgeryToken] — was missing, allowing a
         // CSRF request to delete any category while an admin/editor
         // session is active.
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {

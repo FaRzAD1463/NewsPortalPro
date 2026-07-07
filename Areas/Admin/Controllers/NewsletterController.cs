@@ -54,6 +54,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         // mass email send to every subscriber. A CSRF request against this
         // endpoint could blast an unintended newsletter to your entire
         // list, so this was the highest-impact missing token in this file.
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Send(int id)
         {

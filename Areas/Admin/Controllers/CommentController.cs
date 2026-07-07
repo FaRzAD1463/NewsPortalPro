@@ -22,6 +22,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         // FIX: added [ValidateAntiForgeryToken] — moderation actions
         // (approve/reject/delete) were CSRF-exploitable against an active
         // Admin/Editor session.
+
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Approve(int id)
         {

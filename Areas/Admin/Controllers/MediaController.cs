@@ -78,6 +78,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             {
                 // Validation-type errors (bad file type, too large, etc.)
                 // are safe to relay — they describe the input, not internals.
+
                 return BadRequest(new { success = false, message = ex.Message });
             }
             catch (Exception ex)
@@ -86,6 +87,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 // which can leak storage paths, provider details, or other
                 // internal info. Logged server-side instead; client gets a
                 // generic message.
+
                 _logger.LogError(ex, "Media upload failed");
                 return BadRequest(new { success = false, message = "আপলোড ব্যর্থ হয়েছে, পরে আবার চেষ্টা করুন" });
             }
@@ -94,6 +96,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         // FIX: added the same Reporter-ownership check used in
         // NewsController — previously any Reporter could delete media
         // uploaded by any other user, not just their own.
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
