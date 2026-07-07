@@ -6,8 +6,8 @@ using NewsPortalPro.Models;
 
 namespace NewsPortalPro.Services
 {
-    public class AdsService : IAdsService
-    {
+        public class AdsService : IAdsService
+        {
         private readonly ApplicationDbContext _db;
 
         public AdsService(ApplicationDbContext db) => _db = db;
@@ -39,17 +39,17 @@ namespace NewsPortalPro.Services
                 .ToListAsync();
         }
 
-        public async Task TrackImpressionAsync(int adId) =>
+            public async Task TrackImpressionAsync(int adId) =>
             await _db.Database.ExecuteSqlRawAsync(
                 "UPDATE Advertisements SET ImpressionCount = ImpressionCount + 1 WHERE Id = {0}",
                 adId);
 
-        public async Task TrackClickAsync(int adId) =>
+            public async Task TrackClickAsync(int adId) =>
             await _db.Database.ExecuteSqlRawAsync(
                 "UPDATE Advertisements SET ClickCount = ClickCount + 1 WHERE Id = {0}",
                 adId);
 
-        public async Task<List<AdvertisementDto>> GetAllForAdminAsync() =>
+            public async Task<List<AdvertisementDto>> GetAllForAdminAsync() =>
             await _db.Advertisements
                 .Where(a => !a.IsDeleted)
                 .OrderByDescending(a => a.CreatedAt)
@@ -70,8 +70,8 @@ namespace NewsPortalPro.Services
                 })
                 .ToListAsync();
 
-        public async Task<int> CreateAsync(CreateAdDto dto)
-        {
+            public async Task<int> CreateAsync(CreateAdDto dto)
+            {
             var ad = new Advertisement
             {
                 Title = dto.Title,
@@ -90,8 +90,8 @@ namespace NewsPortalPro.Services
             return ad.Id;
         }
 
-        public async Task<bool> UpdateAsync(int id, UpdateAdDto dto)
-        {
+            public async Task<bool> UpdateAsync(int id, UpdateAdDto dto)
+            {
             var ad = await _db.Advertisements.FindAsync(id);
             if (ad == null) return false;
             ad.Title = dto.Title;
@@ -106,15 +106,15 @@ namespace NewsPortalPro.Services
             ad.EndDate = dto.EndDate;
             await _db.SaveChangesAsync();
             return true;
-        }
+            }
 
-        public async Task<bool> DeleteAsync(int id)
-        {
+           public async Task<bool> DeleteAsync(int id)
+           {
             var ad = await _db.Advertisements.FindAsync(id);
             if (ad == null) return false;
             ad.IsDeleted = true;
             await _db.SaveChangesAsync();
             return true;
+           }
         }
-    }
 }

@@ -3,8 +3,8 @@ using NewsPortalPro.Interfaces;
 
 namespace NewsPortalPro.Repositories
 {
-    public class UnitOfWork : IUnitOfWork
-    {
+        public class UnitOfWork : IUnitOfWork
+        {
         private readonly ApplicationDbContext _db;
 
         public INewsRepository News { get; }
@@ -24,5 +24,5 @@ namespace NewsPortalPro.Repositories
             await _db.SaveChangesAsync();
 
         public void Dispose() => _db.Dispose();
-    }
+        }
 }

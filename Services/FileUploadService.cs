@@ -8,8 +8,8 @@ using NewsPortalPro.Interfaces;
 
 namespace NewsPortalPro.Services
 {
-    public class FileUploadService : IFileUploadService
-    {
+        public class FileUploadService : IFileUploadService
+        {
         private readonly Cloudinary? _cloudinary;
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<FileUploadService> _logger;
@@ -58,8 +58,8 @@ namespace NewsPortalPro.Services
                 }
             };
 
-        // ── Allowed MIME types ─────────────────────────────────────
-        private static readonly HashSet<string> AllowedMimeTypes =
+            // ── Allowed MIME types ─────────────────────────────────────
+            private static readonly HashSet<string> AllowedMimeTypes =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 "image/jpeg",
@@ -69,8 +69,8 @@ namespace NewsPortalPro.Services
                 "image/webp"
             };
 
-        // ── Allowed extensions ─────────────────────────────────────
-        private static readonly HashSet<string> AllowedExtensions =
+            // ── Allowed extensions ─────────────────────────────────────
+            private static readonly HashSet<string> AllowedExtensions =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ".jpg", ".jpeg", ".png", ".gif", ".webp"
@@ -89,11 +89,12 @@ namespace NewsPortalPro.Services
             _logger = logger;
         }
 
-        public async Task<UploadResultDto> UploadImageAsync(
+            public async Task<UploadResultDto> UploadImageAsync(
             IFormFile file,
             string folder = "news")
-        {
+            {
             // ── Step 1: Basic null/size check ─────────────────────
+
             if (file == null || file.Length == 0)
                 throw new ArgumentException(
                     "No file provided or file is empty.");
@@ -105,6 +106,7 @@ namespace NewsPortalPro.Services
                     $"{MaxFileSizeBytes / 1024 / 1024}MB.");
 
             // ── Step 2: Extension validation ──────────────────────
+
             var extension = Path.GetExtension(file.FileName)
                                 .ToLowerInvariant()
                                 .Trim();
@@ -116,6 +118,7 @@ namespace NewsPortalPro.Services
                     $"Allowed: {string.Join(", ", AllowedExtensions)}");
 
             // ── Step 3: MIME type validation ──────────────────────
+
             var mimeType = file.ContentType?.ToLowerInvariant().Trim()
                         ?? string.Empty;
 
@@ -126,6 +129,7 @@ namespace NewsPortalPro.Services
             // ── Step 4: Magic byte validation ─────────────────────
             // Read the first bytes of the file to verify it truly is
             // what it claims to be — this is the critical security check.
+
             await using var stream = file.OpenReadStream();
 
             var headerBytes = new byte[MagicBytesReadSize];
@@ -170,15 +174,15 @@ namespace NewsPortalPro.Services
             else
                 return await SaveLocallyAsync(
                     stream, file, folder, extension);
-        }
+            }
 
-        // ── Cloudinary upload ──────────────────────────────────────
-        private async Task<UploadResultDto> UploadToCloudinaryAsync(
+            // ── Cloudinary upload ──────────────────────────────────────
+            private async Task<UploadResultDto> UploadToCloudinaryAsync(
             Stream stream,
             IFormFile file,
             string folder,
             string extension)
-        {
+            {
             var uploadParams = new ImageUploadParams
             {
                 File = new FileDescription(
@@ -220,21 +224,23 @@ namespace NewsPortalPro.Services
                 Height = result.Height,
                 FileSizeBytes = result.Bytes
             };
-        }
+            }
 
         // ── Local file storage fallback ────────────────────────────
-        private async Task<UploadResultDto> SaveLocallyAsync(
+            private async Task<UploadResultDto> SaveLocallyAsync(
             Stream stream,
             IFormFile file,
             string folder,
             string extension)
-        {
+            {
             // Sanitize folder name — prevent path traversal
+
             var safeFolder = Path.GetFileName(folder.Trim());
             if (string.IsNullOrEmpty(safeFolder))
                 safeFolder = "general";
 
             // Always use a random filename — never the original
+
             var safeFileName = $"{Guid.NewGuid():N}{extension}";
             var uploadFolder = Path.Combine(
                 _env.WebRootPath, "uploads", safeFolder);
@@ -242,6 +248,7 @@ namespace NewsPortalPro.Services
             Directory.CreateDirectory(uploadFolder);
 
             // Verify resolved path stays inside wwwroot/uploads
+
             var fullPath = Path.GetFullPath(
                 Path.Combine(uploadFolder, safeFileName));
             var allowedRootPath = Path.GetFullPath(
@@ -279,12 +286,13 @@ namespace NewsPortalPro.Services
             };
         }
 
-        public async Task<bool> DeleteAsync(string publicId)
-        {
+            public async Task<bool> DeleteAsync(string publicId)
+            {
             if (string.IsNullOrWhiteSpace(publicId))
                 return false;
 
             // ── Cloudinary delete ──────────────────────────────────
+
             if (_cloudinary != null)
             {
                 try
@@ -310,6 +318,7 @@ namespace NewsPortalPro.Services
             }
 
             // ── Local delete ───────────────────────────────────────
+
             var safePublicId = Path.GetFileName(publicId);
             if (string.IsNullOrEmpty(safePublicId)) return false;
 
@@ -352,10 +361,10 @@ namespace NewsPortalPro.Services
             }
         }
 
-        public async Task<UploadResultDto> UploadFromUrlAsync(
+            public async Task<UploadResultDto> UploadFromUrlAsync(
             string url,
             string folder = "news")
-        {
+            {
             if (_cloudinary != null)
             {
                 var uploadParams = new ImageUploadParams
@@ -390,6 +399,6 @@ namespace NewsPortalPro.Services
                 ThumbnailUrl = url,
                 PublicId = Guid.NewGuid().ToString("N")
             };
-        }
+            }
     }
 }

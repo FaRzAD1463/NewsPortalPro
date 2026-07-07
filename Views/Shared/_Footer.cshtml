@@ -1,103 +1,167 @@
-﻿@using NewsPortalPro.Interfaces
-@using NewsPortalPro.DTOs
-@inject ISettingsService SettingsService
-@inject ICategoryService CategoryService
+﻿@using NewsPortalPro.DTOs
 
-@{
-    var siteName = await SettingsService.GetAsync("SiteName") ?? "নিউজপোর্টাল প্রো";
-    var siteEmail = await SettingsService.GetAsync("SiteEmail") ?? "";
-    var sitePhone = await SettingsService.GetAsync("SitePhone") ?? "";
-    var fbUrl = await SettingsService.GetAsync("FacebookUrl") ?? "#";
-    var twUrl = await SettingsService.GetAsync("TwitterUrl") ?? "#";
-    var ytUrl = await SettingsService.GetAsync("YoutubeUrl") ?? "#";
-    var categories = await CategoryService.GetMenuCategoriesAsync();
-}
+<footer class="pb-footer">
 
-<footer class="site-footer mt-5">
-    <div class="footer-main py-5">
-        <div class="container-fluid px-4">
+    <!-- ══ MAIN FOOTER ══════════════════════════════════ -->
+    <div class="pb-footer-main">
+        <div class="pb-footer-inner">
             <div class="row g-4">
-                <div class="col-lg-3 col-md-6">
-                    <h5 class="footer-heading" style="color:#fff;">@siteName</h5>
-                    <p style="color:#fff;" class="small">
+
+                <!-- Logo + tagline + social -->
+                <div class="col-12 col-md-3">
+                    <a href="/" class="text-decoration-none">
+                        <div class="pb-footer-logo">নিউজপোর্টাল প্রো</div>
+                    </a>
+                    <p class="pb-footer-tagline mt-2">
                         বাংলাদেশের নির্ভরযোগ্য ও নিরপেক্ষ সংবাদ মাধ্যম।
                     </p>
-                    <div class="social-links mt-3 d-flex gap-2">
-                        <a href="@fbUrl" target="_blank" class="social-btn facebook" style="color:#fff;">
+                    <div class="pb-footer-social mt-3">
+                        <a href="#" class="pb-social-btn pb-social-fb"
+                           target="_blank">
                             <i class="bi bi-facebook"></i>
                         </a>
-                        <a href="@twUrl" target="_blank" class="social-btn twitter" style="color:#fff;">
+                        <a href="#" class="pb-social-btn pb-social-tw"
+                           target="_blank">
                             <i class="bi bi-twitter-x"></i>
                         </a>
-                        <a href="@ytUrl" target="_blank" class="social-btn youtube" style="color:#fff;">
+                        <a href="#" class="pb-social-btn pb-social-li"
+                           target="_blank">
+                            <i class="bi bi-linkedin"></i>
+                        </a>
+                        <a href="#" class="pb-social-btn pb-social-ig"
+                           target="_blank">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+                        <a href="#" class="pb-social-btn pb-social-yt"
+                           target="_blank">
                             <i class="bi bi-youtube"></i>
                         </a>
                     </div>
                 </div>
 
-                <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-heading" style="color:#fff;">বিভাগসমূহ</h5>
-                    <ul class="footer-links">
-                        @foreach (var cat in categories.Take(8))
+                <!-- Category links — col 1 -->
+                <div class="col-6 col-md-2">
+                    <h6 class="pb-footer-heading">বিভাগসমূহ</h6>
+                    <ul class="pb-footer-links">
+                        @if (ViewBag.FooterCategories is
+                             IEnumerable<CategoryDto> cats)
                         {
-                            <li><a href="/category/@cat.Slug" style="color:#fff;">@cat.Name</a></li>
+                            @foreach (var cat in cats.Take(8))
+                            {
+                                <li>
+                                    <a href="/category/@cat.Slug">
+                                        @cat.Name
+                                    </a>
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                            <li><a href="/category/national">জাতীয়</a></li>
+                            <li><a href="/category/politics">রাজনীতি</a></li>
+                            <li><a href="/category/international">আন্তর্জাতিক</a></li>
+                            <li><a href="/category/economy">অর্থনীতি</a></li>
+                            <li><a href="/category/sports">খেলাধুলা</a></li>
+                            <li><a href="/category/entertainment">বিনোদন</a></li>
+                            <li><a href="/category/technology">প্রযুক্তি</a></li>
+                            <li><a href="/category/health">স্বাস্থ্য</a></li>
                         }
                     </ul>
                 </div>
 
-                <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-heading" style="color:#fff;">দ্রুত লিঙ্ক</h5>
-                    <ul class="footer-links">
-                        <li><a href="/Contact" style="color:#fff;">যোগাযোগ</a></li>
+                <!-- Quick links — col 2 -->
+                <div class="col-6 col-md-2">
+                    <h6 class="pb-footer-heading">দ্রুত লিঙ্ক</h6>
+                    <ul class="pb-footer-links">
+                        <li><a href="/">হোম</a></li>
+                        <li><a href="/news">সর্বশেষ</a></li>
+                        <li><a href="/Epaper">ই-পেপার</a></li>
+                        <li><a href="/Contact">যোগাযোগ</a></li>
+                        <li><a href="/About">আমাদের সম্পর্কে</a></li>
+                        <li><a href="/Privacy">গোপনীয়তা নীতি</a></li>
+                        <li><a href="/Terms">শর্তাবলী</a></li>
                     </ul>
                 </div>
 
-                <div class="col-lg-3 col-md-6">
-                    <h5 class="footer-heading" style="color:#fff;">নিউজলেটার</h5>
-                    <p style="color:#fff;" class="small">সর্বশেষ সংবাদ সরাসরি ইনবক্সে পান</p>
-                    <div class="input-group mt-2">
-                        <input type="email" id="newsletter-email" class="form-control form-control-sm"
+                <!-- Newsletter -->
+                <div class="col-12 col-md-3">
+                    <h6 class="pb-footer-heading">নিউজলেটার</h6>
+                    <p class="pb-footer-text small">
+                        সর্বশেষ সংবাদ সরাসরি ইনবক্সে পান
+                    </p>
+                    <div class="pb-footer-newsletter">
+                        <input type="email"
+                               id="footer-newsletter-email"
+                               class="form-control form-control-sm"
                                placeholder="আপনার ইমেইল" />
-                        <button class="btn btn-primary btn-sm" onclick="subscribeNewsletter()">
+                        <button class="pb-nl-btn"
+                                onclick="subscribeFooterNewsletter()">
                             সাবস্ক্রাইব
                         </button>
                     </div>
                 </div>
 
-                <div class="col-lg-2 col-md-6">
-                    <h5 class="footer-heading" style="color:#fff;">যোগাযোগ</h5>
-                    <ul class="footer-links">
-                        @if (!string.IsNullOrEmpty(siteEmail))
-                        {
-                            <li style="color:#fff;"><i class="bi bi-envelope me-2"></i>@siteEmail</li>
-                        }
-                        @if (!string.IsNullOrEmpty(sitePhone))
-                        {
-                            <li style="color:#fff;"><i class="bi bi-telephone me-2"></i>@sitePhone</li>
-                        }
+                <!-- Contact -->
+                <div class="col-12 col-md-2">
+                    <h6 class="pb-footer-heading">যোগাযোগ</h6>
+                    <ul class="pb-footer-contact">
+                        <li>
+                            <i class="bi bi-envelope me-2"></i>
+                            info@newsportalpro.com
+                        </li>
+                        <li>
+                            <i class="bi bi-telephone me-2"></i>
+                            +880-1700-000000
+                        </li>
                     </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ FOOTER BOTTOM ════════════════════════════════ -->
+    <div class="pb-footer-bottom">
+        <div class="pb-footer-inner">
+            <div class="d-flex justify-content-between
+                align-items-center flex-wrap gap-2">
+                <p class="mb-0 small">
+                    &copy; @DateTime.Now.Year নিউজপোর্টাল প্রো।
+                    সর্বস্বত্ব সংরক্ষিত।
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="/Privacy" class="pb-footer-bottom-link">
+                        গোপনীয়তা
+                    </a>
+                    <a href="/Terms" class="pb-footer-bottom-link">
+                        শর্তাবলী
+                    </a>
+                    <a href="/Contact" class="pb-footer-bottom-link">
+                        যোগাযোগ
+                    </a>
+                    <a href="/About" class="pb-footer-bottom-link">
+                        আমাদের সম্পর্কে
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="footer-bottom py-3">
-        <div class="container-fluid px-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <p class="mb-0 small" style="color:#fff;">
-                        &copy; @DateTime.Now.Year @siteName। সর্বস্বত্ব সংরক্ষিত।
-                    </p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="mb-0 small">
-                        <a href="/sitemap.xml" style="color:#fff;" class="me-3">সাইটম্যাপ</a>
-                        <a href="/rss.xml" style="color:#fff;" class="me-3">
-                            <i class="bi bi-rss me-1"></i>RSS
-                        </a>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
 </footer>
+
+<script>
+    async function subscribeFooterNewsletter() {
+        var email = document.getElementById('footer-newsletter-email')
+            ?.value?.trim();
+        if (!email) { toastr.warning('ইমেইল লিখুন'); return; }
+        try {
+            var res = await fetch('/api/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            if (res.ok) toastr.success('সাবস্ক্রাইব সফল হয়েছে!');
+            else        toastr.error('সাবস্ক্রাইব ব্যর্থ হয়েছে');
+        } catch { toastr.error('নেটওয়ার্ক ত্রুটি'); }
+    }
+</script>

@@ -6,8 +6,8 @@ using NewsPortalPro.Models;
 
 namespace NewsPortalPro.Services
 {
-    public class SearchService : ISearchService
-    {
+        public class SearchService : ISearchService
+        {
         private readonly ApplicationDbContext _db;
 
         public SearchService(ApplicationDbContext db) => _db = db;
@@ -64,9 +64,9 @@ namespace NewsPortalPro.Services
             };
         }
 
-        public async Task<List<string>> GetSuggestionsAsync(
+            public async Task<List<string>> GetSuggestionsAsync(
             string query, int count = 8)
-        {
+            {
             if (string.IsNullOrWhiteSpace(query)) return [];
 
             return await _db.News
@@ -76,6 +76,6 @@ namespace NewsPortalPro.Services
                 .Take(count)
                 .Select(n => n.Title)
                 .ToListAsync();
+            }
         }
-    }
 }

@@ -9,8 +9,8 @@ using Slugify;
 
 namespace NewsPortalPro.Services
 {
-    public class CategoryService : ICategoryService
-    {
+        public class CategoryService : ICategoryService
+        {
         private readonly ApplicationDbContext _db;
         private readonly IDistributedCache _cache;
         private const string CacheKey = "categories:all";
@@ -58,16 +58,16 @@ namespace NewsPortalPro.Services
             catch { }
 
             return dtos;
-        }
+            }
 
-        public async Task<List<CategoryDto>> GetMenuCategoriesAsync()
-        {
+           public async Task<List<CategoryDto>> GetMenuCategoriesAsync()
+           {
             var all = await GetAllActiveAsync();
             return all.Where(c => c.ShowInMenu).ToList();
-        }
+           }
 
-        public async Task<CategoryDto?> GetBySlugAsync(string slug)
-        {
+           public async Task<CategoryDto?> GetBySlugAsync(string slug)
+           {
             var cat = await _db.Categories
                 .Where(c => c.Slug == slug
                          && c.IsActive
@@ -76,20 +76,20 @@ namespace NewsPortalPro.Services
                 .FirstOrDefaultAsync();
 
             return cat == null ? null : MapToDto(cat, null);
-        }
+           }
 
-        public async Task<CategoryDto?> GetByIdAsync(int id)
-        {
+           public async Task<CategoryDto?> GetByIdAsync(int id)
+           {
             var cat = await _db.Categories
                 .Where(c => c.Id == id && !c.IsDeleted)
                 .AsNoTracking()
                 .FirstOrDefaultAsync();
 
             return cat == null ? null : MapToDto(cat, null);
-        }
+           }
 
-        public async Task<int> CreateAsync(CreateCategoryDto dto)
-        {
+           public async Task<int> CreateAsync(CreateCategoryDto dto)
+           {
             var helper = new SlugHelper();
             var slug = helper.GenerateSlug(dto.Name);
 
@@ -125,10 +125,10 @@ namespace NewsPortalPro.Services
             try { await _cache.RemoveAsync(CacheKey); } catch { }
 
             return cat.Id;
-        }
+           }
 
-        public async Task<bool> UpdateAsync(int id, UpdateCategoryDto dto)
-        {
+           public async Task<bool> UpdateAsync(int id, UpdateCategoryDto dto)
+           {
             var cat = await _db.Categories.FindAsync(id);
             if (cat == null) return false;
 
@@ -147,10 +147,10 @@ namespace NewsPortalPro.Services
             await _db.SaveChangesAsync();
             try { await _cache.RemoveAsync(CacheKey); } catch { }
             return true;
-        }
+            }
 
-        public async Task<bool> DeleteAsync(int id)
-        {
+           public async Task<bool> DeleteAsync(int id)
+           {
             var cat = await _db.Categories.FindAsync(id);
             if (cat == null) return false;
             cat.IsDeleted = true;
@@ -158,9 +158,9 @@ namespace NewsPortalPro.Services
             await _db.SaveChangesAsync();
             try { await _cache.RemoveAsync(CacheKey); } catch { }
             return true;
-        }
+           }
 
-        public async Task<List<CategoryWithCountDto>>
+            public async Task<List<CategoryWithCountDto>>
             GetWithNewsCountAsync() =>
             await _db.Categories
                 .Where(c => c.IsActive && !c.IsDeleted)

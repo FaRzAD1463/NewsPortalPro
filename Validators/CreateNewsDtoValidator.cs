@@ -3,8 +3,8 @@ using NewsPortalPro.DTOs;
 
 namespace NewsPortalPro.Validators
 {
-    public class CreateNewsDtoValidator : AbstractValidator<CreateNewsDto>
-    {
+        public class CreateNewsDtoValidator : AbstractValidator<CreateNewsDto>
+        {
         public CreateNewsDtoValidator()
         {
             RuleFor(x => x.Title)
@@ -34,14 +34,14 @@ namespace NewsPortalPro.Validators
                 .GreaterThan(DateTime.UtcNow).WithMessage("শিডিউলের তারিখ ভবিষ্যতে হতে হবে")
                 .When(x => x.ScheduledAt.HasValue);
         }
-    }
+        }
 
-    public class UpdateNewsDtoValidator : AbstractValidator<UpdateNewsDto>
-    {
+        public class UpdateNewsDtoValidator : AbstractValidator<UpdateNewsDto>
+        {
         public UpdateNewsDtoValidator()
         {
             RuleFor(x => x.Id).GreaterThan(0);
             Include(new CreateNewsDtoValidator());
         }
-    }
+        }
 }

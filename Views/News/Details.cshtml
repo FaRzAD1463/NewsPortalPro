@@ -459,14 +459,22 @@
 
     </div>
 
-    <!-- ══ RELATED NEWS BOTTOM GRID ═══════════════════════════ -->
+    <!-- ══ MORE FROM THIS CATEGORY ══════════════════════════ -->
     @if (Model.RelatedNews.Any())
     {
-        <div class="mt-5 pt-3 border-top">
+        <div class="pb-page-container mt-5">
             <div class="pb-section-hdr mb-3">
-                <h5 class="pb-sec-title">আরও পড়ুন</h5>
+                <h5 class="pb-sec-title">
+                    @Model.CategoryName থেকে আরও পড়ুন
+                </h5>
+                <a href="/category/@Model.CategorySlug"
+                   class="pb-sec-more">
+                    সব দেখুন →
+                </a>
             </div>
-            <div class="row g-3">
+
+            <!-- Top 4 grid -->
+            <div class="row g-3 mb-4">
                 @foreach (var n in Model.RelatedNews.Take(4))
                 {
                     <div class="col-6 col-md-3">
@@ -474,25 +482,70 @@
                             <a href="/news/@n.Slug" class="pb-grid-img-link">
                                 <img src="@(n.FeaturedImage
                                                                              ?? "/images/placeholder.jpg")"
-                             alt="@n.Title"
-                             class="pb-grid-img"
-                             loading="lazy"
-                             onerror="this.src='/images/placeholder.jpg'" />
-                    </a>
-                    <h6 class="pb-grid-title mt-2">
-                        <a href="/news/@n.Slug"
-                           class="text-dark text-decoration-none">
-                            @n.Title
-                        </a>
-                    </h6>
-                    <div class="pb-meta-sm">
-                        <i class="bi bi-clock me-1"></i>
-                        @n.PublishedAt?.ToString("dd MMM yyyy")
+                                     alt="@n.Title"
+                                     class="pb-grid-img"
+                                     loading="lazy"
+                                     onerror="this.src='/images/placeholder.jpg'" />
+                            </a>
+                            <h6 class="pb-grid-title mt-2">
+                                <a href="/news/@n.Slug"
+                                   class="text-dark text-decoration-none">
+                                    @n.Title
+                                </a>
+                            </h6>
+                            <div class="pb-meta-sm">
+                                <i class="bi bi-clock me-1"></i>
+                                @n.PublishedAt?.ToString("dd MMM yyyy")
+                            </div>
+                        </div>
                     </div>
+                }
+            </div>
+
+            <!-- List of remaining related news -->
+            @if (Model.RelatedNews.Count > 4)
+            {
+                <div id="more-category-list">
+                    @foreach (var n in Model.RelatedNews.Skip(4))
+                    {
+                        <div class="cat-list-item">
+                            <a href="/news/@n.Slug"
+                               class="cat-list-thumb-link flex-shrink-0">
+                                <img src="@(n.FeaturedImage
+                                                                             ?? "/images/placeholder.jpg")"
+                                     alt="@n.Title"
+                                     class="cat-list-thumb"
+                                     loading="lazy"
+                                     onerror="this.src='/images/placeholder.jpg'" />
+                            </a>
+                            <div class="cat-list-body">
+                                <h5 class="cat-list-title">
+                                    <a href="/news/@n.Slug"
+                                       class="text-dark text-decoration-none">
+                                        @n.Title
+                                    </a>
+                                </h5>
+                                <p class="cat-list-summary">@n.Summary</p>
+                                <div class="pb-meta-sm">
+                                    <i class="bi bi-clock me-1"></i>
+                                    @n.PublishedAt?.ToString("dd MMM yyyy")
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </div>
+            }
+
+            <!-- Load more from category -->
+            <div class="text-center mt-4" id="load-more-related-wrap">
+                <button class="btn btn-outline-secondary px-5"
+                        id="load-more-related-btn"
+                        onclick="loadMoreRelated(this)">
+                    আরও দেখুন
+                    <i class="bi bi-chevron-down ms-1"></i>
+                </button>
             </div>
-                        }
-            </div>
+
         </div>
     }
 
@@ -571,6 +624,48 @@
                 }).join('');
             } catch(e) { }
         })();
+
+                // ── Load more from same category ───────────────────────
+        var _relatedPage = 2;
+        var _catSlug     = '@Model.CategorySlug';
+        var _newsId      = @Model.Id;
+
+        async function loadMoreRelated(btn) {
+            btn.disabled = true;
+            btn.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-2"></span>' +
+                'লোড হচ্ছে...';
+
+            try {
+                var res  = await fetch(
+                    '/category/' + _catSlug +
+                    '/more?page=' + _relatedPage + '&sort=latest');
+                var html = await res.text();
+
+                if (html.trim()) {
+                    var container = document.getElementById(
+                        'more-category-list');
+                    if (!container) {
+                        container = document.createElement('div');
+                        container.id = 'more-category-list';
+                        document.getElementById('load-more-related-wrap')
+                            .before(container);
+                    }
+                    container.insertAdjacentHTML('beforeend', html);
+                    _relatedPage++;
+                    btn.disabled = false;
+                    btn.innerHTML =
+                        'আরও দেখুন <i class="bi bi-chevron-down ms-1"></i>';
+                } else {
+                    document.getElementById('load-more-related-wrap')
+                        .style.display = 'none';
+                }
+            } catch {
+                btn.disabled = false;
+                btn.innerHTML =
+                    'আরও দেখুন <i class="bi bi-chevron-down ms-1"></i>';
+            }
+        }
 
         // ── Submit comment ─────────────────────────────────────────
         async function submitComment(newsId) {

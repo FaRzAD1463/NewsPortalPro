@@ -2,8 +2,8 @@
 
 namespace NewsPortalPro.ViewModels
 {
-    public class HomeViewModel
-    {
+        public class HomeViewModel
+        {
         public List<NewsListDto> BreakingNews { get; set; } = [];
         public List<NewsListDto> FeaturedNews { get; set; } = [];
         public List<NewsListDto> LatestNews { get; set; } = [];
@@ -14,5 +14,5 @@ namespace NewsPortalPro.ViewModels
         public List<AdvertisementDto> SidebarAds { get; set; } = [];
         public string SiteName { get; set; } = string.Empty;
         public Dictionary<string, (CategoryDto Category, List<NewsListDto> News)> CategoryNewsBlocks { get; set; } = [];
-    }
+        }
 }

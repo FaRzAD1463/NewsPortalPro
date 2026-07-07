@@ -3,8 +3,8 @@ using NewsPortalPro.DTOs;
 
 namespace NewsPortalPro.Validators
 {
-    public class CreateCommentDtoValidator : AbstractValidator<CreateCommentDto>
-    {
+        public class CreateCommentDtoValidator : AbstractValidator<CreateCommentDto>
+        {
         public CreateCommentDtoValidator()
         {
             RuleFor(x => x.Content)
@@ -15,5 +15,5 @@ namespace NewsPortalPro.Validators
             RuleFor(x => x.NewsId)
                 .GreaterThan(0).WithMessage("সংবাদ আইডি প্রয়োজন");
         }
-    }
+        }
 }

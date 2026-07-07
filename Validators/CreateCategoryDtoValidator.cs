@@ -3,8 +3,8 @@ using NewsPortalPro.DTOs;
 
 namespace NewsPortalPro.Validators
 {
-    public class CreateCategoryDtoValidator : AbstractValidator<CreateCategoryDto>
-    {
+        public class CreateCategoryDtoValidator : AbstractValidator<CreateCategoryDto>
+        {
         public CreateCategoryDtoValidator()
         {
             RuleFor(x => x.Name)
@@ -23,5 +23,5 @@ namespace NewsPortalPro.Validators
                 .MaximumLength(300)
                 .When(x => x.MetaDescription != null);
         }
-    }
+        }
 }

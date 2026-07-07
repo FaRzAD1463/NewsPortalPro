@@ -3,8 +3,8 @@ using NewsPortalPro.DTOs;
 
 namespace NewsPortalPro.Validators
 {
-    public class RegisterDtoValidator : AbstractValidator<RegisterDto>
-    {
+        public class RegisterDtoValidator : AbstractValidator<RegisterDto>
+        {
         public RegisterDtoValidator()
         {
             RuleFor(x => x.FullName)
@@ -23,5 +23,5 @@ namespace NewsPortalPro.Validators
             RuleFor(x => x.ConfirmPassword)
                 .Equal(x => x.Password).WithMessage("পাসওয়ার্ড মিলছে না");
         }
-    }
+        }
 }

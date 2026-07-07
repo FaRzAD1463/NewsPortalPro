@@ -6,8 +6,8 @@ using NewsPortalPro.Models;
 
 namespace NewsPortalPro.Services
 {
-    public class AnalyticsService : IAnalyticsService
-    {
+        public class AnalyticsService : IAnalyticsService
+        {
         private readonly ApplicationDbContext _db;
 
         public AnalyticsService(ApplicationDbContext db) => _db = db;
@@ -39,8 +39,8 @@ namespace NewsPortalPro.Services
             };
         }
 
-        public async Task<List<DailyViewsDto>> GetDailyViewsAsync(int days = 30)
-        {
+            public async Task<List<DailyViewsDto>> GetDailyViewsAsync(int days = 30)
+            {
             var from = DateTime.UtcNow.Date.AddDays(-days);
             return await _db.NewsViews
                 .Where(v => v.ViewedAt.Date >= from)
@@ -52,11 +52,11 @@ namespace NewsPortalPro.Services
                 })
                 .OrderBy(x => x.Date)
                 .ToListAsync();
-        }
+            }
 
-        public async Task<List<TopNewsDto>> GetTopNewsAsync(
+            public async Task<List<TopNewsDto>> GetTopNewsAsync(
             int count = 10, int days = 7)
-        {
+            {
             var from = DateTime.UtcNow.AddDays(-days);
             return await _db.News
                 .Where(n => n.Status == NewsStatus.Published
@@ -72,9 +72,9 @@ namespace NewsPortalPro.Services
                     FeaturedImage = n.FeaturedImage
                 })
                 .ToListAsync();
-        }
+            }
 
-        public async Task<List<CategoryStatsDto>> GetCategoryStatsAsync() =>
+            public async Task<List<CategoryStatsDto>> GetCategoryStatsAsync() =>
             await _db.Categories
                 .Where(c => c.IsActive)
                 .Select(c => new CategoryStatsDto
@@ -87,9 +87,9 @@ namespace NewsPortalPro.Services
                 .OrderByDescending(c => c.NewsCount)
                 .ToListAsync();
 
-        public async Task RecordVisitAsync(string page, string? userId,
+            public async Task RecordVisitAsync(string page, string? userId,
             string ip, string userAgent, string? referrer)
-        {
+            {
             _db.VisitorAnalytics.Add(new VisitorAnalytics
             {
                 Page = page,
@@ -102,10 +102,10 @@ namespace NewsPortalPro.Services
                 VisitedAt = DateTime.UtcNow
             });
             await _db.SaveChangesAsync();
-        }
+            }
 
-        public async Task<VisitorStatsDto> GetVisitorStatsAsync(int days = 30)
-        {
+           public async Task<VisitorStatsDto> GetVisitorStatsAsync(int days = 30)
+           {
             var from = DateTime.UtcNow.AddDays(-days);
             var visits = await _db.VisitorAnalytics
                 .Where(v => v.VisitedAt >= from)
@@ -125,27 +125,27 @@ namespace NewsPortalPro.Services
                     .GroupBy(v => v.Browser ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count())
             };
-        }
+            }
 
-        public async Task AggregateAsync()
-        {
+           public async Task AggregateAsync()
+           {
             var cutoff = DateTime.UtcNow.AddDays(-90);
             await _db.Database.ExecuteSqlRawAsync(
                 "DELETE FROM VisitorAnalytics WHERE VisitedAt < {0}", cutoff);
-        }
+           }
 
-        private static string DetectDevice(string? ua)
-        {
+           private static string DetectDevice(string? ua)
+           {
             if (string.IsNullOrEmpty(ua)) return "Unknown";
             if (ua.Contains("Mobile", StringComparison.OrdinalIgnoreCase))
                 return "Mobile";
             if (ua.Contains("Tablet", StringComparison.OrdinalIgnoreCase))
                 return "Tablet";
             return "Desktop";
-        }
+           }
 
-        private static string DetectBrowser(string? ua)
-        {
+          private static string DetectBrowser(string? ua)
+          {
             if (string.IsNullOrEmpty(ua)) return "Unknown";
             if (ua.Contains("Chrome", StringComparison.OrdinalIgnoreCase))
                 return "Chrome";
@@ -156,6 +156,6 @@ namespace NewsPortalPro.Services
             if (ua.Contains("Edge", StringComparison.OrdinalIgnoreCase))
                 return "Edge";
             return "Other";
+          }
         }
-    }
 }

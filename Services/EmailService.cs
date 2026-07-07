@@ -7,8 +7,8 @@ using NewsPortalPro.Models;
 
 namespace NewsPortalPro.Services
 {
-    public class EmailService : IEmailService
-    {
+        public class EmailService : IEmailService
+        {
         private readonly EmailSettings _settings;
         private readonly ILogger<EmailService> _logger;
 
@@ -20,9 +20,9 @@ namespace NewsPortalPro.Services
             _logger = logger;
         }
 
-        public async Task SendAsync(string to, string subject,
+            public async Task SendAsync(string to, string subject,
             string body, bool isHtml = true)
-        {
+            {
             try
             {
                 using var client = CreateSmtpClient();
@@ -38,16 +38,16 @@ namespace NewsPortalPro.Services
                 await client.SendMailAsync(mail);
                 _logger.LogInformation(
                     "Email sent to {To}: {Subject}", to, subject);
-            }
+             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to send email to {To}", to);
             }
-        }
+            }
 
-        public async Task SendEmailVerificationAsync(string email,
+            public async Task SendEmailVerificationAsync(string email,
             string userName, string verificationLink)
-        {
+            {
             var body = $@"
                 <div style='font-family:sans-serif;max-width:600px;margin:auto'>
                     <h2>ইমেইল যাচাই করুন</h2>
@@ -60,11 +60,11 @@ namespace NewsPortalPro.Services
                     </a>
                 </div>";
             await SendAsync(email, "ইমেইল যাচাই করুন", body);
-        }
+            }
 
-        public async Task SendPasswordResetAsync(string email,
+            public async Task SendPasswordResetAsync(string email,
             string userName, string resetLink)
-        {
+            {
             var body = $@"
                 <div style='font-family:sans-serif;max-width:600px;margin:auto'>
                     <h2>পাসওয়ার্ড রিসেট</h2>
@@ -76,11 +76,11 @@ namespace NewsPortalPro.Services
                     </a>
                 </div>";
             await SendAsync(email, "পাসওয়ার্ড রিসেট", body);
-        }
+            }
 
-        public async Task SendNewsletterAsync(Newsletter newsletter,
+            public async Task SendNewsletterAsync(Newsletter newsletter,
             List<string> recipients)
-        {
+            {
             using var client = CreateSmtpClient();
             foreach (var recipient in recipients)
             {
@@ -104,11 +104,11 @@ namespace NewsPortalPro.Services
                         "Newsletter failed for {Recipient}", recipient);
                 }
             }
-        }
+            }
 
-        public async Task SendContactReplyAsync(
+            public async Task SendContactReplyAsync(
             ContactMessage message, string reply)
-        {
+            {
             var body = $@"
                 <div style='font-family:sans-serif;max-width:600px;margin:auto'>
                     <h2>আপনার বার্তার উত্তর</h2>
@@ -118,9 +118,9 @@ namespace NewsPortalPro.Services
                     </div>
                 </div>";
             await SendAsync(message.Email, $"Re: {message.Subject}", body);
-        }
+            }
 
-        private SmtpClient CreateSmtpClient() =>
+            private SmtpClient CreateSmtpClient() =>
             new(_settings.SmtpHost, _settings.SmtpPort)
             {
                 Credentials = new NetworkCredential(

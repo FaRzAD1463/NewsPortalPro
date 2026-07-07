@@ -10,8 +10,8 @@ using System.Xml.Linq;
 
 namespace NewsPortalPro.Services
 {
-    public class SEOService : ISEOService
-    {
+        public class SEOService : ISEOService
+        {
         private readonly ApplicationDbContext _db;
         private readonly ISettingsService _settings;
 
@@ -21,8 +21,8 @@ namespace NewsPortalPro.Services
             _settings = settings;
         }
 
-        public async Task<SEOMetaDto> GetMetaForPageAsync(string pageUrl)
-        {
+            public async Task<SEOMetaDto> GetMetaForPageAsync(string pageUrl)
+            {
             var seo = await _db.SEOData
                 .FirstOrDefaultAsync(s => s.PageUrl == pageUrl);
             if (seo == null) return new SEOMetaDto();
@@ -36,10 +36,10 @@ namespace NewsPortalPro.Services
                 OgDescription = seo.OgDescription,
                 OgImage = seo.OgImage
             };
-        }
+            }
 
-        public async Task<string> GenerateSitemapAsync()
-        {
+            public async Task<string> GenerateSitemapAsync()
+            {
             var siteUrl = await _settings.GetAsync("SiteUrl")
                 ?? "https://newsportalpro.com";
 
@@ -89,10 +89,10 @@ namespace NewsPortalPro.Services
 
             sb.AppendLine("</urlset>");
             return sb.ToString();
-        }
+            }
 
-        public async Task<string> GenerateNewsRssFeedAsync()
-        {
+            public async Task<string> GenerateNewsRssFeedAsync()
+            {
             var siteUrl = await _settings.GetAsync("SiteUrl")
                 ?? "https://newsportalpro.com";
             var siteName = await _settings.GetAsync("SiteName")
@@ -127,10 +127,10 @@ namespace NewsPortalPro.Services
                                 new XElement("author", n.Author?.FullName))))));
 
             return rss.ToString();
-        }
+            }
 
-        public string GenerateSlug(string title)
-        {
+            public string GenerateSlug(string title)
+            {
             if (string.IsNullOrWhiteSpace(title)) return string.Empty;
 
             try
@@ -149,16 +149,16 @@ namespace NewsPortalPro.Services
             return string.IsNullOrEmpty(fallback)
                 ? $"news-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}"
                 : fallback;
-        }
+            }
 
-        public int CalculateReadTime(string content)
-        {
+            public int CalculateReadTime(string content)
+            {
             if (string.IsNullOrEmpty(content)) return 1;
             var stripped = Regex.Replace(content, "<.*?>", "");
             var wordCount = stripped
                 .Split([' ', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
                 .Length;
             return Math.Max(1, (int)Math.Ceiling(wordCount / 200.0));
+            }
         }
-    }
 }

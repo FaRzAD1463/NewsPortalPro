@@ -3,8 +3,8 @@ using NewsPortalPro.DTOs;
 
 namespace NewsPortalPro.Validators
 {
-    public class LoginDtoValidator : AbstractValidator<LoginDto>
-    {
+        public class LoginDtoValidator : AbstractValidator<LoginDto>
+        {
         public LoginDtoValidator()
         {
             RuleFor(x => x.Email)
@@ -14,5 +14,5 @@ namespace NewsPortalPro.Validators
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("পাসওয়ার্ড প্রয়োজন");
         }
-    }
+        }
 }

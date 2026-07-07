@@ -8,8 +8,8 @@ using NewsPortalPro.Models;
 
 namespace NewsPortalPro.Services
 {
-    public class NotificationService : INotificationService
-    {
+        public class NotificationService : INotificationService
+        {
         private readonly ApplicationDbContext _db;
         private readonly IHubContext<NewsHub> _hub;
 
@@ -21,7 +21,7 @@ namespace NewsPortalPro.Services
             _hub = hub;
         }
 
-        public async Task<List<NotificationDto>> GetUserNotificationsAsync(
+            public async Task<List<NotificationDto>> GetUserNotificationsAsync(
             string userId, int count = 20) =>
             await _db.Notifications
                 .Where(n => n.UserId == userId)
@@ -39,30 +39,30 @@ namespace NewsPortalPro.Services
                 })
                 .ToListAsync();
 
-        public async Task<int> GetUnreadCountAsync(string userId) =>
+            public async Task<int> GetUnreadCountAsync(string userId) =>
             await _db.Notifications
                 .CountAsync(n => n.UserId == userId && !n.IsRead);
 
-        public async Task MarkAsReadAsync(int id, string userId)
-        {
+            public async Task MarkAsReadAsync(int id, string userId)
+            {
             var notification = await _db.Notifications
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
             if (notification == null) return;
             notification.IsRead = true;
             notification.ReadAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
-        }
+            }
 
-        public async Task MarkAllAsReadAsync(string userId) =>
+            public async Task MarkAllAsReadAsync(string userId) =>
             await _db.Notifications
                 .Where(n => n.UserId == userId && !n.IsRead)
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(n => n.IsRead, true)
                     .SetProperty(n => n.ReadAt, DateTime.UtcNow));
 
-        public async Task SendToUserAsync(string userId, string title,
+            public async Task SendToUserAsync(string userId, string title,
             string message, NotificationType type, string? link = null)
-        {
+            {
             var notification = new Notification
             {
                 UserId = userId,
@@ -84,11 +84,11 @@ namespace NewsPortalPro.Services
                 Type = notification.Type.ToString(),
                 notification.CreatedAt
             });
-        }
+            }
 
-        public async Task BroadcastAsync(string title, string message,
+            public async Task BroadcastAsync(string title, string message,
             NotificationType type, string? link = null)
-        {
+            {
             var users = await _db.Users
                 .Where(u => u.IsActive)
                 .Select(u => u.Id)
@@ -108,9 +108,9 @@ namespace NewsPortalPro.Services
 
             await _hub.Clients.All.SendAsync("ReceiveBroadcast",
                 new { title, message, link });
-        }
+            }
 
-        public async Task SendBreakingNewsAlertAsync(
+            public async Task SendBreakingNewsAlertAsync(
             int newsId, string title, string slug) =>
             await _hub.Clients.All.SendAsync("BreakingNews", new
             {
@@ -119,5 +119,5 @@ namespace NewsPortalPro.Services
                 link = $"/news/{slug}",
                 timestamp = DateTime.UtcNow
             });
-    }
+        }
 }

@@ -9,10 +9,10 @@ using NewsPortalPro.Interfaces;
 using NewsPortalPro.Models;
 using Newtonsoft.Json;
 
-namespace NewsPortalPro.Services
-{
-    public class NewsService : INewsService
-    {
+       namespace NewsPortalPro.Services
+       {
+       public class NewsService : INewsService
+       {
         private readonly ApplicationDbContext _db;
         private readonly IDistributedCache _cache;
         private readonly ISEOService _seo;
@@ -205,36 +205,37 @@ namespace NewsPortalPro.Services
             catch { }
 
             var news = await _db.News
-                .Where(n => n.Slug == slug
+                   .Where(n => n.Slug == slug
                          && n.Status == NewsStatus.Published)
-                .Include(n => n.Category)
-                .Include(n => n.Author)
-                .Include(n => n.Editor)
-                .Include(n => n.NewsTags).ThenInclude(nt => nt.Tag)
-                .Include(n => n.Comments.Where(c =>
+                   .Include(n => n.Category)
+                   .Include(n => n.Author)
+                   .Include(n => n.Editor)
+                   .Include(n => n.NewsTags).ThenInclude(nt => nt.Tag)
+                   .Include(n => n.Comments.Where(c =>
                     c.Status == CommentStatus.Approved
                     && c.ParentId == null))
-                    .ThenInclude(c => c.User)
-                .Include(n => n.Comments.Where(c =>
+                   .ThenInclude(c => c.User)
+                   .Include(n => n.Comments.Where(c =>
                     c.Status == CommentStatus.Approved
                     && c.ParentId == null))
                     .ThenInclude(c => c.Replies.Where(r =>
                         r.Status == CommentStatus.Approved))
                     .ThenInclude(r => r.User)
-                .Include(n => n.Reactions)
-                .FirstOrDefaultAsync();
+                    .Include(n => n.Reactions)
+                    .FirstOrDefaultAsync();
 
             if (news == null) return null;
 
             var related = await _db.News
-                .Where(n => n.CategoryId == news.CategoryId
-                         && n.Id != news.Id
-                         && n.Status == NewsStatus.Published)
-                .OrderByDescending(n => n.PublishedAt)
-                .Take(5)
-                .Include(n => n.Category)
-                .Include(n => n.Author)
-                .ToListAsync();
+            .Where(n => n.CategoryId == news.CategoryId
+             && n.Id != news.Id
+             && n.Status == NewsStatus.Published
+             && !n.IsDeleted)
+            .OrderByDescending(n => n.PublishedAt)
+            .Take(12)   // ← was 5, now 12
+            .Include(n => n.Category)
+            .Include(n => n.Author)
+            .ToListAsync();
 
             var dto = MapToDetailDto(news, related);
 
@@ -394,6 +395,7 @@ namespace NewsPortalPro.Services
                 // ── SANITIZE all user-controlled fields ───────────
                 // Prevents stored XSS. Clean() uses HtmlSanitizer
                 // which strips dangerous tags/attributes/schemes.
+
                 Subtitle = Clean(dto.Subtitle),
                 Content = Clean(dto.Content),
                 Summary = !string.IsNullOrWhiteSpace(
@@ -441,9 +443,9 @@ namespace NewsPortalPro.Services
             return news.Id;
         }
 
-        public async Task<bool> UpdateAsync(
+            public async Task<bool> UpdateAsync(
             int id, UpdateNewsDto dto, string editorId)
-        {
+            {
             var news = await _db.News
                 .Include(n => n.NewsTags)
                 .FirstOrDefaultAsync(n => n.Id == id);
@@ -490,10 +492,10 @@ namespace NewsPortalPro.Services
             await InvalidateNewsCacheAsync(news.Slug);
 
             return true;
-        }
+            }
 
-        public async Task<bool> DeleteAsync(int id)
-        {
+           public async Task<bool> DeleteAsync(int id)
+            {
             var news = await _db.News.FindAsync(id);
             if (news == null) return false;
             news.IsDeleted = true;
@@ -501,10 +503,10 @@ namespace NewsPortalPro.Services
             await _db.SaveChangesAsync();
             await InvalidateNewsCacheAsync(news.Slug);
             return true;
-        }
+            }
 
-        public async Task<bool> PublishAsync(int id)
-        {
+           public async Task<bool> PublishAsync(int id)
+           {
             var news = await _db.News.FindAsync(id);
             if (news == null) return false;
             news.Status = NewsStatus.Published;
@@ -516,10 +518,10 @@ namespace NewsPortalPro.Services
                     news.Id, news.Title, news.Slug);
             await InvalidateNewsCacheAsync();
             return true;
-        }
+           }
 
-        public async Task<bool> SetBreakingAsync(int id, bool isBreaking)
-        {
+           public async Task<bool> SetBreakingAsync(int id, bool isBreaking)
+           {
             var news = await _db.News.FindAsync(id);
             if (news == null) return false;
             news.IsBreaking = isBreaking;
@@ -527,24 +529,24 @@ namespace NewsPortalPro.Services
             await _db.SaveChangesAsync();
             try { await _cache.RemoveAsync("news:breaking"); } catch { }
             return true;
-        }
+           }
 
-        public async Task<bool> SetFeaturedAsync(int id, bool isFeatured)
-        {
+           public async Task<bool> SetFeaturedAsync(int id, bool isFeatured)
+           {
             var news = await _db.News.FindAsync(id);
             if (news == null) return false;
             news.IsFeatured = isFeatured;
             news.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             return true;
-        }
+           }
 
-        public async Task IncrementViewAsync(
+            public async Task IncrementViewAsync(
             int newsId, string? userId,
             string? ip, string? userAgent, string? referrer)
-        {
+            {
             var recentView = await _db.NewsViews
-                .AnyAsync(v => v.NewsId == newsId
+                   .AnyAsync(v => v.NewsId == newsId
                     && v.IpAddress == ip
                     && v.ViewedAt >= DateTime.UtcNow.AddMinutes(-30));
 
@@ -566,19 +568,19 @@ namespace NewsPortalPro.Services
                 newsId);
 
             await _db.SaveChangesAsync();
-        }
+            }
 
-        public async Task<int> GetTotalCountAsync() =>
+            public async Task<int> GetTotalCountAsync() =>
             await _db.News.CountAsync();
 
-        public async Task<List<NewsListDto>> SearchAsync(
+            public async Task<List<NewsListDto>> SearchAsync(
             string query, int page, int pageSize)
-        {
-            var news = await _db.News
+            {
+                var news = await _db.News
                 .Where(n => n.Status == NewsStatus.Published && (
-                    n.Title.Contains(query) ||
-                    n.Content.Contains(query) ||
-                    (n.Summary != null && n.Summary.Contains(query))))
+                 n.Title.Contains(query) ||
+                 n.Content.Contains(query) ||
+                 (n.Summary != null && n.Summary.Contains(query))))
                 .OrderByDescending(n => n.PublishedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -587,11 +589,11 @@ namespace NewsPortalPro.Services
                 .ToListAsync();
 
             return news.Select(MapToListDto).ToList();
-        }
+            }
 
-        public async Task<PagedResult<NewsListDto>> GetAllForAdminAsync(
+            public async Task<PagedResult<NewsListDto>> GetAllForAdminAsync(
             AdminNewsFilterDto filter)
-        {
+            {
             var query = _db.News
                 .IgnoreQueryFilters()
                 .Where(n => !n.IsDeleted)
@@ -635,10 +637,10 @@ namespace NewsPortalPro.Services
                 Page = filter.Page,
                 PageSize = filter.PageSize
             };
-        }
+            }
 
-        public async Task PublishScheduledAsync()
-        {
+           public async Task PublishScheduledAsync()
+           {
             var now = DateTime.UtcNow;
             var scheduled = await _db.News
                 .Where(n => n.Status == NewsStatus.Scheduled
@@ -660,19 +662,19 @@ namespace NewsPortalPro.Services
                     "Published {Count} scheduled news",
                     scheduled.Count);
             }
-        }
+            }
 
-        public async Task CleanupOldViewsAsync()
-        {
+           public async Task CleanupOldViewsAsync()
+           {
             var cutoff = DateTime.UtcNow.AddDays(-90);
             await _db.Database.ExecuteSqlRawAsync(
                 "DELETE FROM NewsViews WHERE ViewedAt < {0}", cutoff);
-        }
+           }
 
         // ── Private Helpers ────────────────────────────────────────
 
-        private static NewsListDto MapToListDto(News n) => new()
-        {
+           private static NewsListDto MapToListDto(News n) => new()
+           {
             Id = n.Id,
             Title = n.Title,
             Slug = n.Slug,
@@ -694,9 +696,9 @@ namespace NewsPortalPro.Services
             Tags = n.NewsTags?
                                 .Select(nt => nt.Tag.Name).ToList()
                               ?? []
-        };
+            };
 
-        private static NewsDetailDto MapToDetailDto(
+            private static NewsDetailDto MapToDetailDto(
             News n, List<News> related) => new()
             {
                 Id = n.Id,
@@ -732,7 +734,7 @@ namespace NewsPortalPro.Services
                 Tags = n.NewsTags?
                                     .Select(nt => nt.Tag.Name).ToList()
                                    ?? [],
-                Comments = n.Comments?
+                 Comments = n.Comments?
                 .Where(c => c.ParentId == null)
                 .Select(c => new CommentDto
                 {
@@ -756,15 +758,15 @@ namespace NewsPortalPro.Services
                             CreatedAt = r.CreatedAt,
                             NewsId = r.NewsId
                         }).ToList() ?? []
-                }).ToList() ?? [],
-                Reactions = n.Reactions?
-                .GroupBy(r => r.Type.ToString())
-                .ToDictionary(g => g.Key, g => g.Count()) ?? [],
-                RelatedNews = related.Select(MapToListDto).ToList()
+                        }).ToList() ?? [],
+                        Reactions = n.Reactions?
+                       .GroupBy(r => r.Type.ToString())
+                       .ToDictionary(g => g.Key, g => g.Count()) ?? [],
+                        RelatedNews = related.Select(MapToListDto).ToList()
             };
 
-        private async Task SaveTagsAsync(int newsId, List<string> tagNames)
-        {
+            private async Task SaveTagsAsync(int newsId, List<string> tagNames)
+            {
             foreach (var name in tagNames
                 .Where(t => !string.IsNullOrWhiteSpace(t))
                 .Distinct())
@@ -790,10 +792,10 @@ namespace NewsPortalPro.Services
                         new NewsTag { NewsId = newsId, TagId = tag.Id });
             }
             await _db.SaveChangesAsync();
-        }
+            }
 
-        private async Task<string> EnsureUniqueSlugAsync(string slug)
-        {
+           private async Task<string> EnsureUniqueSlugAsync(string slug)
+           {
             var exists = await _db.News
                 .IgnoreQueryFilters()
                 .AnyAsync(n => n.Slug == slug);
@@ -811,19 +813,19 @@ namespace NewsPortalPro.Services
                 .AnyAsync(n => n.Slug == newSlug));
 
             return newSlug;
-        }
+            }
 
-        private static string GenerateSummary(string content)
-        {
+           private static string GenerateSummary(string content)
+           {
             var stripped = System.Text.RegularExpressions.Regex
                 .Replace(content ?? string.Empty, "<.*?>", "");
-            return stripped.Length > 300
+                return stripped.Length > 300
                 ? stripped[..300] + "..."
                 : stripped;
-        }
+           }
 
-        private static string DetectDevice(string? userAgent)
-        {
+           private static string DetectDevice(string? userAgent)
+           {
             if (string.IsNullOrEmpty(userAgent)) return "Unknown";
             if (userAgent.Contains(
                     "Mobile", StringComparison.OrdinalIgnoreCase))
@@ -832,10 +834,10 @@ namespace NewsPortalPro.Services
                     "Tablet", StringComparison.OrdinalIgnoreCase))
                 return "Tablet";
             return "Desktop";
-        }
+           }
 
-        private async Task InvalidateNewsCacheAsync(string? slug = null)
-        {
+            private async Task InvalidateNewsCacheAsync(string? slug = null)
+            {
             try
             {
                 await _cache.RemoveAsync("news:breaking");
@@ -845,6 +847,6 @@ namespace NewsPortalPro.Services
                     await _cache.RemoveAsync($"news:slug:{slug}");
             }
             catch { }
+            }
         }
-    }
-}
+       }

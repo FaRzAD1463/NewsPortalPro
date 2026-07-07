@@ -5,8 +5,8 @@ using NewsPortalPro.Models;
 
 namespace NewsPortalPro.Repositories
 {
-    public class NewsRepository : INewsRepository
-    {
+        public class NewsRepository : INewsRepository
+        {
         private readonly ApplicationDbContext _db;
 
         public NewsRepository(ApplicationDbContext db) => _db = db;
@@ -60,5 +60,5 @@ namespace NewsPortalPro.Repositories
                 query = query.Where(n => n.Status == status.Value);
             return await query.CountAsync();
         }
-    }
+        }
 }
