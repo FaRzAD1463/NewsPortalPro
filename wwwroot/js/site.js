@@ -10,8 +10,10 @@
     const months = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
         'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
     const now = new Date();
-    const dateStr = `${days[now.getDay()]}, ${now.getDate()} `
-        + `${months[now.getMonth()]} ${now.getFullYear()}`;
+    const dateStr = days[now.getDay()] + ', ' +
+        now.getDate() + ' ' +
+        months[now.getMonth()] + ' ' +
+        now.getFullYear();
     $('#current-date-header').text(dateStr);
 
     // ── Load mega menu news on hover ─────────────────────
@@ -20,43 +22,56 @@
         if (!link || link === '#') return;
         const slug = link.replace('/category/', '').replace(/\/$/, '');
         if (!slug) return;
-        const container = $(`#mega-news-${slug}`);
+        const container = $('#mega-news-' + slug);
         if (!container.length || container.data('loaded') === true) return;
         container.data('loaded', true);
 
-        fetch(`/api/news?categorySlug=${encodeURIComponent(slug)}&pageSize=4&page=1`)
-            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-            .then(data => {
+        fetch('/api/news?categorySlug=' + encodeURIComponent(slug) +
+            '&pageSize=4&page=1')
+            .then(function (r) {
+                if (!r.ok) throw new Error();
+                return r.json();
+            })
+            .then(function (data) {
                 if (!data.items || !data.items.length) {
                     container.html(
-                        '<p class="text-muted small p-2 mb-0">কোনো সংবাদ নেই</p>');
+                        '<p class="text-muted small p-2 mb-0">' +
+                        'কোনো সংবাদ নেই</p>');
                     return;
                 }
-                let html = '';
-                data.items.forEach(n => {
-                    html += `
-                    <a href="/news/${n.slug}" class="mega-news-item">
-                        <img src="${n.featuredImage || '/images/placeholder.jpg'}"
-                             alt="${n.title}" loading="lazy"
-                             onerror="this.src='/images/placeholder.jpg'" />
-                        <span class="mega-news-item-title">${n.title}</span>
-                    </a>`;
+                var html = '';
+                data.items.forEach(function (n) {
+                    html +=
+                        '<a href="/news/' + n.slug + '" ' +
+                        'class="mega-news-item">' +
+                        '<img src="' +
+                        (n.featuredImage ||
+                            '/images/placeholder.jpg') + '" ' +
+                        'alt="' + n.title + '" loading="lazy" ' +
+                        'onerror="this.src=' +
+                        '\'/images/placeholder.jpg\'" />' +
+                        '<span class="mega-news-item-title">' +
+                        n.title +
+                        '</span>' +
+                        '</a>';
                 });
                 container.html(html);
             })
-            .catch(() => {
+            .catch(function () {
                 container.data('loaded', false);
                 container.html(
-                    '<p class="text-muted small p-2 mb-0">লোড হয়নি</p>');
+                    '<p class="text-muted small p-2 mb-0">' +
+                    'লোড হয়নি</p>');
             });
     });
 
     // ── Category search in All dropdown ──────────────────
     window.filterCategories = function (query) {
         const q = query.toLowerCase().trim();
-        document.querySelectorAll('.all-cat-item').forEach(el => {
+        document.querySelectorAll('.all-cat-item').forEach(function (el) {
             const name = el.dataset.name || '';
-            el.classList.toggle('d-none', q !== '' && !name.includes(q));
+            el.classList.toggle('d-none',
+                q !== '' && !name.includes(q));
         });
     };
 
@@ -65,7 +80,8 @@
     setTheme(saved);
 
     $('#theme-toggle').on('click', function () {
-        const current = document.documentElement.getAttribute('data-theme');
+        const current = document.documentElement
+            .getAttribute('data-theme');
         setTheme(current === 'dark' ? 'light' : 'dark');
     });
 
@@ -82,19 +98,24 @@
     $('#live-search').on('input', function () {
         clearTimeout(searchTimer);
         const q = $(this).val().trim();
-        if (!q) { $('#search-suggestions').empty().hide(); return; }
+        if (!q) {
+            $('#search-suggestions').empty().hide();
+            return;
+        }
 
-        searchTimer = setTimeout(async () => {
+        searchTimer = setTimeout(async function () {
             try {
                 const res = await fetch(
-                    `/api/search/suggest?q=${encodeURIComponent(q)}`);
+                    '/api/search/suggest?q=' + encodeURIComponent(q));
                 const data = await res.json();
                 const box = $('#search-suggestions');
                 box.empty();
                 if (data.length) {
-                    data.forEach(s => box.append(
-                        `<a href="/Search?q=${encodeURIComponent(s)}">${s}</a>`
-                    ));
+                    data.forEach(function (s) {
+                        box.append(
+                            '<a href="/Search?q=' +
+                            encodeURIComponent(s) + '">' + s + '</a>');
+                    });
                     box.show();
                 } else {
                     box.hide();
@@ -116,10 +137,19 @@
             const res = await fetch('/api/news/breaking?count=8');
             const data = await res.json();
             if (data && data.length) {
-                const links = data.map(n =>
-                    `<a href="/news/${n.slug}">${n.title}</a>`).join('');
-                $('#ticker-content').html(links);
-                $('#breaking-ticker').removeClass('d-none');
+                // Duplicate items for seamless infinite scroll
+                const links = data.map(function (n) {
+                    return '<a href="/news/' + n.slug + '">' +
+                        n.title + '</a>';
+                }).join('');
+
+                const ticker = document.getElementById('ticker-content');
+                if (ticker) {
+                    ticker.innerHTML = links + links; // duplicate for loop
+                }
+
+                const bar = document.getElementById('breaking-ticker');
+                if (bar) bar.classList.remove('d-none');
             }
         } catch { }
     }
@@ -134,7 +164,9 @@
             const res = await fetch('/api/notifications?count=10');
             if (!res.ok) return;
             const data = await res.json();
-            const unread = data.filter(n => !n.isRead).length;
+            const unread = data.filter(function (n) {
+                return !n.isRead;
+            }).length;
 
             if (unread > 0)
                 $('#notif-count').text(unread).removeClass('d-none');
@@ -144,14 +176,20 @@
             const list = $('#notif-list');
             list.empty();
             if (data.length) {
-                data.forEach(n => list.append(`
-                    <div class="notif-item ${n.isRead ? '' : 'unread'}"
-                         onclick="readNotification(${n.id},
-                             '${n.link || ''}')">
-                        <div class="fw-medium small">${n.title}</div>
-                        <div class="text-muted"
-                             style="font-size:12px">${n.message || ''}</div>
-                    </div>`));
+                data.forEach(function (n) {
+                    list.append(
+                        '<div class="notif-item ' +
+                        (n.isRead ? '' : 'unread') + '" ' +
+                        'onclick="readNotification(' + n.id + ',' +
+                        '\'' + (n.link || '') + '\')">' +
+                        '<div class="fw-medium small">' +
+                        n.title + '</div>' +
+                        '<div class="text-muted" ' +
+                        'style="font-size:12px">' +
+                        (n.message || '') +
+                        '</div>' +
+                        '</div>');
+                });
             } else {
                 list.html(
                     '<div class="p-3 text-center text-muted small">' +
@@ -166,24 +204,27 @@
 
     $('#mark-all-read').on('click', async function (e) {
         e.preventDefault();
-        await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+        await fetch('/api/notifications/mark-all-read',
+            { method: 'POST' });
         loadNotifications();
     });
 
     // ── Ad Tracking (impression) ─────────────────────────
-    const adObserver = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
+    const adObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
             if (entry.isIntersecting) {
                 const adId = entry.target.dataset.adId;
                 if (adId) {
-                    fetch(`/api/ads/${adId}/impression`, { method: 'POST' });
+                    fetch('/api/ads/' + adId + '/impression',
+                        { method: 'POST' });
                     adObserver.unobserve(entry.target);
                 }
             }
         });
     });
-    document.querySelectorAll('[data-ad-id]').forEach(
-        el => adObserver.observe(el));
+    document.querySelectorAll('[data-ad-id]').forEach(function (el) {
+        adObserver.observe(el);
+    });
 
     // ── Toastr Config ────────────────────────────────────
     toastr.options = {
@@ -208,47 +249,49 @@
     });
 
     // ── Smooth scroll to category section on home page ───
-    document.querySelectorAll('.nav-link-custom').forEach(link => {
+    document.querySelectorAll('.nav-link-custom').forEach(function (link) {
         link.addEventListener('click', function (e) {
             const href = this.getAttribute('href') || '';
             if (!href.startsWith('/category/')) return;
 
-            const slug = href.replace('/category/', '').replace(/\/$/, '');
-            const section = document.getElementById(`cat-${slug}`);
+            const slug = href.replace('/category/', '')
+                .replace(/\/$/, '');
+            const section = document.getElementById('cat-' + slug);
 
             if (section && window.location.pathname === '/') {
                 e.preventDefault();
                 const offset = 80;
                 const top = section.getBoundingClientRect().top
-                    + window.scrollY      // ← fixed: no longer deprecated
+                    + window.scrollY
                     - offset;
-                window.scrollTo({ top, behavior: 'smooth' });
+                window.scrollTo({ top: top, behavior: 'smooth' });
             }
         });
     });
 
 })(jQuery);
 
-// ── Global Functions (outside IIFE so they are globally accessible) ──────────
+// ── Global Functions ─────────────────────────────────────
 
 function submitSearch() {
     const q = document.getElementById('live-search')?.value?.trim();
-    if (q) window.location.href = `/Search?q=${encodeURIComponent(q)}`;
+    if (q) window.location.href = '/Search?q=' + encodeURIComponent(q);
 }
 
 function submitSidebarSearch() {
     const q = document.getElementById('sidebar-search-input')?.value?.trim()
         || document.getElementById('sidebar-search')?.value?.trim();
-    if (q) window.location.href = `/Search?q=${encodeURIComponent(q)}`;
+    if (q) window.location.href = '/Search?q=' + encodeURIComponent(q);
 }
 
 function trackAdClick(adId) {
-    fetch(`/api/ads/${adId}/click`, { method: 'POST' }).catch(() => { });
+    fetch('/api/ads/' + adId + '/click', { method: 'POST' }).catch(function () { });
 }
 
 async function readNotification(id, link) {
     try {
-        await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+        await fetch('/api/notifications/' + id + '/read',
+            { method: 'POST' });
     } catch { }
     if (link) window.location.href = link;
 }

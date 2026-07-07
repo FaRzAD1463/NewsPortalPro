@@ -366,6 +366,62 @@ img {
     }
 }
 
+/* ══════════════════════════════════════════════════════
+   NAVBAR + HEADER — centered to match pb-page-container
+   ══════════════════════════════════════════════════════ */
+
+/* ── Top bar (date + epaper + theme + auth) ──────────── */
+#main-header .container-fluid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* ── Breaking news ticker ────────────────────────────── */
+#breaking-ticker .d-flex,
+#breaking-ticker > div {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* ── Main navbar ─────────────────────────────────────── */
+.main-nav .container-fluid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* ── Footer ──────────────────────────────────────────── */
+.site-footer .container-fluid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* ── 1400px+ screens ─────────────────────────────────── */
+@media (min-width: 1400px) {
+    #main-header .container-fluid,
+    .main-nav .container-fluid,
+    .site-footer .container-fluid {
+        max-width: 1320px;
+    }
+}
+
+/* ── Mobile ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+    #main-header .container-fluid,
+    .main-nav .container-fluid,
+    .site-footer .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
 
 /* ══════════════════════════════════════════════════════
    SIDEBAR TOGGLE BUTTON
@@ -404,26 +460,24 @@ img {
         padding-left: 26px;
     }
 
-/* ══════════════════════════════════════════════════════
-   BREAKING NEWS TICKER
-   ══════════════════════════════════════════════════════ */
+/* ── Breaking ticker — aligned with navbar/content ───── */
 .breaking-ticker {
     background: #f0f0f0;
     color: #1a1a1a;
-    padding: 6px 0;
-    font-size: 13px;
     overflow: hidden;
 }
 
-.ticker-label {
-    background: #d0d0d0;
-    color: #1a1a1a;
-    padding: 4px 12px;
-    font-weight: 700;
-    font-size: 12px;
-    white-space: nowrap;
-    margin-right: 12px;
-    border-radius: 2px;
+.breaking-ticker-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.breaking-label {
     flex-shrink: 0;
 }
 
@@ -434,34 +488,59 @@ img {
 }
 
 .ticker-content {
+    display: flex;
+    gap: 0;
     white-space: nowrap;
-    animation: ticker 30s linear infinite;
-    display: inline-block;
+    animation: ticker-scroll 40s linear infinite;
 }
-
-    .ticker-content:hover {
-        animation-play-state: paused;
-    }
 
     .ticker-content a {
         color: #1a1a1a;
-        margin-right: 40px;
         text-decoration: none;
+        padding-right: 50px;
+        font-size: 13px;
+        white-space: nowrap;
     }
 
         .ticker-content a::before {
             content: "▶ ";
             font-size: 10px;
+            margin-right: 4px;
         }
 
-@keyframes ticker {
+    .ticker-content:hover {
+        animation-play-state: paused;
+    }
+
+@keyframes ticker-scroll {
     0% {
-        transform: translateX(100vw);
+        transform: translateX(0);
     }
 
     100% {
-        transform: translateX(-100%);
+        transform: translateX(-50%);
     }
+}
+
+@media (min-width: 1400px) {
+    .breaking-ticker-inner {
+        max-width: 1320px;
+    }
+}
+
+@media (max-width: 768px) {
+    .breaking-ticker-inner {
+        padding: 5px 10px;
+    }
+}
+
+/* ── Dark mode ticker ────────────────────────────────── */
+[data-theme="dark"] .breaking-ticker {
+    background: #2d2d2d;
+}
+
+[data-theme="dark"] .ticker-content a {
+    color: #e0e0e0;
 }
 
 /* ══════════════════════════════════════════════════════
