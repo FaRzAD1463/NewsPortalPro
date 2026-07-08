@@ -95,22 +95,79 @@
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm mb-4">
+            <<div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-0 pt-4 px-4">
                     <h6 class="fw-bold mb-0">ফিচার্ড ইমেজ</h6>
-                </div>
-                <div class="card-body p-4">
-                    @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
-                    {
-                        <img src="@Model.FeaturedImageUrl" class="img-fluid rounded mb-3" alt="Current" />
-                    }
-                    <input type="file" name="featuredImage" accept="image/*" class="form-control mb-2" />
-                    <input asp-for="FeaturedImageUrl" class="form-control form-control-sm mb-2"
-                           placeholder="বা URL দিন" />
-                    <input asp-for="FeaturedImageAlt" class="form-control form-control-sm mb-2"
-                           placeholder="Alt টেক্সট" />
-                    <input asp-for="FeaturedImageCaption" class="form-control form-control-sm"
-                           placeholder="ক্যাপশন" />
+                    <div class="card-body p-4">
+
+                        <!-- ── Featured Image ─────────────────────────────────── -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">ফিচার্ড ছবি</label>
+
+                            <input type="file"
+                                   name="featuredImage"
+                                   class="form-control"
+                                   accept="image/*"
+                                   data-preview="featured-preview"
+                                   onchange="previewImage(this, 'featured-preview')" />
+
+                            @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
+                            {
+                                <img id="featured-preview"
+                                     src="@Model.FeaturedImageUrl"
+                                     class="mt-2 rounded img-fluid"
+                                     style="max-height:120px;object-fit:cover" />
+                            }
+                            else
+                            {
+                                <img id="featured-preview"
+                                     src=""
+                                     class="mt-2 rounded d-none"
+                                     style="max-height:120px;object-fit:cover" />
+                            }
+
+                            <div class="mt-3">
+                                <input asp-for="FeaturedImageUrl"
+                                       class="form-control form-control-sm mb-2"
+                                       placeholder="অথবা ছবির URL দিন" />
+
+                                <input asp-for="FeaturedImageAlt"
+                                       class="form-control form-control-sm mb-2"
+                                       placeholder="Alt টেক্সট (SEO)" />
+
+                                <input asp-for="FeaturedImageCaption"
+                                       class="form-control form-control-sm"
+                                       placeholder="ছবির ক্যাপশন" />
+                            </div>
+                        </div>
+
+                        <!-- ── Gallery Images ────────────────────────────────── -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">
+                                অতিরিক্ত ছবি (গ্যালারি)
+                                <span class="text-muted small">
+                                    — ক্লিক করলে কন্টেন্টে ইনসার্ট হবে
+                                </span>
+                            </label>
+
+                            <input type="file"
+                                   id="gallery-upload-input"
+                                   accept="image/*"
+                                   multiple
+                                   class="form-control"
+                                   onchange="uploadGalleryImages(this.files)" />
+
+                            <div id="gallery-preview"
+                                 class="d-flex flex-wrap gap-2 mt-2">
+                                <!-- Thumbnails appear here -->
+                            </div>
+
+                            <small class="text-muted">
+                                ছবি আপলোড করার পর ক্লিক করলে কন্টেন্ট এডিটরে ইনসার্ট হবে।
+                            </small>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>

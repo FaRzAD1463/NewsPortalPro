@@ -1413,6 +1413,15 @@ body > *:last-child {
     box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
 
+    .pb-main-nav .nav-link-custom {
+        color: #333 !important;
+    }
+
+        .pb-main-nav .nav-link-custom:hover {
+            color: #c0392b !important;
+            background: rgba(0,0,0,.04);
+        }
+
 .pb-nav-inner {
     max-width: 1200px;
     margin: 0 auto;
@@ -1440,6 +1449,7 @@ body > *:last-child {
     font-size: .85rem;
     padding: 0;
 }
+
 
 /* ══════════════════════════════════════════════════════
    FOOTER — Protidinerbangladesh style (dark grey)
