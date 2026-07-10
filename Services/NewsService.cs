@@ -1,7 +1,6 @@
 ﻿using Ganss.Xss;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
@@ -9,27 +8,23 @@ using NewsPortalPro.Interfaces;
 using NewsPortalPro.Models;
 using Newtonsoft.Json;
 
-       namespace NewsPortalPro.Services
-       {
-       public class NewsService : INewsService
-       {
+namespace NewsPortalPro.Services
+{
+    public class NewsService : INewsService
+    {
         private readonly ApplicationDbContext _db;
         private readonly IDistributedCache _cache;
         private readonly ISEOService _seo;
-        private readonly IMemoryCache _memCache;
         private readonly ILogger<NewsService> _logger;
         private readonly INotificationService _notifications;
 
         // ── HTML Sanitizer ─────────────────────────────────────────
-        // Thread-safe singleton — built once, never mutated after init.
-        // Prevents stored XSS in article content and all text fields.
         private static readonly HtmlSanitizer Sanitizer = CreateSanitizer();
 
         private static HtmlSanitizer CreateSanitizer()
         {
             var s = new HtmlSanitizer();
 
-            // ── Allowed tags ───────────────────────────────────────
             s.AllowedTags.Clear();
             foreach (var tag in new[]
             {
@@ -46,8 +41,6 @@ using Newtonsoft.Json;
                 s.AllowedTags.Add(tag);
             }
 
-            // ── Allowed attributes ─────────────────────────────────
-            // style is NOT included — prevents CSS exfiltration tricks
             s.AllowedAttributes.Clear();
             foreach (var attr in new[]
             {
@@ -59,15 +52,11 @@ using Newtonsoft.Json;
                 s.AllowedAttributes.Add(attr);
             }
 
-            // ── Allowed URL schemes ────────────────────────────────
-            // data: and javascript: are blocked — prevents XSS via img src
             s.AllowedSchemes.Clear();
             s.AllowedSchemes.Add("https");
             s.AllowedSchemes.Add("http");
             s.AllowedSchemes.Add("mailto");
 
-            // ── Force safe external link attributes ────────────────
-            // Must not mutate sanitizer after this point
             s.PostProcessNode += (sender, e) =>
             {
                 if (e.Node is AngleSharp.Dom.IElement element &&
@@ -87,15 +76,9 @@ using Newtonsoft.Json;
             return s;
         }
 
-        // ── Helper — sanitize any user-controlled text field ───────
-        // Strips dangerous HTML from all fields, not just Content.
-        // Covers: Summary, Subtitle, MetaDescription, MetaKeywords,
-        //         FeaturedImageAlt, FeaturedImageCaption
         private static string Clean(string? input)
         {
-            if (string.IsNullOrWhiteSpace(input))
-                return string.Empty;
-
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
             return Sanitizer.Sanitize(input.Trim());
         }
 
@@ -103,23 +86,23 @@ using Newtonsoft.Json;
             ApplicationDbContext db,
             IDistributedCache cache,
             ISEOService seo,
-            IMemoryCache memCache,
             ILogger<NewsService> logger,
             INotificationService notifications)
         {
             _db = db;
             _cache = cache;
-            _memCache = memCache;
             _seo = seo;
             _logger = logger;
             _notifications = notifications;
         }
 
+        // ── GetPublishedAsync ──────────────────────────────────────
         public async Task<PagedResult<NewsListDto>> GetPublishedAsync(
             NewsFilterDto filter)
         {
             var query = _db.News
-                .Where(n => n.Status == NewsStatus.Published)
+                .Where(n => n.Status == NewsStatus.Published
+                         && !n.IsDeleted)
                 .Include(n => n.Category)
                 .Include(n => n.Author)
                 .Include(n => n.NewsTags).ThenInclude(nt => nt.Tag)
@@ -144,7 +127,8 @@ using Newtonsoft.Json;
                      n.Summary.Contains(filter.Search)));
 
             if (filter.Type.HasValue)
-                query = query.Where(n => n.Type == filter.Type.Value);
+                query = query.Where(
+                    n => n.Type == filter.Type.Value);
 
             query = filter.Sort switch
             {
@@ -169,29 +153,7 @@ using Newtonsoft.Json;
             };
         }
 
-        // ── Generic cache-aside helper ─────────────────────────────
-        private async Task<T> GetOrSetMemCacheAsync<T>(
-            string key,
-            Func<Task<T>> factory,
-            TimeSpan expiry)
-        {
-            if (_memCache.TryGetValue(key, out T? cached) && cached != null)
-                return cached;
-
-            var value = await factory();
-
-            _memCache.Set(key, value, new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = expiry,
-                SlidingExpiration = null,
-                Priority = CacheItemPriority.Normal,
-                Size = 1
-            });
-
-            return value;
-        }
-
-
+        // ── GetBySlugAsync ─────────────────────────────────────────
         public async Task<NewsDetailDto?> GetBySlugAsync(string slug)
         {
             var cacheKey = $"news:slug:{slug}";
@@ -199,43 +161,44 @@ using Newtonsoft.Json;
             {
                 var cached = await _cache.GetStringAsync(cacheKey);
                 if (cached != null)
-                    return JsonConvert.DeserializeObject<NewsDetailDto>(
-                        cached);
+                    return JsonConvert
+                        .DeserializeObject<NewsDetailDto>(cached);
             }
             catch { }
 
             var news = await _db.News
-                   .Where(n => n.Slug == slug
-                         && n.Status == NewsStatus.Published)
-                   .Include(n => n.Category)
-                   .Include(n => n.Author)
-                   .Include(n => n.Editor)
-                   .Include(n => n.NewsTags).ThenInclude(nt => nt.Tag)
-                   .Include(n => n.Comments.Where(c =>
+                .Where(n => n.Slug == slug
+                         && n.Status == NewsStatus.Published
+                         && !n.IsDeleted)
+                .Include(n => n.Category)
+                .Include(n => n.Author)
+                .Include(n => n.Editor)
+                .Include(n => n.NewsTags).ThenInclude(nt => nt.Tag)
+                .Include(n => n.Comments.Where(c =>
                     c.Status == CommentStatus.Approved
                     && c.ParentId == null))
-                   .ThenInclude(c => c.User)
-                   .Include(n => n.Comments.Where(c =>
+                    .ThenInclude(c => c.User)
+                .Include(n => n.Comments.Where(c =>
                     c.Status == CommentStatus.Approved
                     && c.ParentId == null))
                     .ThenInclude(c => c.Replies.Where(r =>
                         r.Status == CommentStatus.Approved))
                     .ThenInclude(r => r.User)
-                    .Include(n => n.Reactions)
-                    .FirstOrDefaultAsync();
+                .Include(n => n.Reactions)
+                .FirstOrDefaultAsync();
 
             if (news == null) return null;
 
             var related = await _db.News
-            .Where(n => n.CategoryId == news.CategoryId
-             && n.Id != news.Id
-             && n.Status == NewsStatus.Published
-             && !n.IsDeleted)
-            .OrderByDescending(n => n.PublishedAt)
-            .Take(12)   // ← was 5, now 12
-            .Include(n => n.Category)
-            .Include(n => n.Author)
-            .ToListAsync();
+                .Where(n => n.CategoryId == news.CategoryId
+                         && n.Id != news.Id
+                         && n.Status == NewsStatus.Published
+                         && !n.IsDeleted)
+                .OrderByDescending(n => n.PublishedAt)
+                .Take(12)
+                .Include(n => n.Category)
+                .Include(n => n.Author)
+                .ToListAsync();
 
             var dto = MapToDetailDto(news, related);
 
@@ -255,17 +218,19 @@ using Newtonsoft.Json;
             return dto;
         }
 
+        // ── GetByIdAsync ───────────────────────────────────────────
         public async Task<NewsDetailDto?> GetByIdAsync(int id)
         {
             var news = await _db.News
                 .Include(n => n.Category)
                 .Include(n => n.Author)
                 .Include(n => n.NewsTags).ThenInclude(nt => nt.Tag)
-                .FirstOrDefaultAsync(n => n.Id == id);
+                .FirstOrDefaultAsync(n => n.Id == id && !n.IsDeleted);
 
             return news == null ? null : MapToDetailDto(news, []);
         }
 
+        // ── GetBreakingNewsAsync ───────────────────────────────────
         public async Task<List<NewsListDto>> GetBreakingNewsAsync(
             int count = 5)
         {
@@ -281,7 +246,8 @@ using Newtonsoft.Json;
 
             var news = await _db.News
                 .Where(n => n.IsBreaking
-                         && n.Status == NewsStatus.Published)
+                         && n.Status == NewsStatus.Published
+                         && !n.IsDeleted)
                 .OrderByDescending(n => n.PublishedAt)
                 .Take(count)
                 .Include(n => n.Category)
@@ -306,11 +272,14 @@ using Newtonsoft.Json;
             return dtos;
         }
 
-        public async Task<List<NewsListDto>> GetFeaturedAsync(int count = 6)
+        // ── GetFeaturedAsync ───────────────────────────────────────
+        public async Task<List<NewsListDto>> GetFeaturedAsync(
+            int count = 6)
         {
             var news = await _db.News
                 .Where(n => n.IsFeatured
-                         && n.Status == NewsStatus.Published)
+                         && n.Status == NewsStatus.Published
+                         && !n.IsDeleted)
                 .OrderByDescending(n => n.PublishedAt)
                 .Take(count)
                 .Include(n => n.Category)
@@ -320,12 +289,14 @@ using Newtonsoft.Json;
             return news.Select(MapToListDto).ToList();
         }
 
+        // ── GetByCategoryAsync ─────────────────────────────────────
         public async Task<List<NewsListDto>> GetByCategoryAsync(
             string categorySlug, int page, int pageSize)
         {
             var news = await _db.News
                 .Where(n => n.Category.Slug == categorySlug
-                         && n.Status == NewsStatus.Published)
+                         && n.Status == NewsStatus.Published
+                         && !n.IsDeleted)
                 .OrderByDescending(n => n.PublishedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -336,13 +307,15 @@ using Newtonsoft.Json;
             return news.Select(MapToListDto).ToList();
         }
 
+        // ── GetRelatedAsync ────────────────────────────────────────
         public async Task<List<NewsListDto>> GetRelatedAsync(
             int newsId, int categoryId, int count = 5)
         {
             var news = await _db.News
                 .Where(n => n.CategoryId == categoryId
                          && n.Id != newsId
-                         && n.Status == NewsStatus.Published)
+                         && n.Status == NewsStatus.Published
+                         && !n.IsDeleted)
                 .OrderByDescending(n => n.PublishedAt)
                 .Take(count)
                 .Include(n => n.Category)
@@ -352,11 +325,14 @@ using Newtonsoft.Json;
             return news.Select(MapToListDto).ToList();
         }
 
-        public async Task<List<NewsListDto>> GetTrendingAsync(int count = 10)
+        // ── GetTrendingAsync ───────────────────────────────────────
+        public async Task<List<NewsListDto>> GetTrendingAsync(
+            int count = 10)
         {
             var cutoff = DateTime.UtcNow.AddDays(-7);
             var news = await _db.News
                 .Where(n => n.Status == NewsStatus.Published
+                         && !n.IsDeleted
                          && n.PublishedAt >= cutoff)
                 .OrderByDescending(n => n.ViewCount)
                 .Take(count)
@@ -367,11 +343,13 @@ using Newtonsoft.Json;
             return news.Select(MapToListDto).ToList();
         }
 
+        // ── GetMostViewedAsync ─────────────────────────────────────
         public async Task<List<NewsListDto>> GetMostViewedAsync(
             int count = 10)
         {
             var news = await _db.News
-                .Where(n => n.Status == NewsStatus.Published)
+                .Where(n => n.Status == NewsStatus.Published
+                         && !n.IsDeleted)
                 .OrderByDescending(n => n.ViewCount)
                 .Take(count)
                 .Include(n => n.Category)
@@ -381,6 +359,7 @@ using Newtonsoft.Json;
             return news.Select(MapToListDto).ToList();
         }
 
+        // ── CreateAsync ────────────────────────────────────────────
         public async Task<int> CreateAsync(
             CreateNewsDto dto, string authorId)
         {
@@ -389,17 +368,13 @@ using Newtonsoft.Json;
 
             var news = new News
             {
-                Title = dto.Title?.Trim() ?? string.Empty,
+                Title = dto.Title?.Trim()
+                                       ?? string.Empty,
                 Slug = slug,
-
-                // ── SANITIZE all user-controlled fields ───────────
-                // Prevents stored XSS. Clean() uses HtmlSanitizer
-                // which strips dangerous tags/attributes/schemes.
-
                 Subtitle = Clean(dto.Subtitle),
                 Content = Clean(dto.Content),
                 Summary = !string.IsNullOrWhiteSpace(
-                                            dto.Summary)
+                                           dto.Summary)
                                         ? Clean(dto.Summary)
                                         : GenerateSummary(dto.Content),
                 FeaturedImageAlt = Clean(dto.FeaturedImageAlt),
@@ -409,8 +384,6 @@ using Newtonsoft.Json;
                 MetaDescription = Clean(dto.MetaDescription
                                             ?? dto.Summary),
                 MetaKeywords = Clean(dto.MetaKeywords),
-                // ─────────────────────────────────────────────────
-
                 CategoryId = dto.CategoryId,
                 AuthorId = authorId,
                 Status = dto.Status,
@@ -421,10 +394,11 @@ using Newtonsoft.Json;
                 ScheduledAt = dto.ScheduledAt,
                 FeaturedImage = dto.FeaturedImageUrl,
                 VideoUrl = dto.VideoUrl,
-                ReadTimeMinutes = _seo.CalculateReadTime(dto.Content),
+                ReadTimeMinutes = _seo.CalculateReadTime(
+                                           dto.Content),
                 PublishedAt = dto.Status == NewsStatus.Published
-                                    ? DateTime.UtcNow
-                                    : null
+                                        ? DateTime.UtcNow
+                                        : null
             };
 
             _db.News.Add(news);
@@ -443,23 +417,23 @@ using Newtonsoft.Json;
             return news.Id;
         }
 
-            public async Task<bool> UpdateAsync(
+        // ── UpdateAsync ────────────────────────────────────────────
+        public async Task<bool> UpdateAsync(
             int id, UpdateNewsDto dto, string editorId)
-            {
+        {
             var news = await _db.News
                 .Include(n => n.NewsTags)
-                .FirstOrDefaultAsync(n => n.Id == id);
+                .FirstOrDefaultAsync(n => n.Id == id && !n.IsDeleted);
 
             if (news == null) return false;
 
             var wasPublished = news.Status == NewsStatus.Published;
 
-            // ── SANITIZE all user-controlled fields on update ──────
             news.Title = dto.Title?.Trim() ?? news.Title;
             news.Subtitle = Clean(dto.Subtitle);
             news.Content = Clean(dto.Content);
             news.Summary = !string.IsNullOrWhiteSpace(
-                                            dto.Summary)
+                                           dto.Summary)
                                         ? Clean(dto.Summary)
                                         : GenerateSummary(dto.Content);
             news.FeaturedImageAlt = Clean(dto.FeaturedImageAlt);
@@ -467,8 +441,6 @@ using Newtonsoft.Json;
             news.MetaTitle = Clean(dto.MetaTitle ?? dto.Title);
             news.MetaDescription = Clean(dto.MetaDescription);
             news.MetaKeywords = Clean(dto.MetaKeywords);
-            // ──────────────────────────────────────────────────────
-
             news.CategoryId = dto.CategoryId;
             news.EditorId = editorId;
             news.Status = dto.Status;
@@ -477,12 +449,15 @@ using Newtonsoft.Json;
             news.IsBreaking = dto.IsBreaking;
             news.AllowComments = dto.AllowComments;
             news.ScheduledAt = dto.ScheduledAt;
-            news.FeaturedImage = dto.FeaturedImageUrl ?? news.FeaturedImage;
+            news.FeaturedImage = dto.FeaturedImageUrl
+                                       ?? news.FeaturedImage;
             news.VideoUrl = dto.VideoUrl;
-            news.ReadTimeMinutes = _seo.CalculateReadTime(dto.Content);
+            news.ReadTimeMinutes = _seo.CalculateReadTime(
+                                           dto.Content);
             news.UpdatedAt = DateTime.UtcNow;
 
-            if (!wasPublished && dto.Status == NewsStatus.Published)
+            if (!wasPublished &&
+                dto.Status == NewsStatus.Published)
                 news.PublishedAt = DateTime.UtcNow;
 
             _db.NewsTags.RemoveRange(news.NewsTags);
@@ -492,10 +467,11 @@ using Newtonsoft.Json;
             await InvalidateNewsCacheAsync(news.Slug);
 
             return true;
-            }
+        }
 
-           public async Task<bool> DeleteAsync(int id)
-            {
+        // ── DeleteAsync ────────────────────────────────────────────
+        public async Task<bool> DeleteAsync(int id)
+        {
             var news = await _db.News.FindAsync(id);
             if (news == null) return false;
             news.IsDeleted = true;
@@ -503,10 +479,11 @@ using Newtonsoft.Json;
             await _db.SaveChangesAsync();
             await InvalidateNewsCacheAsync(news.Slug);
             return true;
-            }
+        }
 
-           public async Task<bool> PublishAsync(int id)
-           {
+        // ── PublishAsync ───────────────────────────────────────────
+        public async Task<bool> PublishAsync(int id)
+        {
             var news = await _db.News.FindAsync(id);
             if (news == null) return false;
             news.Status = NewsStatus.Published;
@@ -518,37 +495,41 @@ using Newtonsoft.Json;
                     news.Id, news.Title, news.Slug);
             await InvalidateNewsCacheAsync();
             return true;
-           }
+        }
 
-           public async Task<bool> SetBreakingAsync(int id, bool isBreaking)
-           {
+        // ── SetBreakingAsync ───────────────────────────────────────
+        public async Task<bool> SetBreakingAsync(int id, bool isBreaking)
+        {
             var news = await _db.News.FindAsync(id);
             if (news == null) return false;
             news.IsBreaking = isBreaking;
             news.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
-            try { await _cache.RemoveAsync("news:breaking"); } catch { }
+            try { await _cache.RemoveAsync("news:breaking"); }
+            catch { }
             return true;
-           }
+        }
 
-           public async Task<bool> SetFeaturedAsync(int id, bool isFeatured)
-           {
+        // ── SetFeaturedAsync ───────────────────────────────────────
+        public async Task<bool> SetFeaturedAsync(int id, bool isFeatured)
+        {
             var news = await _db.News.FindAsync(id);
             if (news == null) return false;
             news.IsFeatured = isFeatured;
             news.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             return true;
-           }
+        }
 
-            public async Task IncrementViewAsync(
+        // ── IncrementViewAsync ─────────────────────────────────────
+        public async Task IncrementViewAsync(
             int newsId, string? userId,
             string? ip, string? userAgent, string? referrer)
-            {
-            var recentView = await _db.NewsViews
-                   .AnyAsync(v => v.NewsId == newsId
-                    && v.IpAddress == ip
-                    && v.ViewedAt >= DateTime.UtcNow.AddMinutes(-30));
+        {
+            var recentView = await _db.NewsViews.AnyAsync(v =>
+                v.NewsId == newsId
+                && v.IpAddress == ip
+                && v.ViewedAt >= DateTime.UtcNow.AddMinutes(-30));
 
             if (recentView) return;
 
@@ -564,23 +545,27 @@ using Newtonsoft.Json;
             });
 
             await _db.Database.ExecuteSqlRawAsync(
-                "UPDATE News SET ViewCount = ViewCount + 1 WHERE Id = {0}",
-                newsId);
+                "UPDATE News SET ViewCount = ViewCount + 1 " +
+                "WHERE Id = {0}", newsId);
 
             await _db.SaveChangesAsync();
-            }
+        }
 
-            public async Task<int> GetTotalCountAsync() =>
-            await _db.News.CountAsync();
+        // ── GetTotalCountAsync ─────────────────────────────────────
+        public async Task<int> GetTotalCountAsync() =>
+            await _db.News.CountAsync(n => !n.IsDeleted);
 
-            public async Task<List<NewsListDto>> SearchAsync(
+        // ── SearchAsync ────────────────────────────────────────────
+        public async Task<List<NewsListDto>> SearchAsync(
             string query, int page, int pageSize)
-            {
-                var news = await _db.News
-                .Where(n => n.Status == NewsStatus.Published && (
-                 n.Title.Contains(query) ||
-                 n.Content.Contains(query) ||
-                 (n.Summary != null && n.Summary.Contains(query))))
+        {
+            var news = await _db.News
+                .Where(n => n.Status == NewsStatus.Published
+                         && !n.IsDeleted && (
+                            n.Title.Contains(query) ||
+                            n.Content.Contains(query) ||
+                            (n.Summary != null &&
+                             n.Summary.Contains(query))))
                 .OrderByDescending(n => n.PublishedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -589,11 +574,12 @@ using Newtonsoft.Json;
                 .ToListAsync();
 
             return news.Select(MapToListDto).ToList();
-            }
+        }
 
-            public async Task<PagedResult<NewsListDto>> GetAllForAdminAsync(
+        // ── GetAllForAdminAsync ────────────────────────────────────
+        public async Task<PagedResult<NewsListDto>> GetAllForAdminAsync(
             AdminNewsFilterDto filter)
-            {
+        {
             var query = _db.News
                 .IgnoreQueryFilters()
                 .Where(n => !n.IsDeleted)
@@ -620,7 +606,8 @@ using Newtonsoft.Json;
                 query = query.Where(
                     n => n.Category.Slug == filter.CategorySlug);
             if (!string.IsNullOrEmpty(filter.Search))
-                query = query.Where(n => n.Title.Contains(filter.Search));
+                query = query.Where(
+                    n => n.Title.Contains(filter.Search));
 
             query = query.OrderByDescending(n => n.CreatedAt);
 
@@ -637,14 +624,16 @@ using Newtonsoft.Json;
                 Page = filter.Page,
                 PageSize = filter.PageSize
             };
-            }
+        }
 
-           public async Task PublishScheduledAsync()
-           {
+        // ── PublishScheduledAsync ──────────────────────────────────
+        public async Task PublishScheduledAsync()
+        {
             var now = DateTime.UtcNow;
             var scheduled = await _db.News
                 .Where(n => n.Status == NewsStatus.Scheduled
-                         && n.ScheduledAt <= now)
+                         && n.ScheduledAt <= now
+                         && !n.IsDeleted)
                 .ToListAsync();
 
             foreach (var news in scheduled)
@@ -662,19 +651,21 @@ using Newtonsoft.Json;
                     "Published {Count} scheduled news",
                     scheduled.Count);
             }
-            }
+        }
 
-           public async Task CleanupOldViewsAsync()
-           {
+        // ── CleanupOldViewsAsync ───────────────────────────────────
+        public async Task CleanupOldViewsAsync()
+        {
             var cutoff = DateTime.UtcNow.AddDays(-90);
             await _db.Database.ExecuteSqlRawAsync(
                 "DELETE FROM NewsViews WHERE ViewedAt < {0}", cutoff);
-           }
+        }
 
         // ── Private Helpers ────────────────────────────────────────
 
-           private static NewsListDto MapToListDto(News n) => new()
-           {
+        // ── MapToListDto — includes Status ─────────────────────────
+        private static NewsListDto MapToListDto(News n) => new()
+        {
             Id = n.Id,
             Title = n.Title,
             Slug = n.Slug,
@@ -693,12 +684,14 @@ using Newtonsoft.Json;
             IsBreaking = n.IsBreaking,
             IsFeatured = n.IsFeatured,
             Type = n.Type,
+            Status = n.Status,
             Tags = n.NewsTags?
-                                .Select(nt => nt.Tag.Name).ToList()
-                              ?? []
-            };
+                                   .Select(nt => nt.Tag.Name)
+                                   .ToList()
+                               ?? []
+        };
 
-            private static NewsDetailDto MapToDetailDto(
+        private static NewsDetailDto MapToDetailDto(
             News n, List<News> related) => new()
             {
                 Id = n.Id,
@@ -726,15 +719,17 @@ using Newtonsoft.Json;
                 IsBreaking = n.IsBreaking,
                 IsFeatured = n.IsFeatured,
                 Type = n.Type,
+                Status = n.Status,
                 AllowComments = n.AllowComments,
                 MetaTitle = n.MetaTitle,
                 MetaDescription = n.MetaDescription,
                 MetaKeywords = n.MetaKeywords,
                 CanonicalUrl = n.CanonicalUrl,
                 Tags = n.NewsTags?
-                                    .Select(nt => nt.Tag.Name).ToList()
+                                       .Select(nt => nt.Tag.Name)
+                                       .ToList()
                                    ?? [],
-                 Comments = n.Comments?
+                Comments = n.Comments?
                 .Where(c => c.ParentId == null)
                 .Select(c => new CommentDto
                 {
@@ -758,20 +753,24 @@ using Newtonsoft.Json;
                             CreatedAt = r.CreatedAt,
                             NewsId = r.NewsId
                         }).ToList() ?? []
-                        }).ToList() ?? [],
-                        Reactions = n.Reactions?
-                       .GroupBy(r => r.Type.ToString())
-                       .ToDictionary(g => g.Key, g => g.Count()) ?? [],
-                        RelatedNews = related.Select(MapToListDto).ToList()
+                }).ToList() ?? [],
+                Reactions = n.Reactions?
+                .GroupBy(r => r.Type.ToString())
+                .ToDictionary(g => g.Key, g => g.Count())
+                ?? [],
+                RelatedNews = related.Select(MapToListDto).ToList()
             };
 
-            private async Task SaveTagsAsync(int newsId, List<string> tagNames)
-            {
+        private async Task SaveTagsAsync(
+            int newsId, List<string> tagNames)
+        {
             foreach (var name in tagNames
                 .Where(t => !string.IsNullOrWhiteSpace(t))
                 .Distinct())
             {
-                var slug = name.ToLower().Replace(" ", "-");
+                var slug = name.ToLower()
+                               .Replace(" ", "-")
+                               .Trim();
                 var tag = await _db.Tags
                     .IgnoreQueryFilters()
                     .FirstOrDefaultAsync(t => t.Slug == slug);
@@ -783,19 +782,21 @@ using Newtonsoft.Json;
                     await _db.SaveChangesAsync();
                 }
 
-                var exists = await _db.NewsTags
-                    .AnyAsync(nt => nt.NewsId == newsId
-                                 && nt.TagId == tag.Id);
+                var exists = await _db.NewsTags.AnyAsync(
+                    nt => nt.NewsId == newsId && nt.TagId == tag.Id);
 
                 if (!exists)
-                    _db.NewsTags.Add(
-                        new NewsTag { NewsId = newsId, TagId = tag.Id });
+                    _db.NewsTags.Add(new NewsTag
+                    {
+                        NewsId = newsId,
+                        TagId = tag.Id
+                    });
             }
             await _db.SaveChangesAsync();
-            }
+        }
 
-           private async Task<string> EnsureUniqueSlugAsync(string slug)
-           {
+        private async Task<string> EnsureUniqueSlugAsync(string slug)
+        {
             var exists = await _db.News
                 .IgnoreQueryFilters()
                 .AnyAsync(n => n.Slug == slug);
@@ -813,19 +814,19 @@ using Newtonsoft.Json;
                 .AnyAsync(n => n.Slug == newSlug));
 
             return newSlug;
-            }
+        }
 
-           private static string GenerateSummary(string content)
-           {
+        private static string GenerateSummary(string? content)
+        {
             var stripped = System.Text.RegularExpressions.Regex
                 .Replace(content ?? string.Empty, "<.*?>", "");
-                return stripped.Length > 300
+            return stripped.Length > 300
                 ? stripped[..300] + "..."
                 : stripped;
-           }
+        }
 
-           private static string DetectDevice(string? userAgent)
-           {
+        private static string DetectDevice(string? userAgent)
+        {
             if (string.IsNullOrEmpty(userAgent)) return "Unknown";
             if (userAgent.Contains(
                     "Mobile", StringComparison.OrdinalIgnoreCase))
@@ -834,10 +835,11 @@ using Newtonsoft.Json;
                     "Tablet", StringComparison.OrdinalIgnoreCase))
                 return "Tablet";
             return "Desktop";
-           }
+        }
 
-            private async Task InvalidateNewsCacheAsync(string? slug = null)
-            {
+        private async Task InvalidateNewsCacheAsync(
+            string? slug = null)
+        {
             try
             {
                 await _cache.RemoveAsync("news:breaking");
@@ -847,6 +849,6 @@ using Newtonsoft.Json;
                     await _cache.RemoveAsync($"news:slug:{slug}");
             }
             catch { }
-            }
         }
-       }
+    }
+}

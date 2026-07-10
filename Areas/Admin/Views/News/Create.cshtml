@@ -106,163 +106,160 @@
 
         <!-- ── Right: Settings ──────────────────────────── -->
         <div class="col-lg-4">
+            <div style="position:sticky;top:80px;
+                        max-height:calc(100vh - 90px);
+                        overflow-y:auto;padding-right:4px">
 
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-header bg-transparent fw-medium">
-                    প্রকাশ সেটিংস
+                <!-- Submit buttons — TOP of sidebar -->
+                <div class="d-grid gap-2 mb-3">
+                    <button type="submit" name="Status" value="1"
+                            class="btn btn-danger btn-lg">
+                        <i class="bi bi-send me-2"></i>প্রকাশ করুন
+                    </button>
+                    <button type="submit" name="Status" value="0"
+                            class="btn btn-outline-secondary">
+                        <i class="bi bi-save me-2"></i>
+                        ড্রাফট সংরক্ষণ
+                    </button>
+                    <a href="/Admin/News"
+                       class="btn btn-link text-muted btn-sm">
+                        বাতিল
+                    </a>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label small">স্ট্যাটাস</label>
-                        <select asp-for="Status" class="form-select">
-                            <option value="0">ড্রাফট</option>
-                            <option value="1">প্রকাশিত</option>
-                            <option value="2">নির্ধারিত</option>
-                        </select>
+
+                <!-- Publish settings -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-transparent fw-medium">
+                        প্রকাশ সেটিংস
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small">বিভাগ</label>
-                        <select asp-for="CategoryId"
-                                class="form-select" required>
-                            <option value="">বিভাগ নির্বাচন করুন</option>
-                            @if (ViewBag.Categories is
-                                                        Microsoft.AspNetCore.Mvc.Rendering
-                                                        .SelectList cats)
-                            {
-                                @foreach (var item in cats)
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label small">
+                                বিভাগ <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="CategoryId"
+                                    class="form-select" required>
+                                <option value="">
+                                    বিভাগ নির্বাচন করুন
+                                </option>
+                                @if (ViewBag.Categories is
+                                                                Microsoft.AspNetCore.Mvc.Rendering
+                                                                .SelectList cats)
                                 {
-                                    <option value="@item.Value">
-                                        @item.Text
-                                    </option>
+                                    @foreach (var item in cats)
+                                    {
+                                        <option value="@item.Value">
+                                            @item.Text
+                                        </option>
+                                    }
                                 }
-                            }
-                        </select>
-                        <span asp-validation-for="CategoryId"
-                              class="text-danger small"></span>
+                            </select>
+                            <span asp-validation-for="CategoryId"
+                                  class="text-danger small"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">ট্যাগ</label>
+                            <input asp-for="TagsString"
+                                   class="form-control"
+                                   placeholder="ট্যাগ, কমা দিয়ে আলাদা করুন" />
+                            <small class="text-muted">
+                                যেমন: ক্রিকেট, খেলাধুলা
+                            </small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">
+                                ভিডিও URL (ঐচ্ছিক)
+                            </label>
+                            <input asp-for="VideoUrl"
+                                   class="form-control"
+                                   placeholder="YouTube embed URL" />
+                        </div>
+                        <div class="mb-2">
+                            <div class="form-check form-switch">
+                                <input asp-for="IsFeatured"
+                                       class="form-check-input"
+                                       type="checkbox" />
+                                <label class="form-check-label small">
+                                    ফিচার্ড সংবাদ
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="form-check form-switch">
+                                <input asp-for="IsBreaking"
+                                       class="form-check-input"
+                                       type="checkbox" />
+                                <label class="form-check-label small">
+                                    ব্রেকিং নিউজ
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <div class="form-check form-switch">
+                                <input asp-for="AllowComments"
+                                       class="form-check-input"
+                                       type="checkbox" checked />
+                                <label class="form-check-label small">
+                                    মন্তব্য অনুমতি
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small">ট্যাগ</label>
-                        <input asp-for="TagsString"
-                               class="form-control"
-                               placeholder="ট্যাগ, কমা দিয়ে আলাদা করুন" />
-                        <small class="text-muted">
-                            যেমন: ক্রিকেট, খেলাধুলা, বাংলাদেশ
+                </div>
+
+                <!-- Featured Image -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-transparent fw-medium">
+                        ফিচার্ড ছবি
+                    </div>
+                    <div class="card-body">
+                        <img id="featured-preview"
+                             src=""
+                             class="img-fluid rounded d-none mb-2"
+                             style="max-height:140px;
+                                    object-fit:cover;width:100%" />
+                        <input type="file" name="featuredImage"
+                               class="form-control form-control-sm mb-2"
+                               accept="image/*"
+                               onchange="previewImage(
+                                   this,'featured-preview')" />
+                        <input asp-for="FeaturedImageAlt"
+                               class="form-control form-control-sm mb-2"
+                               placeholder="ছবির Alt টেক্সট" />
+                        <input asp-for="FeaturedImageCaption"
+                               class="form-control form-control-sm"
+                               placeholder="ছবির ক্যাপশন" />
+                    </div>
+                </div>
+
+                <!-- Gallery Images -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-transparent fw-medium">
+                        গ্যালারি ছবি
+                        <small class="text-muted fw-normal ms-1">
+                            — ক্লিক করলে এডিটরে যোগ হবে
                         </small>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small">
-                            ভিডিও URL (ঐচ্ছিক)
-                        </label>
-                        <input asp-for="VideoUrl"
-                               class="form-control"
-                               placeholder="YouTube embed URL" />
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input asp-for="IsFeatured"
-                                   class="form-check-input"
-                                   type="checkbox" />
-                            <label class="form-check-label small">
-                                ফিচার্ড সংবাদ
-                            </label>
+                    <div class="card-body">
+                        <input type="file"
+                               id="gallery-upload-input"
+                               accept="image/*" multiple
+                               class="form-control form-control-sm mb-2"
+                               onchange="uploadGalleryImages(
+                                   this.files)" />
+                        <div id="gallery-preview"
+                             class="d-flex flex-wrap gap-2 mt-1">
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input asp-for="IsBreaking"
-                                   class="form-check-input"
-                                   type="checkbox" />
-                            <label class="form-check-label small">
-                                ব্রেকিং নিউজ
-                            </label>
-                        </div>
-                    </div>
-                    <div class="mb-0">
-                        <div class="form-check form-switch">
-                            <input asp-for="AllowComments"
-                                   class="form-check-input"
-                                   type="checkbox" checked />
-                            <label class="form-check-label small">
-                                মন্তব্য অনুমতি
-                            </label>
-                        </div>
+                        <small class="text-muted d-block mt-2">
+                            একসাথে একাধিক ছবি নির্বাচন করুন।
+                            ছবিতে ক্লিক করলে কন্টেন্টে যোগ হবে।
+                        </small>
                     </div>
                 </div>
-            </div>
 
-            <!-- ── Featured Image ─────────────────────────────────── -->
-            <div class="mb-3">
-                <label class="form-label fw-medium">ফিচার্ড ছবি</label>
-
-                <input type="file"
-                       name="featuredImage"
-                       class="form-control"
-                       accept="image/*"
-                       data-preview="featured-preview"
-                       onchange="previewImage(this, 'featured-preview')" />
-
-                @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
-                {
-                    <img id="featured-preview"
-                         src="@Model.FeaturedImageUrl"
-                         class="mt-2 rounded"
-                         style="max-height:120px;object-fit:cover" />
-                }
-                else
-                {
-                    <img id="featured-preview"
-                         src=""
-                         class="mt-2 rounded d-none"
-                         style="max-height:120px;object-fit:cover" />
-                }
-
-                <div class="mt-3">
-                    <input asp-for="FeaturedImageAlt"
-                           class="form-control form-control-sm mb-2"
-                           placeholder="Alt টেক্সট (SEO)" />
-
-                    <input asp-for="FeaturedImageCaption"
-                           class="form-control form-control-sm"
-                           placeholder="ছবির ক্যাপশন" />
-                </div>
-            </div>
-
-            <!-- ── Gallery Images ────────────────────────────────── -->
-            <div class="mb-3">
-                <label class="form-label fw-medium">
-                    অতিরিক্ত ছবি (গ্যালারি)
-                    <span class="text-muted small">
-                        — ক্লিক করলে কন্টেন্টে ইনসার্ট হবে
-                    </span>
-                </label>
-
-                <input type="file"
-                       id="gallery-upload-input"
-                       accept="image/*"
-                       multiple
-                       class="form-control"
-                       onchange="uploadGalleryImages(this.files)" />
-
-                <div id="gallery-preview" class="d-flex flex-wrap gap-2 mt-2">
-                    <!-- Thumbnails appear here after upload -->
-                </div>
-
-                <small class="text-muted">
-                    ছবি আপলোড করার পর ক্লিক করলে কন্টেন্ট এডিটরে ইনসার্ট হবে।
-                </small>
-            </div>
-            <!-- Video URL -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h6 class="fw-bold mb-0"><i class="bi bi-play-circle me-2 text-primary"></i>ভিডিও</h6>
-                </div>
-                <div class="card-body p-4">
-                    <input asp-for="VideoUrl" class="form-control"
-                           placeholder="YouTube/ভিমিও এম্বেড URL" />
-                </div>
-            </div>
-
+            </div><!-- /sticky wrapper -->
         </div>
+
     </div>
 </form>
 
@@ -298,7 +295,7 @@
                 fd.append('file', blobInfo.blob(), blobInfo.filename());
                 fd.append('__RequestVerificationToken', _token);
                 var res  = await fetch('/Admin/News/UploadImage',
-                    { method: 'POST', body: fd });
+                    { method:'POST', body:fd });
                 var data = await res.json();
                 if (!data.url) throw new Error('Upload failed');
                 return data.url;
@@ -306,8 +303,7 @@
             content_style:
                 'body{font-family:Noto Sans Bengali,sans-serif;' +
                 'font-size:16px;line-height:1.8;color:#222;padding:12px}' +
-                'img{max-width:100%;height:auto}' +
-                'p{margin-bottom:14px}'
+                'img{max-width:100%;height:auto}p{margin-bottom:14px}'
         });
 
         function previewImage(input, previewId) {
@@ -343,7 +339,7 @@
 
                 try {
                     var res  = await fetch('/Admin/News/UploadImage',
-                        { method: 'POST', body: fd });
+                        { method:'POST', body:fd });
                     var data = await res.json();
 
                     if (data.url) {

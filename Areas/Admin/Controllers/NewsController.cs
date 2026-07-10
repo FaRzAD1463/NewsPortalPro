@@ -32,7 +32,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             _logger = logger;
         }
 
-        // ── Index ──────────────────────────────────────────────
+        // ── Index ──────────────────────────────────────────────────
         public async Task<IActionResult> Index(
             [FromQuery] AdminNewsFilterDto filter)
         {
@@ -42,7 +42,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return View(result);
         }
 
-        // ── Create GET ─────────────────────────────────────────
+        // ── Create GET ─────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> Create()
         {
@@ -50,13 +50,22 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return View(new CreateNewsDto());
         }
 
-        // ── Create POST ────────────────────────────────────────
+        // ── Create POST ────────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
         public async Task<IActionResult> Create(
-            CreateNewsDto dto, IFormFile? featuredImage)
+            CreateNewsDto dto,
+            IFormFile? featuredImage,
+            [FromForm(Name = "Status")] string? statusOverride)
         {
+            // Submit button value overrides dropdown
+            if (!string.IsNullOrEmpty(statusOverride) &&
+                int.TryParse(statusOverride, out var statusInt))
+            {
+                dto.Status = (Models.NewsStatus)statusInt;
+            }
+
             if (featuredImage != null)
             {
                 try
@@ -83,18 +92,22 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             var authorId = User.FindFirstValue(
                 ClaimTypes.NameIdentifier)!;
             await _news.CreateAsync(dto, authorId);
-            TempData["Success"] = "সংবাদ সফলভাবে তৈরি হয়েছে";
+
+            TempData["Success"] = dto.Status ==
+                Models.NewsStatus.Published
+                    ? "সংবাদ সফলভাবে প্রকাশিত হয়েছে"
+                    : "সংবাদ ড্রাফট হিসেবে সংরক্ষিত হয়েছে";
+
             return RedirectToAction(nameof(Index));
         }
 
-        // ── Edit GET ───────────────────────────────────────────
+        // ── Edit GET ───────────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var news = await _news.GetByIdAsync(id);
             if (news == null) return NotFound();
 
-            // IDOR — reporters can only edit their own
             if (User.IsInRole("Reporter")
                 && !User.IsInRole("Admin")
                 && !User.IsInRole("Editor"))
@@ -110,7 +123,6 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 }
             }
 
-            // Look up CategoryId from slug
             var categoryId = 0;
             if (!string.IsNullOrEmpty(news.CategorySlug))
             {
@@ -122,8 +134,6 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             }
 
             await PopulateCategoryList();
-
-            // Pass slug to ViewBag — UpdateNewsDto has no Slug property
             ViewBag.NewsSlug = news.Slug;
 
             var dto = new UpdateNewsDto
@@ -134,12 +144,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 Content = news.Content,
                 Summary = news.Summary,
                 CategoryId = categoryId,
-                Status = news.PublishedAt.HasValue &&
-                                       news.PublishedAt <= DateTime.UtcNow
-                                        ? Models.NewsStatus.Published
-                                        : news.PublishedAt.HasValue
-                                            ? Models.NewsStatus.Scheduled
-                                            : Models.NewsStatus.Draft,
+                Status = news.Status,
                 IsFeatured = news.IsFeatured,
                 IsBreaking = news.IsBreaking,
                 AllowComments = news.AllowComments,
@@ -156,14 +161,23 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return View(dto);
         }
 
-        // ── Edit POST ──────────────────────────────────────────
+        // ── Edit POST ──────────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
         public async Task<IActionResult> Edit(
-            int id, UpdateNewsDto dto, IFormFile? featuredImage)
+            int id,
+            UpdateNewsDto dto,
+            IFormFile? featuredImage,
+            [FromForm(Name = "Status")] string? statusOverride)
         {
-            // IDOR check
+            // Submit button value overrides dropdown
+            if (!string.IsNullOrEmpty(statusOverride) &&
+                int.TryParse(statusOverride, out var statusInt))
+            {
+                dto.Status = (Models.NewsStatus)statusInt;
+            }
+
             if (User.IsInRole("Reporter")
                 && !User.IsInRole("Admin")
                 && !User.IsInRole("Editor"))
@@ -207,11 +221,16 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             var editorId = User.FindFirstValue(
                 ClaimTypes.NameIdentifier)!;
             await _news.UpdateAsync(id, dto, editorId);
-            TempData["Success"] = "সংবাদ সফলভাবে আপডেট হয়েছে";
+
+            TempData["Success"] = dto.Status ==
+                Models.NewsStatus.Published
+                    ? "সংবাদ সফলভাবে প্রকাশিত হয়েছে"
+                    : "সংবাদ আপডেট হয়েছে";
+
             return RedirectToAction(nameof(Index));
         }
 
-        // ── Delete ─────────────────────────────────────────────
+        // ── Delete ─────────────────────────────────────────────────
         [HttpPost]
         [Authorize(Roles = "Admin,Editor,Reporter")]
         public async Task<IActionResult> Delete(int id)
@@ -232,7 +251,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return Ok(new { success = deleted });
         }
 
-        // ── Publish ────────────────────────────────────────────
+        // ── Publish ────────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Publish(int id)
@@ -241,7 +260,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return Ok(new { success = true });
         }
 
-        // ── Toggle Breaking ────────────────────────────────────
+        // ── Toggle Breaking ────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleBreaking(
@@ -251,7 +270,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return Ok(new { success = true });
         }
 
-        // ── Toggle Featured ────────────────────────────────────
+        // ── Toggle Featured ────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleFeatured(
@@ -261,7 +280,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return Ok(new { success = true });
         }
 
-        // ── Image Upload (TinyMCE + Gallery) ──────────────────
+        // ── Image Upload ───────────────────────────────────────────
         [HttpPost]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
@@ -282,7 +301,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             }
         }
 
-        // ── Populate category dropdown ─────────────────────────
+        // ── Populate Categories ────────────────────────────────────
         private async Task PopulateCategoryList()
         {
             var cats = await _db.Categories

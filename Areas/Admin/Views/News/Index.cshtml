@@ -1,18 +1,14 @@
 ﻿@using NewsPortalPro.DTOs
 @using NewsPortalPro.Models
 @model NewsPortalPro.DTOs.PagedResult<NewsPortalPro.DTOs.NewsListDto>
-
 @{
     ViewData["Title"] = "সংবাদ ব্যবস্থাপনা";
     var filter = ViewBag.Filter as AdminNewsFilterDto
-                  ?? new AdminNewsFilterDto();
-    var isDraft = filter.Status == NewsStatus.Draft;
-    var isPublished = filter.Status == NewsStatus.Published;
-    var isScheduled = filter.Status == NewsStatus.Scheduled;
+              ?? new AdminNewsFilterDto();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0">সর্বশেষ সংবাদ</h4>
+    <h4 class="fw-bold mb-0">সংবাদ ব্যবস্থাপনা</h4>
     <a href="/Admin/News/Create" class="btn btn-primary">
         <i class="bi bi-plus-circle me-2"></i>নতুন সংবাদ
     </a>
@@ -29,21 +25,38 @@
                        placeholder="শিরোনাম খুঁজুন..." />
             </div>
             <div class="col-md-3">
-                <select name="Status" class="form-select form-select-sm">
+                <select name="Status"
+                        class="form-select form-select-sm">
                     <option value="">সব স্ট্যাটাস</option>
-                    <option value="0" selected="@(isDraft ? "selected" : null)">
-                        ড্রাফট
-                    </option>
-                    <option value="1" selected="@(isPublished ? "selected" : null)">
-                        প্রকাশিত
-                    </option>
-                    <option value="2" selected="@(isScheduled ? "selected" : null)">
-                        নির্ধারিত
-                    </option>
+                    @if (filter.Status == NewsStatus.Draft)
+                    {
+                        <option value="0" selected>ড্রাফট</option>
+                    }
+                    else
+                    {
+                        <option value="0">ড্রাফট</option>
+                    }
+                    @if (filter.Status == NewsStatus.Published)
+                    {
+                        <option value="1" selected>প্রকাশিত</option>
+                    }
+                    else
+                    {
+                        <option value="1">প্রকাশিত</option>
+                    }
+                    @if (filter.Status == NewsStatus.Scheduled)
+                    {
+                        <option value="2" selected>নির্ধারিত</option>
+                    }
+                    else
+                    {
+                        <option value="2">নির্ধারিত</option>
+                    }
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary btn-sm w-100">
+                <button type="submit"
+                        class="btn btn-primary btn-sm w-100">
                     <i class="bi bi-search me-1"></i>খুঁজুন
                 </button>
             </div>
@@ -60,13 +73,15 @@
 <!-- News Table -->
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
-
         @if (!Model.Items.Any())
         {
             <div class="text-center py-5">
                 <i class="bi bi-newspaper fs-1 text-muted"></i>
-                <p class="text-muted mt-3">কোনো সংবাদ পাওয়া যায়নি।</p>
-                <a href="/Admin/News/Create" class="btn btn-primary btn-sm">
+                <p class="text-muted mt-3">
+                    কোনো সংবাদ পাওয়া যায়নি।
+                </p>
+                <a href="/Admin/News/Create"
+                   class="btn btn-primary btn-sm">
                     প্রথম সংবাদ তৈরি করুন
                 </a>
             </div>
@@ -83,7 +98,8 @@
                             <th style="width:100px">স্ট্যাটাস</th>
                             <th style="width:80px">ভিউ</th>
                             <th style="width:110px">তারিখ</th>
-                            <th style="width:180px" class="text-center">
+                            <th style="width:170px"
+                                class="text-center">
                                 অ্যাকশন
                             </th>
                         </tr>
@@ -94,28 +110,33 @@
                             <tr>
                                 <!-- Thumbnail -->
                                 <td>
-                                    @if (!string.IsNullOrEmpty(news.FeaturedImage))
+                                    @if (!string.IsNullOrEmpty(
+                                                                news.FeaturedImage))
                                     {
                                         <img src="@news.FeaturedImage"
                                              class="rounded"
-                                             style="width:48px;height:36px;
+                                             style="width:48px;
+                                                                height:36px;
                                                                 object-fit:cover" />
                                     }
                                     else
                                     {
-                                        <div class="rounded bg-light d-flex
-                                                                align-items-center
-                                                                justify-content-center"
-                                             style="width:48px;height:36px">
+                                        <div class="rounded bg-light
+                                                         d-flex align-items-center
+                                                         justify-content-center"
+                                             style="width:48px;
+                                                                height:36px">
                                             <i class="bi bi-image
-                                                                   text-muted small"></i>
+                                                                   text-muted small">
+                                            </i>
                                         </div>
                                     }
                                 </td>
 
                                 <!-- Title -->
                                 <td>
-                                    <div class="fw-medium small text-truncate"
+                                    <div class="fw-medium small
+                                                        text-truncate"
                                          style="max-width:320px"
                                          title="@news.Title">
                                         @news.Title
@@ -123,8 +144,8 @@
                                     <div class="d-flex gap-2 mt-1">
                                         <span class="text-muted"
                                               style="font-size:11px">
-                                            <i class="bi bi-person me-1"></i>
-                                            @news.AuthorName
+                                            <i class="bi bi-person me-1">
+                                            </i>@news.AuthorName
                                         </span>
                                         @if (news.IsBreaking)
                                         {
@@ -147,24 +168,26 @@
                                 <!-- Category -->
                                 <td>
                                     <span class="badge rounded-pill"
-                                          style="background:@(news.CategoryColor
-                                                                                           ?? "#6c757d");
-                                                 font-size:11px">
+                                          style="background:@(
+                                          news.CategoryColor
+                                          ?? "#6c757d");
+                                              font-size:11px">
                                 @news.CategoryName
                             </span>
                         </td>
 
                                 <!-- Status -->
                                 <td>
-                            @if (news.PublishedAt.HasValue &&
-                                                        news.PublishedAt <= DateTime.UtcNow)
+                            @if (news.Status ==
+                                                        NewsStatus.Published)
                                     {
                                         <span class="badge bg-success"
                                               style="font-size:11px">
                                             প্রকাশিত
                                         </span>
                                     }
-                                    else if (news.PublishedAt.HasValue)
+                                    else if (news.Status ==
+                                    NewsStatus.Scheduled)
                                     {
                                         <span class="badge bg-info"
                                               style="font-size:11px">
@@ -188,16 +211,16 @@
 
                             <!-- Date -->
                             <td class="text-muted small">
-                                @(news.PublishedAt?.ToString("dd MMM yy")
-                                                            ?? "—")
+                                @(news.PublishedAt
+                                                            ?.ToString("dd MMM yy") ?? "—")
                         </td>
 
                                 <!-- Actions -->
                                 <td class="text-center">
                                     <div class="d-flex gap-1
-                                                        justify-content-center">
+                                                 justify-content-center">
 
-                                        <!-- View on site -->
+                                        <!-- View -->
                                         <a href="/news/@news.Slug"
                                            target="_blank"
                                            class="btn btn-outline-secondary
@@ -208,26 +231,40 @@
 
                                         <!-- Edit -->
                                         <a href="/Admin/News/Edit/@news.Id"
-                                           class="btn btn-outline-primary btn-sm"
+                                           class="btn btn-outline-primary
+                                                          btn-sm"
                                            title="সম্পাদনা">
                                             <i class="bi bi-pencil"></i>
                                         </a>
 
-                                        <!-- Publish (drafts only) -->
-                                @if (!news.PublishedAt.HasValue ||
-                                                                news.PublishedAt > DateTime.UtcNow)
+                                        <!-- Publish button -->
+                                @if (news.Status !=
+                                                                NewsStatus.Published)
                                         {
                                             <button class="btn btn-outline-success
-                                                                       btn-sm"
-                                                    onclick="publishNews(@news.Id)"
+                                                                   btn-sm"
+                                                    onclick="publishNews(
+                                                                @news.Id)"
                                                     title="প্রকাশ করুন">
-                                                <i class="bi bi-check-circle"></i>
+                                                <i class="bi bi-check-circle">
+                                                </i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-success btn-sm"
+                                                    disabled
+                                                    style="opacity:.55;
+                                                                   cursor:default"
+                                                    title="প্রকাশিত">
+                                                <i class="bi bi-check-circle-fill">
+                                                </i>
                                             </button>
                                         }
 
                                         <!-- Delete -->
-                                        <button type="button"
-                                                class="btn btn-outline-danger btn-sm btn-delete"
+                                        <button class="btn btn-outline-danger
+                                                           btn-sm btn-delete"
                                                 data-id="@news.Id"
                                                 title="মুছুন">
                                             <i class="bi bi-trash"></i>
@@ -264,8 +301,8 @@
                                                 Model.Page + 2); i++)
                             {
                                 <li class="page-item
-                                                       @(i == Model.Page
-                                                                                   ? "active" : "")">
+                                                @(i == Model.Page
+                                                                            ? "active" : "")">
                         <a class="page-link"
                            href="?page=@i
                                               &Search=@filter.Search
@@ -295,42 +332,41 @@
 
 <!-- Summary -->
 <div class="mt-3 text-muted small">
-    মোট @Model.TotalCount টি সংবাদ পাওয়া গেছে।
+    মোট @Model.TotalCount টি সংবাদ।
     পৃষ্ঠা @Model.Page / @Model.TotalPages
 </div>
 
-
-
 @section Scripts {
     <script>
-        // ── Antiforgery token ──────────────────────────────────────
-        const _token = document.querySelector(
-            'input[name="__RequestVerificationToken"]')?.value ?? '';
+        function getAdminToken() {
+            return document.querySelector(
+                'input[name="__RequestVerificationToken"]')
+                ?.value ?? '';
+        }
 
-        // ── Publish ────────────────────────────────────────────────
         async function publishNews(id) {
-            const fd = new FormData();
-            fd.append('__RequestVerificationToken', _token);
+            var fd = new FormData();
+            fd.append('__RequestVerificationToken', getAdminToken());
             try {
-                const res  = await fetch(`/Admin/News/Publish/${id}`,
+                var res  = await fetch('/Admin/News/Publish/' + id,
                     { method: 'POST', body: fd });
-                const data = await res.json();
+                var data = await res.json();
                 if (data.success) {
                     toastr.success('সংবাদ প্রকাশিত হয়েছে');
-                    setTimeout(() => location.reload(), 1000);
+                    setTimeout(function() { location.reload(); }, 800);
                 } else {
                     toastr.error('প্রকাশ করা যায়নি');
                 }
-            } catch { toastr.error('নেটওয়ার্ক ত্রুটি'); }
+            } catch {
+                toastr.error('নেটওয়ার্ক ত্রুটি');
+            }
         }
 
-        // ── Delete — event delegation, no inline onclick ───────────
-        document.addEventListener('click', function (e) {
-            const btn = e.target.closest('.btn-delete');
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.btn-delete');
             if (!btn) return;
-
             e.preventDefault();
-            const id = btn.dataset.id;
+            var id = btn.dataset.id;
 
             Swal.fire({
                 title:              'সংবাদ মুছে ফেলবেন?',
@@ -341,20 +377,18 @@
                 cancelButtonColor:  '#6c757d',
                 confirmButtonText:  'মুছুন',
                 cancelButtonText:   'বাতিল'
-            }).then(async result => {
+            }).then(async function(result) {
                 if (!result.isConfirmed) return;
 
-                const fd = new FormData();
-                fd.append('__RequestVerificationToken', _token);
+                var fd = new FormData();
+                fd.append('__RequestVerificationToken', getAdminToken());
                 fd.append('id', id);
 
                 try {
-                    const res = await fetch(`/Admin/News/Delete/${id}`,
+                    var res = await fetch('/Admin/News/Delete/' + id,
                         { method: 'POST', body: fd });
-
                     if (res.ok) {
                         toastr.success('সংবাদ মুছে ফেলা হয়েছে');
-                        // Remove row from table without page reload
                         btn.closest('tr')?.remove();
                     } else {
                         toastr.error('মুছতে ব্যর্থ — কোড: ' + res.status);

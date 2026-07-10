@@ -22,6 +22,7 @@ namespace NewsPortalPro.DTOs
         public bool IsBreaking { get; set; }
         public bool IsFeatured { get; set; }
         public NewsType Type { get; set; }
+        public NewsStatus Status { get; set; }
         public List<string> Tags { get; set; } = [];
     }
 
@@ -65,19 +66,15 @@ namespace NewsPortalPro.DTOs
         public string? MetaDescription { get; set; }
         public string? MetaKeywords { get; set; }
 
-        // ── Tags stored as List<string> internally ─────────────
         public List<string> Tags { get; set; } = [];
 
-        // ── TagsString — used by form binding ──────────────────
-        // Form posts comma-separated string e.g. "খেলা, ক্রিকেট"
-        // Setter converts it to List<string> automatically
+        // Form binding helper — converts comma string ↔ List<string>
         public string TagsString
         {
             get => string.Join(", ", Tags);
             set => Tags = string.IsNullOrWhiteSpace(value)
                 ? []
-                : value.Split(',',
-                      StringSplitOptions.RemoveEmptyEntries)
+                : value.Split(',', StringSplitOptions.RemoveEmptyEntries)
                        .Select(t => t.Trim())
                        .Where(t => !string.IsNullOrEmpty(t))
                        .ToList();
