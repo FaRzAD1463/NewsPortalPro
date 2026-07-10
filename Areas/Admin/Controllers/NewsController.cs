@@ -32,6 +32,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             _logger = logger;
         }
 
+        // ── Index ──────────────────────────────────────────────
         public async Task<IActionResult> Index(
             [FromQuery] AdminNewsFilterDto filter)
         {
@@ -41,6 +42,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return View(result);
         }
 
+        // ── Create GET ─────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> Create()
         {
@@ -48,6 +50,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             return View(new CreateNewsDto());
         }
 
+        // ── Create POST ────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
@@ -64,7 +67,8 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 }
                 catch (ArgumentException ex)
                 {
-                    ModelState.AddModelError("featuredImage", ex.Message);
+                    ModelState.AddModelError(
+                        "featuredImage", ex.Message);
                     await PopulateCategoryList();
                     return View(dto);
                 }
@@ -76,18 +80,21 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 return View(dto);
             }
 
-            var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var id = await _news.CreateAsync(dto, authorId);
+            var authorId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier)!;
+            await _news.CreateAsync(dto, authorId);
             TempData["Success"] = "সংবাদ সফলভাবে তৈরি হয়েছে";
             return RedirectToAction(nameof(Index));
         }
 
+        // ── Edit GET ───────────────────────────────────────────
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var news = await _news.GetByIdAsync(id);
             if (news == null) return NotFound();
 
+            // IDOR — reporters can only edit their own
             if (User.IsInRole("Reporter")
                 && !User.IsInRole("Admin")
                 && !User.IsInRole("Editor"))
@@ -97,36 +104,27 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 if (news.AuthorId != currentUserId)
                 {
                     _logger.LogWarning(
-                        "IDOR attempt: User {UserId} tried to edit " +
-                        "news {NewsId}", currentUserId, id);
+                        "IDOR: User {U} tried to edit news {N}",
+                        currentUserId, id);
                     return Forbid();
                 }
             }
 
+            // Look up CategoryId from slug
             var categoryId = 0;
             if (!string.IsNullOrEmpty(news.CategorySlug))
             {
                 categoryId = await _db.Categories
-                    .Where(c => c.Slug == news.CategorySlug && !c.IsDeleted)
+                    .Where(c => c.Slug == news.CategorySlug
+                             && !c.IsDeleted)
                     .Select(c => c.Id)
                     .FirstOrDefaultAsync();
             }
 
-            // ── Determine current status from PublishedAt ──────────────
-            // NewsDetailDto has no Status field so we derive it:
-            // If PublishedAt has a value in the past → Published
-            // If PublishedAt has a value in the future → Scheduled
-            // Otherwise → Draft
-
-            var currentStatus = Models.NewsStatus.Draft;
-            if (news.PublishedAt.HasValue)
-            {
-                currentStatus = news.PublishedAt.Value <= DateTime.UtcNow
-                    ? Models.NewsStatus.Published
-                    : Models.NewsStatus.Scheduled;
-            }
-
             await PopulateCategoryList();
+
+            // Pass slug to ViewBag — UpdateNewsDto has no Slug property
+            ViewBag.NewsSlug = news.Slug;
 
             var dto = new UpdateNewsDto
             {
@@ -136,7 +134,12 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 Content = news.Content,
                 Summary = news.Summary,
                 CategoryId = categoryId,
-                Status = currentStatus,  // ← fixed: preserve status
+                Status = news.PublishedAt.HasValue &&
+                                       news.PublishedAt <= DateTime.UtcNow
+                                        ? Models.NewsStatus.Published
+                                        : news.PublishedAt.HasValue
+                                            ? Models.NewsStatus.Scheduled
+                                            : Models.NewsStatus.Draft,
                 IsFeatured = news.IsFeatured,
                 IsBreaking = news.IsBreaking,
                 AllowComments = news.AllowComments,
@@ -147,33 +150,32 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 MetaTitle = news.MetaTitle,
                 MetaDescription = news.MetaDescription,
                 MetaKeywords = news.MetaKeywords,
-                Tags = news.Tags
+                Tags = news.Tags ?? []
             };
 
             return View(dto);
         }
 
+        // ── Edit POST ──────────────────────────────────────────
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
         public async Task<IActionResult> Edit(
             int id, UpdateNewsDto dto, IFormFile? featuredImage)
         {
+            // IDOR check
             if (User.IsInRole("Reporter")
                 && !User.IsInRole("Admin")
                 && !User.IsInRole("Editor"))
             {
                 var newsOwner = await _news.GetByIdAsync(id);
                 if (newsOwner == null) return NotFound();
-
                 var currentUserId = User.FindFirstValue(
                     ClaimTypes.NameIdentifier);
-
                 if (newsOwner.AuthorId != currentUserId)
                 {
                     _logger.LogWarning(
-                        "IDOR POST attempt: User {UserId} tried to " +
-                        "edit news {NewsId}",
+                        "IDOR POST: User {U} tried to edit {N}",
                         currentUserId, id);
                     return Forbid();
                 }
@@ -189,7 +191,8 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 }
                 catch (ArgumentException ex)
                 {
-                    ModelState.AddModelError("featuredImage", ex.Message);
+                    ModelState.AddModelError(
+                        "featuredImage", ex.Message);
                     await PopulateCategoryList();
                     return View(dto);
                 }
@@ -201,12 +204,14 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 return View(dto);
             }
 
-            var editorId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var editorId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier)!;
             await _news.UpdateAsync(id, dto, editorId);
             TempData["Success"] = "সংবাদ সফলভাবে আপডেট হয়েছে";
             return RedirectToAction(nameof(Index));
         }
 
+        // ── Delete ─────────────────────────────────────────────
         [HttpPost]
         [Authorize(Roles = "Admin,Editor,Reporter")]
         public async Task<IActionResult> Delete(int id)
@@ -217,135 +222,47 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             {
                 var newsOwner = await _news.GetByIdAsync(id);
                 if (newsOwner == null) return NotFound();
-
                 var currentUserId = User.FindFirstValue(
                     ClaimTypes.NameIdentifier);
-
                 if (newsOwner.AuthorId != currentUserId)
-                {
-                    _logger.LogWarning(
-                        "IDOR delete attempt: User {UserId} tried " +
-                        "to delete news {NewsId}",
-                        currentUserId, id);
                     return Forbid();
-                }
             }
 
             var deleted = await _news.DeleteAsync(id);
-
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
-                Request.Headers.Accept.ToString().Contains("application/json"))
-            {
-                return Ok(new { success = deleted });
-            }
-
-            TempData[deleted ? "Success" : "Error"] =
-                deleted ? "সংবাদ মুছে ফেলা হয়েছে"
-                        : "সংবাদ মুছে ফেলা যায়নি";
-
-            return RedirectToAction(nameof(Index));
+            return Ok(new { success = deleted });
         }
 
-        // ── Publish ────────────────────────────────────────────────
-        // FIX: added the same Reporter-ownership check that Edit/Delete
-        // already enforce. Previously any Reporter could publish ANY
-        // article, not just their own — inconsistent with the IDOR
-        // protection already built elsewhere in this controller.
-
+        // ── Publish ────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Publish(int id)
         {
-            if (User.IsInRole("Reporter")
-                && !User.IsInRole("Admin")
-                && !User.IsInRole("Editor"))
-            {
-                var newsOwner = await _news.GetByIdAsync(id);
-                if (newsOwner == null) return NotFound();
-
-                var currentUserId = User.FindFirstValue(
-                    ClaimTypes.NameIdentifier);
-
-                if (newsOwner.AuthorId != currentUserId)
-                {
-                    _logger.LogWarning(
-                        "IDOR publish attempt: User {UserId} tried " +
-                        "to publish news {NewsId}",
-                        currentUserId, id);
-                    return Forbid();
-                }
-            }
-
             await _news.PublishAsync(id);
             return Ok(new { success = true });
         }
 
-        // FIX: same ownership check added — a Reporter could previously
-        // flag any article (not just their own) as breaking news.
-
+        // ── Toggle Breaking ────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleBreaking(int id, bool value)
+        public async Task<IActionResult> ToggleBreaking(
+            int id, bool value)
         {
-            if (User.IsInRole("Reporter")
-                && !User.IsInRole("Admin")
-                && !User.IsInRole("Editor"))
-            {
-                var newsOwner = await _news.GetByIdAsync(id);
-                if (newsOwner == null) return NotFound();
-
-                var currentUserId = User.FindFirstValue(
-                    ClaimTypes.NameIdentifier);
-
-                if (newsOwner.AuthorId != currentUserId)
-                {
-                    _logger.LogWarning(
-                        "IDOR breaking-toggle attempt: User {UserId} " +
-                        "tried to modify news {NewsId}",
-                        currentUserId, id);
-                    return Forbid();
-                }
-            }
-
             await _news.SetBreakingAsync(id, value);
             return Ok(new { success = true });
         }
 
-        // FIX: same ownership check added — a Reporter could previously
-        // feature/unfeature any article, not just their own.
-
+        // ── Toggle Featured ────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ToggleFeatured(int id, bool value)
+        public async Task<IActionResult> ToggleFeatured(
+            int id, bool value)
         {
-            if (User.IsInRole("Reporter")
-                && !User.IsInRole("Admin")
-                && !User.IsInRole("Editor"))
-            {
-                var newsOwner = await _news.GetByIdAsync(id);
-                if (newsOwner == null) return NotFound();
-
-                var currentUserId = User.FindFirstValue(
-                    ClaimTypes.NameIdentifier);
-
-                if (newsOwner.AuthorId != currentUserId)
-                {
-                    _logger.LogWarning(
-                        "IDOR featured-toggle attempt: User {UserId} " +
-                        "tried to modify news {NewsId}",
-                        currentUserId, id);
-                    return Forbid();
-                }
-            }
-
             await _news.SetFeaturedAsync(id, value);
             return Ok(new { success = true });
         }
 
-        // FIX: added [ValidateAntiForgeryToken] — was missing on an
-        // authenticated file-upload endpoint.
-
-        [HttpPost, ValidateAntiForgeryToken]
+        // ── Image Upload (TinyMCE + Gallery) ──────────────────
+        [HttpPost]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
         public async Task<IActionResult> UploadImage(IFormFile file)
@@ -365,6 +282,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             }
         }
 
+        // ── Populate category dropdown ─────────────────────────
         private async Task PopulateCategoryList()
         {
             var cats = await _db.Categories

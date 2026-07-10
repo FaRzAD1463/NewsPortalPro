@@ -64,7 +64,24 @@ namespace NewsPortalPro.DTOs
         public string? MetaTitle { get; set; }
         public string? MetaDescription { get; set; }
         public string? MetaKeywords { get; set; }
+
+        // ── Tags stored as List<string> internally ─────────────
         public List<string> Tags { get; set; } = [];
+
+        // ── TagsString — used by form binding ──────────────────
+        // Form posts comma-separated string e.g. "খেলা, ক্রিকেট"
+        // Setter converts it to List<string> automatically
+        public string TagsString
+        {
+            get => string.Join(", ", Tags);
+            set => Tags = string.IsNullOrWhiteSpace(value)
+                ? []
+                : value.Split(',',
+                      StringSplitOptions.RemoveEmptyEntries)
+                       .Select(t => t.Trim())
+                       .Where(t => !string.IsNullOrEmpty(t))
+                       .ToList();
+        }
     }
 
     public class UpdateNewsDto : CreateNewsDto

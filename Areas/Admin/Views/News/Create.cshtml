@@ -1,174 +1,251 @@
-﻿@model CreateNewsDto
-
+﻿@using NewsPortalPro.DTOs
 @using NewsPortalPro.Models
-@using NewsPortalPro.DTOs
-
+@model NewsPortalPro.DTOs.CreateNewsDto
 @{
-    ViewData["Title"] = "নতুন সংবাদ";
+    ViewData["Title"] = "নতুন সংবাদ তৈরি";
 }
 
-<form asp-action="Create" asp-controller="News" asp-area="Admin"
-      method="post" enctype="multipart/form-data" id="news-form">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">নতুন সংবাদ তৈরি</h4>
+    <a href="/Admin/News" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>ফিরে যান
+    </a>
+</div>
+
+<form method="post" enctype="multipart/form-data"
+      asp-action="Create">
     @Html.AntiForgeryToken()
 
     <div class="row g-4">
 
-        <!-- Left: Content -->
+        <!-- ── Left: Main content ────────────────────────── -->
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body p-4">
+
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label fw-medium">শিরোনাম <span class="text-danger">*</span></label>
-                        <input asp-for="Title" class="form-control form-control-lg"
-                               placeholder="সংবাদের শিরোনাম লিখুন..." required />
+                        <label class="form-label fw-medium">
+                            শিরোনাম <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Title"
+                               class="form-control form-control-lg"
+                               placeholder="সংবাদের শিরোনাম লিখুন..."
+                               required />
+                        <span asp-validation-for="Title"
+                              class="text-danger small"></span>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">উপশিরোনাম</label>
-                        <input asp-for="Subtitle" class="form-control"
-                               placeholder="ঐচ্ছিক উপশিরোনাম..." />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">সারসংক্ষেপ</label>
-                        <textarea asp-for="Summary" class="form-control" rows="3"
-                                  placeholder="সংক্ষিপ্ত বিবরণ (SEO ও প্রিভিউয়ের জন্য)..."></textarea>
-                    </div>
-                    <div>
-                        <label class="form-label fw-medium">বিষয়বস্তু <span class="text-danger">*</span></label>
-                        <textarea asp-for="Content" id="content-editor" class="form-control" rows="20"></textarea>
+                    <div class="mb-0">
+                        <label class="form-label fw-medium">
+                            উপশিরোনাম
+                        </label>
+                        <input asp-for="Subtitle"
+                               class="form-control"
+                               placeholder="উপশিরোনাম (ঐচ্ছিক)" />
                     </div>
                 </div>
             </div>
 
-            <!-- SEO -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h6 class="fw-bold mb-0"><i class="bi bi-search me-2 text-primary"></i>SEO সেটিংস</h6>
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <label class="form-label fw-medium">
+                        কন্টেন্ট <span class="text-danger">*</span>
+                    </label>
+                    <textarea asp-for="Content"
+                              id="news-content"
+                              class="form-control"
+                              rows="20"></textarea>
+                    <span asp-validation-for="Content"
+                          class="text-danger small"></span>
                 </div>
-                <div class="card-body p-4">
+            </div>
+
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <label class="form-label fw-medium">
+                        সারসংক্ষেপ
+                    </label>
+                    <textarea asp-for="Summary"
+                              class="form-control" rows="3"
+                              placeholder="সংক্ষিপ্ত বিবরণ (না দিলে স্বয়ংক্রিয়ভাবে তৈরি হবে)">
+                    </textarea>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-transparent fw-medium">
+                    SEO সেটিংস
+                </div>
+                <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Meta শিরোনাম (সর্বোচ্চ ১৬০ অক্ষর)</label>
-                        <input asp-for="MetaTitle" class="form-control" maxlength="160" />
+                        <label class="form-label small">Meta Title</label>
+                        <input asp-for="MetaTitle"
+                               class="form-control"
+                               placeholder="SEO শিরোনাম" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Meta বিবরণ (সর্বোচ্চ ৩০০ অক্ষর)</label>
-                        <textarea asp-for="MetaDescription" class="form-control" rows="2" maxlength="300"></textarea>
+                        <label class="form-label small">
+                            Meta Description
+                        </label>
+                        <textarea asp-for="MetaDescription"
+                                  class="form-control" rows="2"
+                                  placeholder="SEO বিবরণ">
+                        </textarea>
                     </div>
-                    <div>
-                        <label class="form-label">Meta কীওয়ার্ড</label>
-                        <input asp-for="MetaKeywords" class="form-control"
-                               placeholder="কমা দিয়ে আলাদা করুন" />
+                    <div class="mb-0">
+                        <label class="form-label small">
+                            Meta Keywords
+                        </label>
+                        <input asp-for="MetaKeywords"
+                               class="form-control"
+                               placeholder="কীওয়ার্ড, কমা দিয়ে" />
                     </div>
                 </div>
             </div>
+
         </div>
 
-        <!-- Right: Settings -->
+        <!-- ── Right: Settings ──────────────────────────── -->
         <div class="col-lg-4">
 
-            <!-- Publish Settings -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h6 class="fw-bold mb-0"><i class="bi bi-send me-2 text-primary"></i>প্রকাশনা</h6>
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-transparent fw-medium">
+                    প্রকাশ সেটিংস
                 </div>
-                <div class="card-body p-4">
+                <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label fw-medium">স্ট্যাটাস</label>
+                        <label class="form-label small">স্ট্যাটাস</label>
                         <select asp-for="Status" class="form-select">
-                            <option value="@NewsStatus.Draft">ড্রাফট</option>
-                            <option value="@NewsStatus.Published">প্রকাশিত</option>
-                            <option value="@NewsStatus.Scheduled">শিডিউল</option>
+                            <option value="0">ড্রাফট</option>
+                            <option value="1">প্রকাশিত</option>
+                            <option value="2">নির্ধারিত</option>
                         </select>
                     </div>
-                    <div class="mb-3" id="scheduled-date-row" style="display:none">
-                        <label class="form-label">প্রকাশনার তারিখ ও সময়</label>
-                        <input asp-for="ScheduledAt" type="datetime-local" class="form-control" />
-                    </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">বিভাগ <span class="text-danger">*</span></label>
-                        <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select" required>
+                        <label class="form-label small">বিভাগ</label>
+                        <select asp-for="CategoryId"
+                                class="form-select" required>
                             <option value="">বিভাগ নির্বাচন করুন</option>
+                            @if (ViewBag.Categories is
+                                                        Microsoft.AspNetCore.Mvc.Rendering
+                                                        .SelectList cats)
+                            {
+                                @foreach (var item in cats)
+                                {
+                                    <option value="@item.Value">
+                                        @item.Text
+                                    </option>
+                                }
+                            }
                         </select>
+                        <span asp-validation-for="CategoryId"
+                              class="text-danger small"></span>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">ট্যাগ</label>
-                        <input type="text" id="tags-input" class="form-control"
-                               placeholder="ট্যাগ লিখুন, Enter চাপুন" />
-                        <div id="tags-container" class="mt-2 d-flex flex-wrap gap-1"></div>
-                        <input type="hidden" name="Tags" id="tags-hidden" />
+                        <label class="form-label small">ট্যাগ</label>
+                        <input asp-for="TagsString"
+                               class="form-control"
+                               placeholder="ট্যাগ, কমা দিয়ে আলাদা করুন" />
+                        <small class="text-muted">
+                            যেমন: ক্রিকেট, খেলাধুলা, বাংলাদেশ
+                        </small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">সংবাদের ধরন</label>
-                        <select asp-for="Type" class="form-select">
-                            <option value="@NewsType.Article">প্রতিবেদন</option>
-                            <option value="@NewsType.Video">ভিডিও</option>
-                            <option value="@NewsType.Gallery">গ্যালারি</option>
-                            <option value="@NewsType.LiveBlog">লাইভ ব্লগ</option>
-                        </select>
+                        <label class="form-label small">
+                            ভিডিও URL (ঐচ্ছিক)
+                        </label>
+                        <input asp-for="VideoUrl"
+                               class="form-control"
+                               placeholder="YouTube embed URL" />
                     </div>
-                    <div class="form-check form-switch mb-2">
-                        <input asp-for="IsBreaking" class="form-check-input" type="checkbox" />
-                        <label class="form-check-label">ব্রেকিং নিউজ</label>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input asp-for="IsFeatured"
+                                   class="form-check-input"
+                                   type="checkbox" />
+                            <label class="form-check-label small">
+                                ফিচার্ড সংবাদ
+                            </label>
+                        </div>
                     </div>
-                    <div class="form-check form-switch mb-2">
-                        <input asp-for="IsFeatured" class="form-check-input" type="checkbox" />
-                        <label class="form-check-label">ফিচার্ড নিউজ</label>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input asp-for="IsBreaking"
+                                   class="form-check-input"
+                                   type="checkbox" />
+                            <label class="form-check-label small">
+                                ব্রেকিং নিউজ
+                            </label>
+                        </div>
                     </div>
-                    <div class="form-check form-switch mb-3">
-                        <input asp-for="AllowComments" class="form-check-input" type="checkbox" checked />
-                        <label class="form-check-label">মন্তব্য অনুমতি</label>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" name="Status" value="@NewsStatus.Published" class="btn btn-primary">
-                            <i class="bi bi-send me-2"></i>প্রকাশ করুন
-                        </button>
-                        <button type="submit" name="Status" value="@NewsStatus.Draft" class="btn btn-outline-secondary">
-                            <i class="bi bi-save me-2"></i>ড্রাফট সেভ করুন
-                        </button>
+                    <div class="mb-0">
+                        <div class="form-check form-switch">
+                            <input asp-for="AllowComments"
+                                   class="form-check-input"
+                                   type="checkbox" checked />
+                            <label class="form-check-label small">
+                                মন্তব্য অনুমতি
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Featured Image -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h6 class="fw-bold mb-0"><i class="bi bi-image me-2 text-primary"></i>ফিচার্ড ইমেজ</h6>
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-transparent fw-medium">
+                    ফিচার্ড ছবি
                 </div>
-                <div class="card-body p-4">
-                    <div class="image-upload-area mb-3" id="image-drop-zone">
-                        <div id="image-preview-container">
-                            <div class="text-center text-muted py-3">
-                                <i class="bi bi-cloud-upload fs-2"></i>
-                                <p class="small mt-2">ছবি টেনে আনুন বা ক্লিক করুন</p>
-                            </div>
-                        </div>
-                        <input type="file" name="featuredImage" id="featured-image-input"
-                               accept="image/*" class="d-none" />
-                        <input type="hidden" asp-for="FeaturedImageUrl" />
-                    </div>
-                    <button type="button" class="btn btn-outline-primary btn-sm w-100"
-                            onclick="document.getElementById('featured-image-input').click()">
-                        <i class="bi bi-upload me-2"></i>ছবি আপলোড করুন
-                    </button>
-
-                    <div class="mt-3">
-                        <input asp-for="FeaturedImageAlt" class="form-control form-control-sm mb-2"
-                               placeholder="Alt টেক্সট (SEO)" />
-                        <input asp-for="FeaturedImageCaption" class="form-control form-control-sm"
-                               placeholder="ছবির ক্যাপশন" />
-                    </div>
+                <div class="card-body">
+                    <img id="featured-preview"
+                         src=""
+                         class="img-fluid rounded d-none mb-2"
+                         style="max-height:140px;
+                                object-fit:cover;width:100%" />
+                    <input type="file" name="featuredImage"
+                           class="form-control form-control-sm mb-2"
+                           accept="image/*"
+                           onchange="previewImage(
+                               this,'featured-preview')" />
+                    <input asp-for="FeaturedImageAlt"
+                           class="form-control form-control-sm mb-2"
+                           placeholder="ছবির Alt টেক্সট" />
+                    <input asp-for="FeaturedImageCaption"
+                           class="form-control form-control-sm"
+                           placeholder="ছবির ক্যাপশন" />
                 </div>
             </div>
 
-            <!-- Video URL -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h6 class="fw-bold mb-0"><i class="bi bi-play-circle me-2 text-primary"></i>ভিডিও</h6>
+            <!-- Gallery Images -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-transparent fw-medium">
+                    গ্যালারি ছবি
+                    <small class="text-muted fw-normal ms-1">
+                        — ক্লিক করলে এডিটরে যোগ হবে
+                    </small>
                 </div>
-                <div class="card-body p-4">
-                    <input asp-for="VideoUrl" class="form-control"
-                           placeholder="YouTube/ভিমিও এম্বেড URL" />
+                <div class="card-body">
+                    <input type="file"
+                           id="gallery-upload-input"
+                           accept="image/*" multiple
+                           class="form-control form-control-sm mb-2"
+                           onchange="uploadGalleryImages(this.files)" />
+                    <div id="gallery-preview"
+                         class="d-flex flex-wrap gap-2 mt-1">
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        একসাথে একাধিক ছবি নির্বাচন করুন।
+                        ছবিতে ক্লিক করলে কন্টেন্টে যোগ হবে।
+                    </small>
                 </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>
+                    সংবাদ সংরক্ষণ
+                </button>
+                <a href="/Admin/News"
+                   class="btn btn-outline-secondary">বাতিল</a>
             </div>
 
         </div>
@@ -176,82 +253,148 @@
 </form>
 
 @section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
     <script>
-        // CKEditor
-        (async function() {
-            if (typeof ClassicEditor !== 'undefined') {
-                const editor = await ClassicEditor.create(document.getElementById('content-editor'), {
-                    toolbar: ['heading','|','bold','italic','underline','strikethrough','|',
-                              'bulletedList','numberedList','blockQuote','|',
-                              'link','insertTable','mediaEmbed','|','undo','redo'],
-                    language: 'bn'
-                });
-            }
-        })();
+        var _token = document.querySelector(
+            'input[name="__RequestVerificationToken"]')?.value ?? '';
 
-        // Tag input
-        const tags = [];
-        const tagsInput = document.getElementById('tags-input');
-        tagsInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ',') {
-                e.preventDefault();
-                const val = this.value.trim();
-                if (val && !tags.includes(val)) {
-                    tags.push(val);
-                    renderTags();
-                    this.value = '';
-                }
-            }
+        tinymce.init({
+            selector:  '#news-content',
+            height:    500,
+            menubar:   true,
+            plugins: [
+                'advlist','autolink','lists','link','image',
+                'charmap','preview','anchor','searchreplace',
+                'visualblocks','code','fullscreen','insertdatetime',
+                'media','table','help','wordcount'
+            ],
+            toolbar:
+                'undo redo | blocks | ' +
+                'bold italic underline strikethrough | ' +
+                'alignleft aligncenter alignright alignjustify | ' +
+                'bullist numlist outdent indent | ' +
+                'link image media table | ' +
+                'forecolor backcolor | removeformat | ' +
+                'code fullscreen | help',
+            image_title:       true,
+            automatic_uploads: true,
+            file_picker_types: 'image',
+            images_upload_handler: async function(blobInfo) {
+                var fd = new FormData();
+                fd.append('file', blobInfo.blob(), blobInfo.filename());
+                fd.append('__RequestVerificationToken', _token);
+                var res  = await fetch('/Admin/News/UploadImage',
+                    { method: 'POST', body: fd });
+                var data = await res.json();
+                if (!data.url) throw new Error('Upload failed');
+                return data.url;
+            },
+            content_style:
+                'body{font-family:Noto Sans Bengali,sans-serif;' +
+                'font-size:16px;line-height:1.8;color:#222;padding:12px}' +
+                'img{max-width:100%;height:auto}' +
+                'p{margin-bottom:14px}'
         });
 
-        function renderTags() {
-            const container = document.getElementById('tags-container');
-            container.innerHTML = tags.map((t, i) =>
-                `<span class="badge bg-secondary">
-                    ${t}
-                    <i class="bi bi-x ms-1" style="cursor:pointer" onclick="removeTag(${i})"></i>
-                </span>`
-            ).join('');
-            document.getElementById('tags-hidden').value = JSON.stringify(tags);
+        function previewImage(input, previewId) {
+            var p = document.getElementById(previewId);
+            if (!p || !input.files || !input.files[0]) return;
+            var r = new FileReader();
+            r.onload = function(e) {
+                p.src = e.target.result;
+                p.classList.remove('d-none');
+            };
+            r.readAsDataURL(input.files[0]);
         }
 
-        function removeTag(i) { tags.splice(i, 1); renderTags(); }
+        async function uploadGalleryImages(files) {
+            if (!files || !files.length) return;
+            var gallery = document.getElementById('gallery-preview');
 
-        // Scheduled date toggle
-        document.querySelector('[name="Status"]')?.addEventListener('change', function() {
-            document.getElementById('scheduled-date-row').style.display =
-                this.value === '@NewsStatus.Scheduled' ? 'block' : 'none';
-        });
+            for (var i = 0; i < files.length; i++) {
+                var fd = new FormData();
+                fd.append('file', files[i]);
+                fd.append('__RequestVerificationToken', _token);
 
-        // Image preview
-        document.getElementById('featured-image-input').addEventListener('change', function() {
-            const file = this.files[0];
-            if (!file) return;
+                var wrap = document.createElement('div');
+                wrap.className =
+                    'position-relative d-flex align-items-center ' +
+                    'justify-content-center bg-light rounded';
+                wrap.style.cssText =
+                    'width:80px;height:60px;flex-shrink:0';
+                wrap.innerHTML =
+                    '<div class="spinner-border spinner-border-sm ' +
+                    'text-secondary"></div>';
+                gallery.appendChild(wrap);
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('image-preview-container').innerHTML =
-                    `<img src="${e.target.result}" class="img-fluid rounded" />`;
-            };
-            reader.readAsDataURL(file);
-        });
+                try {
+                    var res  = await fetch('/Admin/News/UploadImage',
+                        { method: 'POST', body: fd });
+                    var data = await res.json();
 
-        // Drag and drop
-        const dropZone = document.getElementById('image-drop-zone');
-        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-        dropZone.addEventListener('drop', e => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            const file = e.dataTransfer.files[0];
-            if (file) {
-                document.getElementById('featured-image-input').files = e.dataTransfer.files;
-                document.getElementById('featured-image-input').dispatchEvent(new Event('change'));
+                    if (data.url) {
+                        var url = data.url;
+                        wrap.innerHTML = '';
+                        wrap.className = 'position-relative';
+                        wrap.style.cssText =
+                            'width:80px;height:60px;flex-shrink:0';
+
+                        var img = document.createElement('img');
+                        img.src = url;
+                        img.style.cssText =
+                            'width:80px;height:60px;object-fit:cover;' +
+                            'border-radius:4px;cursor:pointer;' +
+                            'border:2px solid #e0e0e0;' +
+                            'transition:border-color .2s';
+                        img.title = 'ক্লিক করলে এডিটরে যোগ হবে';
+
+                        img.addEventListener('click', function() {
+                            var u = this.src;
+                            if (typeof tinymce !== 'undefined' &&
+                                tinymce.activeEditor) {
+                                tinymce.activeEditor.insertContent(
+                                    '<figure style="text-align:center;' +
+                                    'margin:16px 0"><img src="' + u +
+                                    '" style="max-width:100%;height:auto"' +
+                                    ' alt="" /><figcaption style="' +
+                                    'font-size:.85rem;color:#777;' +
+                                    'margin-top:4px">ছবির ক্যাপশন' +
+                                    '</figcaption></figure>');
+                                this.style.borderColor = '#c0392b';
+                                toastr.success('ছবি এডিটরে যোগ হয়েছে');
+                            } else {
+                                navigator.clipboard.writeText(u)
+                                    .then(function() {
+                                        toastr.info('URL কপি হয়েছে');
+                                    });
+                            }
+                        });
+
+                        var rb = document.createElement('button');
+                        rb.type = 'button';
+                        rb.innerHTML = '×';
+                        rb.style.cssText =
+                            'position:absolute;top:-6px;right:-6px;' +
+                            'width:18px;height:18px;border-radius:50%;' +
+                            'background:#dc3545;color:#fff;border:none;' +
+                            'font-size:11px;cursor:pointer;display:flex;' +
+                            'align-items:center;justify-content:center;' +
+                            'line-height:1;z-index:1';
+                        rb.onclick = function() { wrap.remove(); };
+
+                        wrap.appendChild(img);
+                        wrap.appendChild(rb);
+                        toastr.success('ছবি আপলোড সফল');
+                    } else {
+                        wrap.innerHTML =
+                            '<small class="text-danger p-1">ব্যর্থ</small>';
+                    }
+                } catch {
+                    wrap.innerHTML =
+                        '<small class="text-danger p-1">ত্রুটি</small>';
+                }
             }
-        });
-        dropZone.addEventListener('click', () =>
-            document.getElementById('featured-image-input').click());
+            document.getElementById('gallery-upload-input').value = '';
+        }
     </script>
 }

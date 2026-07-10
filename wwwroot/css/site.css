@@ -3772,6 +3772,7 @@ body > *:last-child {
    height differs — or better, set it with JS reading the navbar's
    getBoundingClientRect().bottom for pixel-perfect accuracy.)
    ══════════════════════════════════════════════════════ */
+
 .all-categories-dropdown {
     min-width: 760px;
     max-width: 98vw;
