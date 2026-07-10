@@ -479,6 +479,7 @@ img {
 
 .breaking-label {
     flex-shrink: 0;
+    margin-right: 60px;
 }
 
 .ticker-wrapper {
@@ -1176,6 +1177,7 @@ body > *:last-child {
    (was height:100%, which collapses to 0 if the parent has no explicit
    height — the two elements now always agree on size, at every breakpoint,
    defined once below in the "FIX IMAGE CUTTING" section). */
+
 .pb-hero-lead {
     border-radius: 4px;
     height: 380px;
@@ -1314,6 +1316,7 @@ body > *:last-child {
 }
 
 /* Right */
+
 .pb-header-right {
     display: flex;
     align-items: center;
@@ -1384,6 +1387,15 @@ body > *:last-child {
         color: white;
     }
 
+[data-theme="dark"] .pb-login-btn {
+    color: white !important;
+}
+
+    [data-theme="dark"] .pb-login-btn:hover {
+        color: white !important;
+        background: #a93226;
+    }
+
 .pb-register-btn {
     border: 1px solid #c0392b;
     color: #c0392b;
@@ -1413,6 +1425,15 @@ body > *:last-child {
     box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
 
+    .pb-main-nav .nav-link-custom {
+        color: #333 !important;
+    }
+
+        .pb-main-nav .nav-link-custom:hover {
+            color: #c0392b !important;
+            background: rgba(0,0,0,.04);
+        }
+
 .pb-nav-inner {
     max-width: 1200px;
     margin: 0 auto;
@@ -1440,6 +1461,7 @@ body > *:last-child {
     font-size: .85rem;
     padding: 0;
 }
+
 
 /* ══════════════════════════════════════════════════════
    FOOTER — Protidinerbangladesh style (dark grey)
@@ -1680,11 +1702,21 @@ body > *:last-child {
     border-color: #2d3748;
 }
 
+    [data-theme="dark"] .pb-main-nav .nav-link-custom {
+        color: var(--text) !important;
+    }
+
+        [data-theme="dark"] .pb-main-nav .nav-link-custom:hover {
+            color: var(--primary) !important;
+            background: rgba(255,255,255,.06);
+        }
+
 [data-theme="dark"] .pb-hamburger {
     color: #ccc;
 }
 
 /* ── Responsive ──────────────────────────────────────── */
+
 @media (min-width: 1400px) {
     .pb-header-inner,
     .pb-nav-inner,
@@ -1776,6 +1808,7 @@ body > *:last-child {
 }
 
 /* ── Mini card (latest news row) ─────────────────────── */
+
 .pb-mini-card {
     background: #fff;
 }
@@ -2045,6 +2078,7 @@ body > *:last-child {
 
 /* Responsive height adjustments — hero-lead/hero-sub containers
    and their images always move together */
+
 @media (max-width: 991px) {
     .pb-hero-lead,
     .pb-hero-lead-img {
@@ -2156,6 +2190,7 @@ body > *:last-child {
    .pb-lead2-img / .pb-grid-img media queries that used to live here —
    they conflicted with the "FIX IMAGE CUTTING" block above and are
    now consolidated there. .pb-sidebar static-positioning kept. */
+
 @media (max-width: 991px) {
     .pb-sidebar {
         position: static;
@@ -2165,6 +2200,7 @@ body > *:last-child {
 /* ══════════════════════════════════════════════════════
    SIDEBAR (RIGHT)
    ══════════════════════════════════════════════════════ */
+
 .sticky-sidebar {
     position: sticky;
     top: 80px;
@@ -2219,6 +2255,7 @@ body > *:last-child {
 /* ══════════════════════════════════════════════════════
    CATEGORY PAGE
    ══════════════════════════════════════════════════════ */
+
 .category-page-header {
     padding-bottom: 8px;
 }
@@ -2226,6 +2263,7 @@ body > *:last-child {
 /* ══════════════════════════════════════════════════════
    ARTICLE
    ══════════════════════════════════════════════════════ */
+
 .article-title {
     font-family: var(--font-bn-serif);
     font-size: 1.9rem;
@@ -2300,6 +2338,7 @@ body > *:last-child {
 /* ══════════════════════════════════════════════════════
    COMMENTS
    ══════════════════════════════════════════════════════ */
+
 .avatar-placeholder {
     width: 40px;
     height: 40px;
@@ -2316,6 +2355,7 @@ body > *:last-child {
 /* ══════════════════════════════════════════════════════
    FLOATING SHARE BAR
    ══════════════════════════════════════════════════════ */
+
 .floating-share-bar {
     position: fixed;
     left: 12px;
@@ -2365,6 +2405,7 @@ body > *:last-child {
    (FIXED: this is now the only .notification-bell-widget rule
    in the file — the duplicate under "FIX 3" was removed)
    ══════════════════════════════════════════════════════ */
+
 .notification-bell-widget {
     position: fixed;
     bottom: 24px;
@@ -2419,6 +2460,7 @@ body > *:last-child {
    (FIXED: merged the duplicate .site-footer declaration that used
    to live under "FIX 3" into this single rule)
    ══════════════════════════════════════════════════════ */
+
 .site-footer {
     background: var(--secondary);
     color: rgba(255,255,255,.7);
@@ -2502,6 +2544,7 @@ body > *:last-child {
 /* ══════════════════════════════════════════════════════
    AUTH PAGES
    ══════════════════════════════════════════════════════ */
+
 .auth-page {
     background: var(--bg);
 }
@@ -2514,6 +2557,7 @@ body > *:last-child {
 /* ══════════════════════════════════════════════════════
    SKELETON LOADER
    ══════════════════════════════════════════════════════ */
+
 .skeleton {
     background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
     background-size: 200% 100%;
@@ -2538,6 +2582,7 @@ body > *:last-child {
 /* ══════════════════════════════════════════════════════
    DARK MODE OVERRIDES
    ══════════════════════════════════════════════════════ */
+
 [data-theme="dark"] .main-nav {
     background: #1a1d27 !important;
 }
@@ -3142,6 +3187,7 @@ body > *:last-child {
 /* ══════════════════════════════════════════════════════
    RESPONSIVE
    ══════════════════════════════════════════════════════ */
+
 @media (max-width: 991px) {
     .lead-story-img {
         height: 280px;
@@ -3221,6 +3267,7 @@ body > *:last-child {
    ══════════════════════════════════════════════════════ */
 
 /* ── Reading progress bar ────────────────────────────── */
+
 .reading-progress-wrap {
     height: 3px;
     background: #f0f0f0;
@@ -3237,6 +3284,7 @@ body > *:last-child {
 }
 
 /* ── Breadcrumb ──────────────────────────────────────── */
+
 .article-breadcrumb {
     font-size: .78rem;
     color: #888;
@@ -3257,6 +3305,7 @@ body > *:last-child {
     }
 
 /* ── Title ───────────────────────────────────────────── */
+
 .article-main-title {
     font-size: 1.5rem;
     font-weight: 800;
@@ -3274,6 +3323,7 @@ body > *:last-child {
 }
 
 /* ── Meta row ────────────────────────────────────────── */
+
 .article-meta-row {
     padding: 10px 0;
     border-top: 1px solid #eee;
@@ -3295,6 +3345,7 @@ body > *:last-child {
 }
 
 /* ── Share bar ───────────────────────────────────────── */
+
 .article-share-bar {
     display: flex;
     align-items: center;
@@ -3353,6 +3404,7 @@ body > *:last-child {
 }
 
 /* ── Featured image ──────────────────────────────────── */
+
 .article-featured-img-wrap {
     border-radius: 4px;
     overflow: hidden;
@@ -3374,6 +3426,7 @@ body > *:last-child {
 }
 
 /* ── Article body ────────────────────────────────────── */
+
 .article-body {
     font-size: 1rem;
     line-height: 1.85;
@@ -3433,6 +3486,7 @@ body > *:last-child {
         }
 
 /* ── Tags ────────────────────────────────────────────── */
+
 .article-tags {
     display: flex;
     flex-wrap: wrap;
@@ -3465,8 +3519,8 @@ body > *:last-child {
     }
 
 /* ── Reactions ───────────────────────────────────────── */
-.article-reactions {
-}
+
+
 
 .reactions-label {
     font-size: .85rem;
@@ -3515,6 +3569,7 @@ body > *:last-child {
 }
 
 /* ── Author box ──────────────────────────────────────── */
+
 .article-author-box {
     display: flex;
     gap: 16px;
@@ -3547,6 +3602,7 @@ body > *:last-child {
 }
 
 /* ── Comments ────────────────────────────────────────── */
+
 .comments-title {
     font-size: 1rem;
     font-weight: 700;
@@ -3571,6 +3627,7 @@ body > *:last-child {
 }
 
 /* ── Left sidebar TOC ────────────────────────────────── */
+
 .article-toc-panel {
     position: sticky;
     top: 80px;
@@ -3618,6 +3675,7 @@ body > *:last-child {
     }
 
 /* ── Right sidebar ───────────────────────────────────── */
+
 .article-right-sidebar {
     position: sticky;
     top: 80px;
@@ -3626,8 +3684,7 @@ body > *:last-child {
     scrollbar-width: thin;
 }
 
-.sidebar-widget {
-}
+
 
 .sidebar-widget-title {
     font-size: .85rem;
@@ -3681,6 +3738,7 @@ body > *:last-child {
     }
 
 /* ── Dark mode ───────────────────────────────────────── */
+
 [data-theme="dark"] .article-main-title {
     color: var(--text);
 }
@@ -3740,6 +3798,7 @@ body > *:last-child {
 }
 
 /* ── Responsive ──────────────────────────────────────── */
+
 @media (max-width: 767px) {
     .article-main-title {
         font-size: 1.2rem;

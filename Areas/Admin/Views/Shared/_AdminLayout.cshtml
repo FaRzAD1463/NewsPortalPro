@@ -21,6 +21,7 @@
                 <i class="bi bi-newspaper me-2"></i>
                 <span>নিউজ অ্যাডমিন</span>
             </a>
+
             <button id="sidebar-toggle"
                     class="btn btn-sm btn-link text-white ms-auto">
                 <i class="bi bi-list"></i>
@@ -30,52 +31,58 @@
         <ul class="nav flex-column sidebar-nav mt-3">
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "Dashboard" ? "active" : "")"
+                    ?.ToString() == "Dashboard" ? "active" : "")"
                    href="/Admin/Dashboard">
                     <i class="bi bi-speedometer2"></i>
                     <span>ড্যাশবোর্ড</span>
                 </a>
+
             </li>
             <li class="nav-section-label"><small>কন্টেন্ট</small></li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "News" ? "active" : "")"
+                    ?.ToString() == "News" ? "active" : "")"
                    href="/Admin/News">
                     <i class="bi bi-newspaper"></i><span>সংবাদ</span>
                 </a>
+
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                           ?.ToString() == "Epaper" ? "active" : "")"
+                    ?.ToString() == "Epaper" ? "active" : "")"
                    href="/Admin/Epaper">
                     <i class="bi bi-newspaper"></i><span>ই-পেপার</span>
                 </a>
+
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "Category" ? "active" : "")"
+                    ?.ToString() == "Category" ? "active" : "")"
                    href="/Admin/Category">
                     <i class="bi bi-folder"></i><span>বিভাগ</span>
                 </a>
+
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "Media" ? "active" : "")"
+                    ?.ToString() == "Media" ? "active" : "")"
                    href="/Admin/Media">
                     <i class="bi bi-images"></i><span>মিডিয়া</span>
                 </a>
+
             </li>
             <li class="nav-section-label"><small>ব্যবহারকারী</small></li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "User" ? "active" : "")"
+                    ?.ToString() == "User" ? "active" : "")"
                    href="/Admin/User">
                     <i class="bi bi-people"></i><span>ব্যবহারকারী</span>
                 </a>
+
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "Comment" ? "active" : "")"
+                    ?.ToString() == "Comment" ? "active" : "")"
                    href="/Admin/Comment">
                     <i class="bi bi-chat-dots"></i><span>মন্তব্য</span>
                     @if (ViewBag.PendingComments > 0)
@@ -85,35 +92,40 @@
                         </span>
                     }
                 </a>
+
             </li>
             <li class="nav-section-label"><small>সিস্টেম</small></li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "Ads" ? "active" : "")"
+                    ?.ToString() == "Ads" ? "active" : "")"
                    href="/Admin/Ads">
                     <i class="bi bi-megaphone"></i><span>বিজ্ঞাপন</span>
                 </a>
+
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "Analytics" ? "active" : "")"
+                     ?.ToString() == "Analytics" ? "active" : "")"
                    href="/Admin/Analytics">
                     <i class="bi bi-bar-chart-line"></i><span>অ্যানালিটিক্স</span>
                 </a>
+
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "Newsletter" ? "active" : "")"
+                    ?.ToString() == "Newsletter" ? "active" : "")"
                    href="/Admin/Newsletter">
                     <i class="bi bi-envelope-paper"></i><span>নিউজলেটার</span>
                 </a>
+
             </li>
             <li class="nav-item">
                 <a class="nav-link @(ViewContext.RouteData.Values["controller"]
-                                       ?.ToString() == "Settings" ? "active" : "")"
+                    ?.ToString() == "Settings" ? "active" : "")"
                    href="/Admin/Settings">
                     <i class="bi bi-gear"></i><span>সেটিংস</span>
                 </a>
+
             </li>
         </ul>
 
@@ -152,6 +164,7 @@
                    class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-box-arrow-up-right me-1"></i>সাইট দেখুন
                 </a>
+
                 <form asp-controller="Account"
                       asp-action="Logout" method="post">
                     @Html.AntiForgeryToken()
@@ -164,6 +177,7 @@
         </div>
 
         <!-- Page Content -->
+
         <div class="admin-content p-4">
             @if (TempData["Success"] != null)
             {
@@ -172,6 +186,7 @@
                     <button type="button" class="btn-close"
                             data-bs-dismiss="alert"></button>
                 </div>
+
             }
             @if (TempData["Error"] != null)
             {
@@ -180,6 +195,7 @@
                     <button type="button" class="btn-close"
                             data-bs-dismiss="alert"></button>
                 </div>
+
             }
             @RenderBody()
         </div>
@@ -188,9 +204,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
     <!-- SweetAlert2 — required for delete confirmations -->
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.min.js"></script>
     <script src="~/js/admin.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

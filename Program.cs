@@ -623,6 +623,8 @@ try
             b => b.Expire(TimeSpan.FromMinutes(1)).Tag("breaking"));
     });
 
+
+
     // ──────────────────────────────────────────────────────────
     // HTTP CLIENT + CONTEXT ACCESSOR
     // ──────────────────────────────────────────────────────────
@@ -700,6 +702,7 @@ try
         // a broader refactor to nonce- or event-delegation-based
         // handlers. Flagging that as a good follow-up, not done here to
         // avoid changing runtime behavior.
+
         headers["Content-Security-Policy"] =
             "default-src 'self'; " +
             "script-src 'self' 'unsafe-inline' " +
