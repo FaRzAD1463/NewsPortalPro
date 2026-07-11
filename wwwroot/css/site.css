@@ -981,7 +981,11 @@ body > *:last-child {
 .cat-top-card {
     background: #fff;
 }
+[data-theme="dark"] .cat-top-card {
+    background: var(--surface);
+}
 
+    
 .cat-top-img-link {
     display: block;
     overflow: hidden;
@@ -1645,7 +1649,7 @@ body > *:last-child {
 .offcanvas-nav-link {
     display: block;
     padding: 10px 20px;
-    color: #333;
+    color: #333; 
     text-decoration: none;
     font-size: .9rem;
     border-bottom: 1px solid #f0f0f0;
@@ -1812,6 +1816,9 @@ body > *:last-child {
 .pb-mini-card {
     background: #fff;
 }
+[data-theme="dark"] .pb-mini-card {
+    background: var(--surface);
+}
 
 .pb-mini-img-link {
     display: block;
@@ -1897,6 +1904,10 @@ body > *:last-child {
     background: #fff;
 }
 
+[data-theme="dark"] .pb-grid-card {
+    background: var(--surface);
+} 
+
 .pb-grid-img-link {
     display: block;
     overflow: hidden;
@@ -1904,11 +1915,12 @@ body > *:last-child {
 
 .pb-grid-img {
     width: 100%;
-    height: 120px;
+    max-width: 90px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
-    border-radius: 3px;
+    object-position: center;
     display: block;
-    transition: transform .3s;
+    margin: 0 auto;
 }
 
 .pb-grid-img-link:hover .pb-grid-img {
@@ -2062,20 +2074,23 @@ body > *:last-child {
 
 .pb-lead2-img {
     width: 100%;
-    height: 210px;
+    max-width: 90px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
-    object-position: center top;
+    object-position: center;
     display: block;
+
 }
 
 .pb-grid-img {
     width: 100%;
-    height: 125px;
+    max-width: 90px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
     object-position: center;
     display: block;
+    margin: 0 auto;
 }
-
 /* Responsive height adjustments — hero-lead/hero-sub containers
    and their images always move together */
 
@@ -2092,10 +2107,6 @@ body > *:last-child {
 
     .pb-lead2-img {
         height: 180px;
-    }
-
-    .pb-grid-img {
-        height: 110px;
     }
 }
 
@@ -2117,10 +2128,6 @@ body > *:last-child {
     .pb-lead2-img {
         height: 160px;
     }
-
-    .pb-grid-img {
-        height: 95px;
-    }
 }
 
 @media (max-width: 480px) {
@@ -2140,10 +2147,6 @@ body > *:last-child {
 
     .pb-lead2-img {
         height: 140px;
-    }
-
-    .pb-grid-img {
-        height: 85px;
     }
 }
 
