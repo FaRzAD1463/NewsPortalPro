@@ -710,6 +710,7 @@ form.contact-form {
    flex-shrink/margin-top now live once, in the FOOTER section below */
 
 /* Remove blank space below footer caused by last child margin */
+
 body > *:last-child {
     margin-bottom: 0;
     padding-bottom: 0;
@@ -1484,9 +1485,9 @@ body > *:last-child {
     padding: 0;
 }
 
-            /* ══════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════════════════
    FOOTER — Protidinerbangladesh style (dark grey)
-   ══════════════════════════════════════════════════════ */
+    ══════════════════════════════════════════════════════ */
 
             .pb-footer {
                 background: #3a3a3a;
@@ -1778,8 +1779,8 @@ body > *:last-child {
                     display: none;
                 }
             }
-            /* ── Hero sub cards ──────────────────────────────────── */
-            /* FIXED: .pb-hero-sub was 148px while .pb-hero-sub-img was 184px —
+   /* ── Hero sub cards ──────────────────────────────────── */
+   /* FIXED: .pb-hero-sub was 148px while .pb-hero-sub-img was 184px —
    container clipped the image back down. Both now match at 184px,
    and stay matched at every breakpoint below. */
 
@@ -2013,7 +2014,7 @@ body > *:last-child {
                 .pb-trending-title:hover {
                     color: #c0392b !important;
                 }
-            /* ── Home wrapper ────────────────────────────────────── */
+     /* ── Home wrapper ────────────────────────────────────── */
             .pb-home-wrapper {
                 background: #f7f7f7;
                 padding-bottom: 40px;
@@ -2022,9 +2023,9 @@ body > *:last-child {
             .pb-cat-block {
                 background: transparent;
             }
-            /* ══════════════════════════════════════════════════════
+  /* ══════════════════════════════════════════════════════
    PAGE CONTAINER
-   ══════════════════════════════════════════════════════ */
+    ══════════════════════════════════════════════════════ */
 
             .pb-page-container {
                 max-width: 1200px;
@@ -2043,7 +2044,7 @@ body > *:last-child {
                     padding: 0 10px;
                 }
             }
-            /* ══════════════════════════════════════════════════════
+   /* ══════════════════════════════════════════════════════
    FIX IMAGE CUTTING — images must never overflow
    (FIXED: this is now the single canonical block for hero-lead,
    hero-sub, mini, lead2 and grid heights across all breakpoints —
@@ -3794,7 +3795,7 @@ body > *:last-child {
                     font-size: 1.1rem;
                 }
             }
-            /* ══════════════════════════════════════════════════════
+   /* ══════════════════════════════════════════════════════
    ALL CATEGORIES MEGA DROPDOWN — VIEWPORT-SAFE
    (FIXED: `top: auto` on a fixed-position element was relying on
    the browser's static-position fallback, which is inconsistent.
