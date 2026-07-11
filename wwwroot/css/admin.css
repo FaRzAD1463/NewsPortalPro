@@ -286,7 +286,7 @@ body.admin-body {
     }
 
     /* Hide non-essential columns on small screens */
-    admin-col-hide-sm {
+    .admin-col-hide-sm {
         display: none;
     }
 }
