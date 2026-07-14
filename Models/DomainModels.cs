@@ -405,6 +405,8 @@ namespace NewsPortalPro.Models
         public bool IsConfirmed { get; set; } = false;
         [StringLength(100)] public string? ConfirmationToken { get; set; }
         public DateTime SubscribedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
         public DateTime? UnsubscribedAt { get; set; }
         [StringLength(45)] public string? IpAddress { get; set; }
         }
