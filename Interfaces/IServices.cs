@@ -118,13 +118,15 @@ namespace NewsPortalPro.Interfaces
     // ─────────────────────────────────────────────────────
     public interface IAdsService
     {
-        Task<List<AdvertisementDto>> GetByPositionAsync(AdPosition position, int? categoryId = null);
-        Task TrackImpressionAsync(int adId);
-        Task TrackClickAsync(int adId);
+        Task<List<AdvertisementDto>> GetByPositionAsync(
+           AdPosition position, int? categoryId = null);
         Task<List<AdvertisementDto>> GetAllForAdminAsync();
+        Task<List<AdvertisementDto>> GetAllActiveAsync(); // ← add this
         Task<int> CreateAsync(CreateAdDto dto);
         Task<bool> UpdateAsync(int id, UpdateAdDto dto);
         Task<bool> DeleteAsync(int id);
+        Task TrackImpressionAsync(int id);
+        Task TrackClickAsync(int id);
     }
 
     // ─────────────────────────────────────────────────────

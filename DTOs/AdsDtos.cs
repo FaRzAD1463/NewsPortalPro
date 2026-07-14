@@ -14,8 +14,20 @@ namespace NewsPortalPro.DTOs
         public int ImpressionCount { get; set; }
         public int ClickCount { get; set; }
         public int? CategoryId { get; set; }
+        public int DisplayOrder { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+
+        // ── Computed helpers for views ─────────────────────────
+        public bool IsActive => Status == AdStatus.Active
+            && (StartDate == null || StartDate <= DateTime.UtcNow)
+            && (EndDate == null || EndDate >= DateTime.UtcNow);
+
+        public double Ctr =>
+            ImpressionCount == 0
+                ? 0
+                : Math.Round((double)ClickCount
+                             / ImpressionCount * 100, 2);
     }
 
     public class CreateAdDto
@@ -25,6 +37,7 @@ namespace NewsPortalPro.DTOs
         public string? TargetUrl { get; set; }
         public string? HtmlCode { get; set; }
         public AdPosition Position { get; set; }
+        public AdStatus Status { get; set; } = AdStatus.Active;
         public int DisplayOrder { get; set; }
         public int? CategoryId { get; set; }
         public DateTime? StartDate { get; set; }
@@ -34,6 +47,5 @@ namespace NewsPortalPro.DTOs
     public class UpdateAdDto : CreateAdDto
     {
         public int Id { get; set; }
-        public AdStatus Status { get; set; }
     }
 }

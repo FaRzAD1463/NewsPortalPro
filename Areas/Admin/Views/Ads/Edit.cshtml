@@ -1,81 +1,254 @@
-﻿@using NewsPortalPro.Models
-@using NewsPortalPro.DTOs
+﻿@using NewsPortalPro.DTOs
+@using NewsPortalPro.Models
 @model UpdateAdDto
 @{
     ViewData["Title"] = "বিজ্ঞাপন সম্পাদনা";
 }
 
-<form asp-action="Edit" asp-controller="Ads" asp-area="Admin"
-      asp-route-id="@Model.Id" method="post">
-    @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="Id" />
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">বিজ্ঞাপন সম্পাদনা</h4>
+    <a href="/Admin/Ads" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>ফিরে যান
+    </a>
+</div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h5 class="fw-bold mb-0">বিজ্ঞাপন সম্পাদনা</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-medium">শিরোনাম</label>
-                            <input asp-for="Title" class="form-control" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">পজিশন</label>
-                            <select asp-for="Position" class="form-select">
-                                @foreach (var pos in Enum.GetValues<NewsPortalPro.Models.AdPosition>())
-                                {
-                                    <option value="@pos" selected="@(Model.Position == pos)">@pos</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium">স্ট্যাটাস</label>
-                            <select asp-for="Status" class="form-select">
-                                @foreach (var s in Enum.GetValues<NewsPortalPro.Models.AdStatus>())
-                                {
-                                    <option value="@s" selected="@(Model.Status == s)">@s</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+<div class="row g-4">
+    <div class="col-lg-8">
+        <form method="post" enctype="multipart/form-data"
+              asp-action="Edit" asp-route-id="@Model.Id">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            শিরোনাম <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Title"
+                               class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            পজিশন
+                        </label>
+                        <select asp-for="Position"
+                                class="form-select">
+                            @if (ViewBag.Positions is
+                                 List<Microsoft.AspNetCore.Mvc.Rendering
+                                 .SelectListItem> positions)
                             {
-                                <img src="@Model.ImageUrl" class="img-fluid rounded mb-2"
-                                     style="max-height:80px" alt="Current" />
+                                @foreach (var p in positions)
+                                {
+                                    @if (p.Value ==
+                                         ((int)Model.Position).ToString())
+                                    {
+                                        <option value="@p.Value" selected>
+                                            @p.Text
+                                        </option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@p.Value">
+                                            @p.Text
+                                        </option>
+                                    }
+                                }
                             }
-                            <label class="form-label fw-medium">ছবির URL</label>
-                            <input asp-for="ImageUrl" class="form-control" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-medium">গন্তব্য URL</label>
-                            <input asp-for="TargetUrl" class="form-control" />
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-medium">HTML কোড</label>
-                            <textarea asp-for="HtmlCode" class="form-control font-monospace" rows="4"></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">শুরুর তারিখ</label>
-                            <input asp-for="StartDate" type="datetime-local" class="form-control" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">শেষের তারিখ</label>
-                            <input asp-for="EndDate" type="datetime-local" class="form-control" />
-                        </div>
-                        <div class="col-12 pt-2">
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary px-4">
-                                    <i class="bi bi-save me-2"></i>আপডেট করুন
-                                </button>
-                                <a href="/Admin/Ads" class="btn btn-outline-secondary">বাতিল</a>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            স্ট্যাটাস
+                        </label>
+                        <select asp-for="Status" class="form-select">
+                            @if (ViewBag.Statuses is
+                                 List<Microsoft.AspNetCore.Mvc.Rendering
+                                 .SelectListItem> statuses)
+                            {
+                                @foreach (var s in statuses)
+                                {
+                                    @if (s.Value ==
+                                         ((int)Model.Status).ToString())
+                                    {
+                                        <option value="@s.Value" selected>
+                                            @s.Text
+                                        </option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@s.Value">
+                                            @s.Text
+                                        </option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            টার্গেট URL
+                        </label>
+                        <input asp-for="TargetUrl"
+                               class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            বিজ্ঞাপনের ছবি
+                        </label>
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <div class="mb-2">
+                                <img src="@Model.ImageUrl"
+                                     id="ad-preview"
+                                     class="img-fluid rounded"
+                                     style="max-height:120px;
+                                object-fit:contain" />
                             </div>
+                        }
+                        else
+                        {
+                            <img id="ad-preview"
+                                 src="" class="img-fluid rounded d-none mb-2"
+                                 style="max-height:120px;
+                            object-fit:contain" />
+                        }
+                        <input type="file" name="imageFile"
+                               class="form-control mb-2"
+                               accept="image/*"
+                               onchange="previewAdImage(this)" />
+                        <input asp-for="ImageUrl"
+                               class="form-control"
+                               placeholder="অথবা সরাসরি URL দিন" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            HTML কোড
+                        </label>
+                        <textarea asp-for="HtmlCode"
+                                  class="form-control font-monospace"
+                                  rows="6">
+                        </textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">
+                                শুরুর তারিখ
+                            </label>
+                            <input asp-for="StartDate"
+                                   type="date"
+                                   class="form-control" />
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">
+                                শেষ তারিখ
+                            </label>
+                            <input asp-for="EndDate"
+                                   type="date"
+                                   class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">
+                                ডিসপ্লে অর্ডার
+                            </label>
+                            <input asp-for="DisplayOrder"
+                                   type="number"
+                                   class="form-control"
+                                   min="0" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">
+                                বিভাগ (ঐচ্ছিক)
+                            </label>
+                            <select asp-for="CategoryId"
+                                    class="form-select">
+                                <option value="">সব বিভাগ</option>
+                                @if (ViewBag.Categories is
+                                     List<Microsoft.AspNetCore.Mvc
+                                     .Rendering.SelectListItem> cats)
+                                {
+                                    @foreach (var c in cats)
+                                    {
+                                        @if (c.Value ==
+                                             Model.CategoryId?.ToString())
+                                        {
+                                            <option value="@c.Value"
+                                                    selected>
+                                                @c.Text
+                                            </option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@c.Value">
+                                                @c.Text
+                                            </option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit"
+                                class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            আপডেট করুন
+                        </button>
+                        <a href="/Admin/Ads"
+                           class="btn btn-outline-secondary">
+                            বাতিল
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent fw-medium">
+                পরিসংখ্যান
+            </div>
+            <div class="card-body">
+                @{
+                    var adDto = ViewBag.AdStats as AdvertisementDto;
+                }
+                <div class="row g-3 text-center">
+                    <div class="col-4">
+                        <div class="fs-4 fw-bold text-primary">
+                            @Model.Id
+                        </div>
+                        <div class="small text-muted">ID</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</form>
+</div>
+
+@section Scripts {
+    <script>
+        function previewAdImage(input) {
+            var preview = document.getElementById('ad-preview');
+            if (!preview || !input.files || !input.files[0]) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    </script>
+}

@@ -213,6 +213,7 @@ try
     // unmodified — MVC/Razor requests still use the cookie, API/mobile
     // requests carrying a Bearer token now correctly authenticate via
     // JWT, with no per-controller/per-action changes required.
+
     const string JwtOrCookieScheme = "JwtOrCookie";
 
     builder.Services.AddAuthentication(options =>
@@ -305,6 +306,7 @@ try
     // secret above), and keep the original non-production behavior
     // (use Redis if a non-localhost connection string is present,
     // otherwise fall back to in-memory cache with a warning).
+
     if (builder.Environment.IsProduction())
     {
         if (string.IsNullOrWhiteSpace(redisConnection))

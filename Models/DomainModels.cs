@@ -215,7 +215,7 @@ namespace NewsPortalPro.Models
         public ApplicationUser User { get; set; } = null!;
         }
 
-        public enum AdPosition { Header, Sidebar, InlineTop, InlineBottom, Footer, Popup }
+        public enum AdPosition {Header,Sidebar,InlineTop,InlineBottom,Footer,Popup,InArticle,BelowTitle }
         public enum AdStatus { Active, Inactive, Scheduled, Expired }
 
         public class Advertisement

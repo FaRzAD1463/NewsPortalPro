@@ -89,8 +89,37 @@ namespace NewsPortalPro.Services
             await _db.SaveChangesAsync();
             return ad.Id;
         }
+        public async Task<List<AdvertisementDto>> GetAllActiveAsync()
+        {
+            var now = DateTime.UtcNow;
+            var ads = await _db.Advertisements
+                .Where(a => a.Status == AdStatus.Active
+                         && (a.StartDate == null || a.StartDate <= now)
+                         && (a.EndDate == null || a.EndDate >= now))
+                .OrderBy(a => a.DisplayOrder)
+                .ToListAsync();
 
-            public async Task<bool> UpdateAsync(int id, UpdateAdDto dto)
+            return ads.Select(MapToDto).ToList();
+        }
+
+        private static AdvertisementDto MapToDto(Advertisement a) => new()
+        {
+            Id = a.Id,
+            Title = a.Title,
+            ImageUrl = a.ImageUrl,
+            TargetUrl = a.TargetUrl,
+            HtmlCode = a.HtmlCode,
+            Position = a.Position,
+            Status = a.Status,
+            ImpressionCount = a.ImpressionCount,
+            ClickCount = a.ClickCount,
+            CategoryId = a.CategoryId,
+            DisplayOrder = a.DisplayOrder,
+            StartDate = a.StartDate,
+            EndDate = a.EndDate
+        };
+
+        public async Task<bool> UpdateAsync(int id, UpdateAdDto dto)
             {
             var ad = await _db.Advertisements.FindAsync(id);
             if (ad == null) return false;
