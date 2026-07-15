@@ -77,6 +77,7 @@ try
                     errorNumbersToAdd: null);
                 sql.CommandTimeout(30);
                 sql.MigrationsAssembly("NewsPortalPro");
+                sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
             })
         .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
         .EnableDetailedErrors(builder.Environment.IsDevelopment()));
@@ -598,17 +599,21 @@ try
     // ──────────────────────────────────────────────────────────
     builder.Services.AddResponseCompression(options =>
     {
+        // Disable Brotli in development — conflicts with Browser Link
+        if (!builder.Environment.IsDevelopment())
+        {
+            options.Providers.Add<Microsoft.AspNetCore.ResponseCompression
+                .BrotliCompressionProvider>();
+        }
         options.EnableForHttps = true;
-        options.Providers.Add<Microsoft.AspNetCore.ResponseCompression
-            .BrotliCompressionProvider>();
         options.Providers.Add<Microsoft.AspNetCore.ResponseCompression
             .GzipCompressionProvider>();
         options.MimeTypes = Microsoft.AspNetCore.ResponseCompression
             .ResponseCompressionDefaults.MimeTypes
             .Concat([
                 "application/json",
-                "application/javascript",
-                "text/css"
+            "application/javascript",
+            "text/css"
             ]);
     });
 
@@ -946,6 +951,7 @@ static async Task SeedAdminUserAsync(
     // fall back to a fixed literal in Development. In Production with
     // no env var set, fail loudly instead of silently using a known
     // default — consistent with how the JWT secret is already handled.
+
     var adminPassword =
         Environment.GetEnvironmentVariable("NEWSPORTAL__Seed__AdminPassword");
 
@@ -1018,6 +1024,13 @@ static async Task SeedAdminUserAsync(
             // plaintext password no longer appears in the log output.
             logger.LogInformation(
                 "Admin user seeded: {Email}", adminEmail);
+        }
+        if (environment.IsProduction())
+        {
+            logger.LogCritical(
+                "SECURITY: Default admin password is active " +
+                "in production. Change it immediately at " +
+                "/Account/ChangePassword");
         }
         else
         {
