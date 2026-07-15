@@ -27,6 +27,7 @@ using System.Text;
 // ════════════════════════════════════════════════════════════
 // SERILOG — must be configured before everything else
 // ════════════════════════════════════════════════════════════
+
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(new ConfigurationBuilder()
         .AddJsonFile("appsettings.json")
@@ -52,6 +53,7 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     // ── Replace default logging with Serilog ──────────────────
+
     builder.Host.UseSerilog((context, services, configuration) =>
         configuration
             .ReadFrom.Configuration(context.Configuration)
@@ -66,6 +68,7 @@ try
     // ──────────────────────────────────────────────────────────
     // DATABASE
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(
             builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -85,6 +88,7 @@ try
     // ──────────────────────────────────────────────────────────
     // IDENTITY
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
         options.Password.RequireDigit = true;
@@ -120,7 +124,8 @@ try
         options.Cookie.Name = "NewsPortalPro.Auth";
         options.Cookie.HttpOnly = true;
 
-        // ── SameAsRequest allows dev on HTTP and prod on HTTPS ──
+        // SameAsRequest allows dev on HTTP and prod on HTTPS 
+
         options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
             ? CookieSecurePolicy.SameAsRequest
             : CookieSecurePolicy.Always;
@@ -155,6 +160,7 @@ try
     // ──────────────────────────────────────────────────────────
     // JWT AUTHENTICATION
     // ──────────────────────────────────────────────────────────
+
     var jwtSecret =
         Environment.GetEnvironmentVariable("NEWSPORTAL__JwtSettings__SecretKey")
         ?? builder.Configuration["JwtSettings:SecretKey"];
@@ -274,6 +280,7 @@ try
     // ──────────────────────────────────────────────────────────
     // AUTHORIZATION POLICIES
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddAuthorization(options =>
     {
         options.AddPolicy("AdminOnly",
@@ -289,6 +296,7 @@ try
     // ──────────────────────────────────────────────────────────
     // REDIS / DISTRIBUTED CACHE
     // ──────────────────────────────────────────────────────────
+
     var redisConnection =
         builder.Configuration.GetConnectionString("Redis");
 
@@ -346,6 +354,7 @@ try
     // ──────────────────────────────────────────────────────────
     // HANGFIRE
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddHangfire(config => config
         .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
         .UseSimpleAssemblyNameTypeSerializer()
@@ -372,6 +381,7 @@ try
     // ──────────────────────────────────────────────────────────
     // SIGNALR
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddSignalR(options =>
     {
         options.EnableDetailedErrors = builder.Environment.IsDevelopment();
@@ -383,12 +393,14 @@ try
     // ──────────────────────────────────────────────────────────
     // AUTOMAPPER
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddAutoMapper(
         new[] { typeof(Program).Assembly });
 
     // ──────────────────────────────────────────────────────────
     // FLUENT VALIDATION
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddFluentValidationAutoValidation(config =>
     {
         config.DisableDataAnnotationsValidation = false;
@@ -399,6 +411,7 @@ try
     // ──────────────────────────────────────────────────────────
     // IP RATE LIMITING
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddOptions();
     builder.Services.AddMemoryCache();
     builder.Services.Configure<IpRateLimitOptions>(
@@ -412,6 +425,7 @@ try
     // ──────────────────────────────────────────────────────────
     // CLOUDINARY
     // ──────────────────────────────────────────────────────────
+
     var cloudinarySettings = builder.Configuration
         .GetSection("CloudinarySettings")
         .Get<CloudinarySettings>();
@@ -434,6 +448,7 @@ try
     else
     {
         // Null registration — FileUploadService falls back to local storage
+
         builder.Services.AddSingleton<Cloudinary>(_ => null!);
         Log.Warning(
             "Cloudinary not configured — using local file storage");
@@ -442,6 +457,7 @@ try
     // ──────────────────────────────────────────────────────────
     // CONFIGURATION SETTINGS
     // ──────────────────────────────────────────────────────────
+
     builder.Services.Configure<EmailSettings>(
         builder.Configuration.GetSection("EmailSettings"));
     builder.Services.Configure<RedisSettings>(
@@ -450,6 +466,7 @@ try
     // ──────────────────────────────────────────────────────────
     // REPOSITORIES
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddScoped<INewsRepository, NewsRepository>();
     builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -457,6 +474,7 @@ try
     // ──────────────────────────────────────────────────────────
     // APPLICATION SERVICES
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddScoped<INewsService, NewsService>();
     builder.Services.AddScoped<ICategoryService, CategoryService>();
     builder.Services.AddScoped<ICommentService, CommentService>();
@@ -472,6 +490,7 @@ try
     // ──────────────────────────────────────────────────────────
     // MVC + RAZOR VIEWS
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddControllersWithViews(options =>
     {
         options.Filters.Add<AuditLogFilter>();
@@ -495,6 +514,7 @@ try
     // ──────────────────────────────────────────────────────────
     // SWAGGER / OPENAPI
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>
     {
@@ -542,6 +562,7 @@ try
     // ──────────────────────────────────────────────────────────
     // IMAGESHARP WEB
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddImageSharp(options =>
     {
         options.Configuration = SixLabors.ImageSharp.Configuration.Default;
@@ -552,6 +573,7 @@ try
     // ──────────────────────────────────────────────────────────
     // CORS
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("NewsPortalPolicy", policy =>
@@ -580,11 +602,13 @@ try
     // ──────────────────────────────────────────────────────────
     // ANTIFORGERY
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddAntiforgery(options =>
     {
         options.Cookie.Name = "NewsPortalPro.XSRF";
 
         // SameAsRequest in dev allows HTTP; Always in prod enforces HTTPS
+
         options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
             ? CookieSecurePolicy.SameAsRequest
             : CookieSecurePolicy.Always;
@@ -597,9 +621,11 @@ try
     // ──────────────────────────────────────────────────────────
     // RESPONSE COMPRESSION + CACHING
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddResponseCompression(options =>
     {
         // Disable Brotli in development — conflicts with Browser Link
+
         if (!builder.Environment.IsDevelopment())
         {
             options.Providers.Add<Microsoft.AspNetCore.ResponseCompression
@@ -635,12 +661,14 @@ try
     // ──────────────────────────────────────────────────────────
     // HTTP CLIENT + CONTEXT ACCESSOR
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddHttpClient();
 
     // ──────────────────────────────────────────────────────────
     // HEALTH CHECKS
     // ──────────────────────────────────────────────────────────
+
     builder.Services.AddHealthChecks()
         .AddSqlServer(
             builder.Configuration
@@ -656,11 +684,13 @@ try
     // ════════════════════════════════════════════════════════════
     // BUILD APPLICATION
     // ════════════════════════════════════════════════════════════
+
     var app = builder.Build();
 
     // ──────────────────────────────────────────────────────────
     // EXCEPTION HANDLING — must be first in pipeline
     // ──────────────────────────────────────────────────────────
+
     if (app.Environment.IsDevelopment())
     {
         app.UseDeveloperExceptionPage();
@@ -685,6 +715,7 @@ try
     // ──────────────────────────────────────────────────────────
     // SECURITY HEADERS
     // ──────────────────────────────────────────────────────────
+
     app.Use(async (context, next) =>
     {
         var headers = context.Response.Headers;
@@ -745,6 +776,7 @@ try
     // ──────────────────────────────────────────────────────────
     // MIDDLEWARE PIPELINE — ORDER IS CRITICAL
     // ──────────────────────────────────────────────────────────
+
     app.UseHttpsRedirection();
     app.UseResponseCompression();
 
@@ -774,6 +806,7 @@ try
     // ──────────────────────────────────────────────────────────
     // HANGFIRE DASHBOARD
     // ──────────────────────────────────────────────────────────
+
     app.UseHangfireDashboard(
         app.Configuration["Hangfire:DashboardPath"] ?? "/hangfire-admin",
         new DashboardOptions
@@ -787,6 +820,7 @@ try
     // ──────────────────────────────────────────────────────────
     // HEALTH CHECK ENDPOINT
     // ──────────────────────────────────────────────────────────
+
     app.MapHealthChecks("/health",
         new Microsoft.AspNetCore.Diagnostics.HealthChecks
             .HealthCheckOptions
@@ -813,6 +847,7 @@ try
     // ──────────────────────────────────────────────────────────
     // ROUTE CONFIGURATION
     // ──────────────────────────────────────────────────────────
+
     app.MapControllerRoute(
         name: "areas",
         pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
@@ -846,8 +881,9 @@ try
 
     // ──────────────────────────────────────────────────────────
     // HANGFIRE RECURRING JOBS
-    // ── No scope needed — Hangfire resolves services itself ───
+    //  No scope needed — Hangfire resolves services itself 
     // ──────────────────────────────────────────────────────────
+
     RecurringJob.AddOrUpdate<INewsService>(
         recurringJobId: "publish-scheduled-news",
         methodCall: svc => svc.PublishScheduledAsync(),
@@ -878,6 +914,7 @@ try
     // ──────────────────────────────────────────────────────────
     // DATABASE MIGRATION + SEED
     // ──────────────────────────────────────────────────────────
+
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider
@@ -931,26 +968,18 @@ finally
 // dev/prod apart, mirroring the pattern already used for the JWT secret
 // above. The seed password source and the logging of that password
 // were both changed — see comments inline below.
+
 static async Task SeedAdminUserAsync(
     UserManager<ApplicationUser> userManager,
     RoleManager<ApplicationRole> roleManager,
-    ILogger<Program> logger,
+    Microsoft.Extensions.Logging.ILogger<Program> logger,
     IHostEnvironment environment)
 {
     const string adminEmail = "admin@newsportalpro.com";
 
-    // FIX: the password was a hardcoded literal used in every
-    // environment, AND it was written to disk in plaintext via the log
-    // line further down (Logs/log-*.txt, 30-day retention) every single
-    // time the app seeded an admin — meaning a known credential for a
-    // full-admin account persisted in log files, which are typically
-    // less access-controlled than the database itself.
-    //
-    // Fix: read the seed password from an environment variable first
-    // (same convention as NEWSPORTAL__JwtSettings__SecretKey), and only
-    // fall back to a fixed literal in Development. In Production with
-    // no env var set, fail loudly instead of silently using a known
-    // default — consistent with how the JWT secret is already handled.
+    // Read admin password from environment variable.
+    // In Development, fall back to a default password.
+    // In Production, require the environment variable.
 
     var adminPassword =
         Environment.GetEnvironmentVariable("NEWSPORTAL__Seed__AdminPassword");
@@ -958,22 +987,29 @@ static async Task SeedAdminUserAsync(
     if (string.IsNullOrWhiteSpace(adminPassword))
     {
         if (environment.IsProduction())
+        {
             throw new InvalidOperationException(
                 "CRITICAL: Admin seed password is not configured. " +
-                "Set env var: NEWSPORTAL__Seed__AdminPassword");
+                "Set environment variable: NEWSPORTAL__Seed__AdminPassword");
+        }
 
         adminPassword = "Admin@12345";
+
         logger.LogWarning(
-            "NEWSPORTAL__Seed__AdminPassword not set — using default " +
-            "development seed password. Do not use this in production.");
+            "NEWSPORTAL__Seed__AdminPassword not set. " +
+            "Using the default development seed password. " +
+            "Do NOT use this in production.");
     }
 
-    string[] roles = ["Admin", "Editor", "Reporter", "User"];
+    // Create roles if they don't exist
+
+    string[] roles = { "Admin", "Editor", "Reporter", "User" };
+
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
         {
-            var result = await roleManager.CreateAsync(
+            var roleResult = await roleManager.CreateAsync(
                 new ApplicationRole
                 {
                     Name = role,
@@ -987,19 +1023,23 @@ static async Task SeedAdminUserAsync(
                     }
                 });
 
-            if (result.Succeeded)
+            if (roleResult.Succeeded)
+            {
                 logger.LogInformation("Role created: {Role}", role);
+            }
             else
+            {
                 logger.LogError(
                     "Failed to create role {Role}: {Errors}",
                     role,
-                    string.Join(", ",
-                        result.Errors.Select(e => e.Description)));
+                    string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+            }
         }
     }
 
-    var existingAdmin =
-        await userManager.FindByEmailAsync(adminEmail);
+    // Check if admin already exists
+
+    var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
 
     if (existingAdmin == null)
     {
@@ -1008,36 +1048,33 @@ static async Task SeedAdminUserAsync(
             UserName = adminEmail,
             Email = adminEmail,
             FullName = "System Administrator",
-            Designation = "System Admin",
+            Designation = "System Administrator",
             EmailConfirmed = true,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
 
-        var result =
-            await userManager.CreateAsync(admin, adminPassword);
+        var result = await userManager.CreateAsync(admin, adminPassword);
 
         if (result.Succeeded)
         {
             await userManager.AddToRoleAsync(admin, "Admin");
-            // FIX: previously logged "{Email} / {Password}" — the
-            // plaintext password no longer appears in the log output.
+
             logger.LogInformation(
-                "Admin user seeded: {Email}", adminEmail);
-        }
-        if (environment.IsProduction())
-        {
-            logger.LogCritical(
-                "SECURITY: Default admin password is active " +
-                "in production. Change it immediately at " +
-                "/Account/ChangePassword");
+                "Admin user seeded successfully: {Email}",
+                adminEmail);
+
+            if (environment.IsProduction())
+            {
+                logger.LogCritical(
+                    "Admin user was seeded in production. Verify that the seeded password is unique and change it immediately after first login.");
+            }
         }
         else
         {
             logger.LogError(
-                "Failed to seed admin: {Errors}",
-                string.Join(", ",
-                    result.Errors.Select(e => e.Description)));
+                "Failed to seed admin user: {Errors}",
+                string.Join(", ", result.Errors.Select(e => e.Description)));
         }
     }
     else
@@ -1045,6 +1082,7 @@ static async Task SeedAdminUserAsync(
         if (!await userManager.IsInRoleAsync(existingAdmin, "Admin"))
         {
             await userManager.AddToRoleAsync(existingAdmin, "Admin");
+
             logger.LogInformation(
                 "Admin role assigned to existing user: {Email}",
                 adminEmail);
