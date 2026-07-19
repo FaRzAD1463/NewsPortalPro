@@ -853,6 +853,21 @@ try
         pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
     app.MapControllerRoute(
+        name: "terms",
+        pattern: "Terms",
+        defaults: new { controller = "Home", action = "Terms" });
+
+    app.MapControllerRoute(
+        name: "about",
+        pattern: "About",
+        defaults: new { controller = "Home", action = "About" });
+
+    app.MapControllerRoute(
+        name: "privacy",
+        pattern: "Privacy",
+        defaults: new { controller = "Home", action = "Privacy" });
+
+    app.MapControllerRoute(
         name: "news-detail",
         pattern: "news/{slug}",
         defaults: new { controller = "News", action = "Details" });
@@ -868,9 +883,9 @@ try
         defaults: new { controller = "News", action = "ByTag" });
 
     app.MapControllerRoute(
-    name: "epaper",
-    pattern: "Epaper/{action=Index}/{id?}",
-    defaults: new { controller = "Epaper" });
+        name: "epaper",
+        pattern: "Epaper/{action=Index}/{id?}",
+        defaults: new { controller = "Epaper" });
 
     app.MapControllerRoute(
         name: "default",

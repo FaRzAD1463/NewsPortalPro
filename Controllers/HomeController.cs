@@ -12,7 +12,7 @@ namespace NewsPortalPro.Controllers
         private readonly ICategoryService _categories;
         private readonly IAdsService _ads;
         private readonly ISettingsService _settings;
-       
+
         public HomeController(
             INewsService news,
             ICategoryService categories,
@@ -53,6 +53,10 @@ namespace NewsPortalPro.Controllers
 
             return View(vm);
         }
+        public IActionResult Terms() => View();
+        public IActionResult About() => View();
+
+        public IActionResult Privacy() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error() => View();
