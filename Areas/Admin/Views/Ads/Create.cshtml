@@ -35,20 +35,19 @@
                         <label class="form-label fw-medium">
                             পজিশন <span class="text-danger">*</span>
                         </label>
-                        <select asp-for="Position"
-                                class="form-select">
-                            @if (ViewBag.Positions is
-                                 List<Microsoft.AspNetCore.Mvc.Rendering
-                                 .SelectListItem> positions)
-                            {
-                                @foreach (var p in positions)
-                                {
-                                    <option value="@p.Value">
-                                        @p.Text
-                                    </option>
-                                }
-                            }
+
+                        <select name="Position" class="form-select">
+                            <option value="0">হেডার (পেজের শীর্ষে)</option>
+                            <option value="1" selected>সাইডবার (ডান পাশে)</option>
+                            <option value="2">ফুটার (পেজের নিচে)</option>
+                            <option value="3">আর্টিকেলের মধ্যে</option>
+                            <option value="4">পপআপ</option>
+                            <option value="5">শিরোনামের নিচে</option>
                         </select>
+
+                        <small class="text-muted">
+                            হোম পেজে দেখাতে চাইলে <strong>সাইডবার</strong> বেছে নিন।
+                        </small>
                     </div>
 
                     <div class="mb-3">

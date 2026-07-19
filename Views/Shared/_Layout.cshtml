@@ -166,6 +166,29 @@
         </div>
     </nav>
 
+    @if (ViewBag.HeaderAds != null)
+{
+    foreach (var ad in (IEnumerable<NewsPortalPro.DTOs.AdvertisementDto>)ViewBag.HeaderAds)
+    {
+        if (!string.IsNullOrEmpty(ad.HtmlCode))
+        {
+            <div class="text-center py-1" data-ad-id="@ad.Id">
+                @Html.Raw(ad.HtmlCode)
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(ad.ImageUrl))
+        {
+            <div class="text-center py-1" data-ad-id="@ad.Id">
+                <a href="@ad.TargetUrl" target="_blank"
+                   onclick="trackAdClick(@ad.Id)">
+                    <img src="@ad.ImageUrl" alt="@ad.Title"
+                         class="img-fluid" style="max-height:90px" />
+                </a>
+            </div>
+        }
+    }
+}
+
     <!-- ══ MAIN CONTENT ═════════════════════════════════ -->
     <main style="min-height:50vh">
         @RenderBody()

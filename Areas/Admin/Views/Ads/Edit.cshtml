@@ -31,30 +31,28 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-medium">
-                            পজিশন
-                        </label>
-                        <select asp-for="Position"
-                                class="form-select">
-                            @if (ViewBag.Positions is
-                                 List<Microsoft.AspNetCore.Mvc.Rendering
-                                 .SelectListItem> positions)
-                            {
-                                @foreach (var p in positions)
+                        <label class="form-label fw-medium">পজিশন</label>
+                        <select name="Position" class="form-select">
+                            @{
+                                var positions = new[]
                                 {
-                                    @if (p.Value ==
-                                         ((int)Model.Position).ToString())
-                                    {
-                                        <option value="@p.Value" selected>
-                                            @p.Text
-                                        </option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@p.Value">
-                                            @p.Text
-                                        </option>
-                                    }
+                            (0, "হেডার (পেজের শীর্ষে)"),
+                            (1, "সাইডবার (ডান পাশে)"),
+                            (2, "ফুটার (পেজের নিচে)"),
+                            (3, "আর্টিকেলের মধ্যে"),
+                            (4, "পপআপ"),
+                            (5, "শিরোনামের নিচে")
+                            };
+                            }
+                            @foreach (var (val, label) in positions)
+                            {
+                                @if ((int)Model.Position == val)
+                                {
+                                    <option value="@val" selected>@label</option>
+                                }
+                                else
+                                {
+                                    <option value="@val">@label</option>
                                 }
                             }
                         </select>
