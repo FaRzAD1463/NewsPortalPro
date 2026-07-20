@@ -13,33 +13,38 @@ namespace NewsPortalPro.Services
         public AdsService(ApplicationDbContext db) => _db = db;
 
         public async Task<List<AdvertisementDto>> GetByPositionAsync(
-            AdPosition position, int? categoryId = null)
+      AdPosition position, int? categoryId = null)
         {
             var now = DateTime.UtcNow;
-            return await _db.Advertisements
-                .Where(a => a.Position == position
-                    && a.Status == AdStatus.Active
-                    && !a.IsDeleted
-                    && (a.StartDate == null || a.StartDate <= now)
-                    && (a.EndDate == null || a.EndDate >= now)
-                    && (a.CategoryId == null || a.CategoryId == categoryId))
+
+            var ads = await _db.Advertisements
+                .Where(a =>
+                    a.Position == position &&
+                    a.Status == AdStatus.Active &&
+                    !a.IsDeleted &&
+                    (a.StartDate == null || a.StartDate <= now) &&
+                    // Compare only the date so ads remain active
+                    // throughout their EndDate.
+
+                    (a.EndDate == null || a.EndDate.Value.Date >= now.Date))
                 .OrderBy(a => a.DisplayOrder)
-                .Select(a => new AdvertisementDto
-                {
-                    Id = a.Id,
-                    Title = a.Title,
-                    ImageUrl = a.ImageUrl,
-                    TargetUrl = a.TargetUrl,
-                    HtmlCode = a.HtmlCode,
-                    Position = a.Position,
-                    Status = a.Status,
-                    ImpressionCount = a.ImpressionCount,
-                    ClickCount = a.ClickCount
-                })
                 .ToListAsync();
+
+            // Apply category filtering only when a category is specified.
+            // Global ads (CategoryId == null) are always included.
+
+            if (categoryId.HasValue)
+            {
+                ads = ads.Where(a =>
+                        a.CategoryId == null ||
+                        a.CategoryId == categoryId.Value)
+                    .ToList();
+            }
+
+            return ads.Select(MapToDto).ToList();
         }
 
-            public async Task TrackImpressionAsync(int adId) =>
+        public async Task TrackImpressionAsync(int adId) =>
             await _db.Database.ExecuteSqlRawAsync(
                 "UPDATE Advertisements SET ImpressionCount = ImpressionCount + 1 WHERE Id = {0}",
                 adId);
