@@ -60,13 +60,20 @@ namespace NewsPortalPro.Services
             return dtos;
             }
 
-           public async Task<List<CategoryDto>> GetMenuCategoriesAsync()
-           {
+        public async Task<List<CategoryDto>> GetMenuCategoriesAsync()
+        {
             var all = await GetAllActiveAsync();
-            return all.Where(c => c.ShowInMenu).ToList();
-           }
 
-           public async Task<CategoryDto?> GetBySlugAsync(string slug)
+            var menuCats = all.Where(c => c.ShowInMenu).ToList();
+
+            // Fallback: if no categories are marked for the menu,
+            // show the first 10 active categories instead.
+            return menuCats.Any()
+                ? menuCats
+                : all.Take(10).ToList();
+        }
+
+        public async Task<CategoryDto?> GetBySlugAsync(string slug)
            {
             var cat = await _db.Categories
                 .Where(c => c.Slug == slug
