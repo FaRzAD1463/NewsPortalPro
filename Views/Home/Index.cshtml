@@ -8,6 +8,8 @@
 <div class="pb-home-wrapper">
     <div class="pb-page-container">
 
+        @await Component.InvokeAsync("AdSlot", new { position = AdPosition.Header })
+
         <!-- ══ HERO / FEATURED ══════════════════════════════ -->
         @if (Model.FeaturedNews.Any())
         {

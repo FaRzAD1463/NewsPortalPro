@@ -143,6 +143,8 @@
     <!-- ══ BREAKING NEWS TICKER ═════════════════════════ -->
     @await Html.PartialAsync("_BreakingNewsTicker")
 
+    @await Component.InvokeAsync("AdSlot", new { position = AdPosition.InlineTop })
+
     <!-- ══ MAIN NAVBAR ══════════════════════════════════ -->
     <nav class="pb-main-nav" id="main-nav">
         <div class="pb-nav-inner">
@@ -166,33 +168,14 @@
         </div>
     </nav>
 
-    @if (ViewBag.HeaderAds != null)
-{
-    foreach (var ad in (IEnumerable<NewsPortalPro.DTOs.AdvertisementDto>)ViewBag.HeaderAds)
-    {
-        if (!string.IsNullOrEmpty(ad.HtmlCode))
-        {
-            <div class="text-center py-1" data-ad-id="@ad.Id">
-                @Html.Raw(ad.HtmlCode)
-            </div>
-        }
-        else if (!string.IsNullOrEmpty(ad.ImageUrl))
-        {
-            <div class="text-center py-1" data-ad-id="@ad.Id">
-                <a href="@ad.TargetUrl" target="_blank"
-                   onclick="trackAdClick(@ad.Id)">
-                    <img src="@ad.ImageUrl" alt="@ad.Title"
-                         class="img-fluid" style="max-height:90px" />
-                </a>
-            </div>
-        }
-    }
-}
+    @await Component.InvokeAsync("AdSlot", new { position = AdPosition.Header })
 
     <!-- ══ MAIN CONTENT ═════════════════════════════════ -->
     <main style="min-height:50vh">
         @RenderBody()
     </main>
+
+    @await Component.InvokeAsync("AdSlot", new { position = AdPosition.Footer })
 
     <!-- ══ FOOTER ═══════════════════════════════════════ -->
     @await Html.PartialAsync("_Footer")
@@ -253,6 +236,8 @@
             </div>
         </div>
     }
+
+    @await Component.InvokeAsync("AdPopup")
 
     <!-- ══ SCRIPTS ══════════════════════════════════════ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>

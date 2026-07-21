@@ -176,6 +176,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         private async Task PopulateViewBag()
         {
             ViewBag.Positions = Enum.GetValues<AdPosition>()
+                .Where(p => p != AdPosition.InlineTop && p != AdPosition.InlineBottom)
                 .Select(p => new SelectListItem
                 {
                     Value = ((int)p).ToString(),

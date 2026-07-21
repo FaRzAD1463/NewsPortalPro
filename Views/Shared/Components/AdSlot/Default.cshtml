@@ -1,0 +1,29 @@
+﻿@using NewsPortalPro.DTOs
+@model List<AdvertisementDto>
+
+@if (Model.Any())
+{
+    @foreach (var ad in Model)
+    {
+        <div class="text-center my-3">
+            <div style="display:inline-block; max-width:728px; width:100%;">
+                @if (!string.IsNullOrEmpty(ad.HtmlCode))
+                {
+                    <iframe src="/ads/render/@ad.Id"
+                            sandbox="allow-scripts allow-popups"
+                            style="border:0;width:100%;height:90px;max-height:90px"
+                            scrolling="no"
+                            loading="lazy"></iframe>
+                }
+                else if (!string.IsNullOrEmpty(ad.ImageUrl))
+                {
+                    <a href="@ad.TargetUrl" target="_blank" onclick="trackAdClick(@ad.Id)">
+                        <img src="@ad.ImageUrl" alt="@ad.Title" style="width:100%;max-height:90px;object-fit:contain" />
+                    </a>
+                }
+            </div>
+        </div>
+    }
+}
+
+    
