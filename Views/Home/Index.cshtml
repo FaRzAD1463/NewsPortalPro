@@ -9,6 +9,7 @@
     <div class="pb-page-container">
 
         <!-- ══ HERO / FEATURED ══════════════════════════════ -->
+
         @if (Model.FeaturedNews.Any())
         {
             <section class="pb-hero-section mt-3">
@@ -31,16 +32,23 @@
                                    style="background:@(hero.CategoryColor ?? "#c0392b")">
                                     @hero.CategoryName
                                 </a>
+
                                 <h2 class="pb-hero-title">
                                     <a href="/news/@hero.Slug"
                                        class="text-white text-decoration-none">
                                         @hero.Title
                                     </a>
                                 </h2>
+
                                 <p class="pb-hero-summary">@hero.Summary</p>
+
                             </div>
+
+
                         </div>
+
                     </div>
+
                     <div class="col-md-6 col-lg-7">
                         <div class="row g-2 h-100">
                             @foreach (var n in Model.FeaturedNews.Skip(1).Take(4))
@@ -65,24 +73,36 @@
                                                     @n.Title
                                                 </a>
                                             </h6>
+
                                         </div>
+
                                     </div>
+
                                 </div>
                             }
                         </div>
+
                     </div>
+
                 </div>
+
             </section>
         }
 
         <!-- ══ LATEST NEWS ROW ══════════════════════════════ -->
+
+
         @if (Model.LatestNews.Any())
         {
             <section class="mt-4">
+
                 <div class="pb-section-hdr">
+
                     <h2 class="pb-sec-title">সর্বশেষ সংবাদ</h2>
+
                     <a href="/news" class="pb-sec-more">আরও →</a>
                 </div>
+
                 <div class="row g-2 mt-2">
                     @foreach (var n in Model.LatestNews.Take(6))
                     {
@@ -95,28 +115,41 @@
                                          loading="lazy"
                                          onerror="this.src='/images/placeholder.jpg'" />
                                 </a>
+
                                 <h6 class="pb-mini-title">
                                     <a href="/news/@n.Slug"
                                        class="text-dark text-decoration-none">
                                         @n.Title
                                     </a>
+
                                 </h6>
+
                                 <div class="pb-mini-meta">
                                     <i class="bi bi-clock me-1"></i>
                                     @n.PublishedAt?.ToString("dd MMM")
                                 </div>
+
                             </div>
+
                         </div>
                     }
                 </div>
+
             </section>
         }
 
+
         <!-- ══ MAIN CONTENT + SIDEBAR ═══════════════════════ -->
+
+
         <div class="row g-4 mt-1">
 
+
             <!-- Left: Category blocks -->
+
+
             <div class="col-lg-9">
+
                 @foreach (var block in Model.CategoryNewsBlocks)
                 {
                     var cat = block.Value.Category;
@@ -133,19 +166,26 @@
                                    class="text-dark text-decoration-none">
                                     @cat.Name
                                 </a>
+
                             </h2>
+
                             <a href="/category/@cat.Slug"
                                class="pb-sec-more"
                                style="color:@(cat.ColorCode ?? "#c0392b")">
                                 আরও →
+
                             </a>
+
                         </div>
 
                         @if (count >= 5)
                         {
                             <div class="row g-2 mt-1">
+
                                 <div class="col-md-5">
+
                                     <div class="pb-lead2">
+
                                         <a href="/news/@catNews[0].Slug"
                                            class="pb-lead2-img-link">
                                             <img src="@(catNews[0].FeaturedImage ?? "/images/placeholder.jpg")"
@@ -154,21 +194,27 @@
                                                  loading="lazy"
                                                  onerror="this.src='/images/placeholder.jpg'" />
                                         </a>
+
                                         <h3 class="pb-lead2-title mt-2">
                                             <a href="/news/@catNews[0].Slug"
                                                class="text-dark text-decoration-none">
                                                 @catNews[0].Title
                                             </a>
                                         </h3>
+
                                         <p class="pb-lead2-summary">
                                             @catNews[0].Summary
                                         </p>
+
                                         <div class="pb-meta-sm">
                                             <i class="bi bi-clock me-1"></i>
                                             @catNews[0].PublishedAt?.ToString("dd MMM yyyy")
                                         </div>
+
                                     </div>
+
                                 </div>
+
                                 <div class="col-md-7">
                                     <div class="row g-2">
                                         @foreach (var n in catNews.Skip(1).Take(4))
@@ -183,23 +229,33 @@
                                                              loading="lazy"
                                                              onerror="this.src='/images/placeholder.jpg'" />
                                                     </a>
+
                                                     <h6 class="pb-grid-title">
                                                         <a href="/news/@n.Slug"
                                                            class="text-dark text-decoration-none">
                                                             @n.Title
                                                         </a>
+
                                                     </h6>
+
                                                     <div class="pb-meta-sm">
                                                         @n.PublishedAt?.ToString("dd MMM")
                                                     </div>
+
                                                 </div>
+
                                             </div>
                                         }
+
                                     </div>
+
                                 </div>
+
                             </div>
                         }
+
                         else if (count >= 3)
+
                         {
                             <div class="row g-2 mt-1">
                                 @foreach (var n in catNews.Take(4))
@@ -214,20 +270,25 @@
                                                      loading="lazy"
                                                      onerror="this.src='/images/placeholder.jpg'" />
                                             </a>
+
                                             <h6 class="pb-grid-title">
                                                 <a href="/news/@n.Slug"
                                                    class="text-dark text-decoration-none">
                                                     @n.Title
                                                 </a>
+
                                             </h6>
                                             <p class="pb-grid-summary">@n.Summary</p>
                                             <div class="pb-meta-sm">
                                                 <i class="bi bi-clock me-1"></i>
                                                 @n.PublishedAt?.ToString("dd MMM")
                                             </div>
+
                                         </div>
+
                                     </div>
                                 }
+
                             </div>
                         }
                         else
@@ -245,36 +306,53 @@
                                                      loading="lazy"
                                                      onerror="this.src='/images/placeholder.jpg'" />
                                             </a>
+
                                             <h6 class="pb-grid-title">
                                                 <a href="/news/@n.Slug"
                                                    class="text-dark text-decoration-none">
                                                     @n.Title
                                                 </a>
+
                                             </h6>
+
                                             <div class="pb-meta-sm">
                                                 <i class="bi bi-clock me-1"></i>
                                                 @n.PublishedAt?.ToString("dd MMM")
                                             </div>
+
                                         </div>
+
                                     </div>
                                 }
                             </div>
                         }
 
                         <hr class="pb-divider" />
+
                     </section>
                 }
+
             </div>
 
+
             <!-- Right: Sidebar -->
+
             <div class="col-lg-3">
+
                 <div class="pb-sidebar">
+
                     <div class="pb-widget mb-4">
+
                         <div class="pb-section-hdr mb-3">
+
                             <h2 class="pb-sec-title">
+
                                 <i class="bi bi-fire text-danger me-1"></i>
+
                                 সর্বাধিক পঠিত
+
                             </h2>
+
                         </div>
                         @foreach (var (n, i) in Model.TrendingNews
                             .Select((x, idx) => (x, idx + 1)).Take(8))
@@ -287,13 +365,17 @@
                                         text-dark text-decoration-none">
                                         @n.Title
                                     </a>
+
                                     <div class="pb-meta-sm mt-1">
                                         <i class="bi bi-clock me-1"></i>
                                         @n.PublishedAt?.ToString("dd MMM")
                                     </div>
+
                                 </div>
+
                             </div>
                         }
+
                     </div>
 
                     @foreach (var ad in Model.SidebarAds.Take(3))
@@ -311,16 +393,20 @@
                                          class="img-fluid w-100" />
                                 </a>
                             }
+
                         </div>
                     }
+
 
                     <div class="pb-widget mb-4">
                         <div class="pb-section-hdr mb-3">
                             <h2 class="pb-sec-title">নিউজলেটার</h2>
                         </div>
+
                         <p class="small text-muted mb-2">
                             সর্বশেষ সংবাদ সরাসরি ইনবক্সে পান
                         </p>
+
                         <div class="input-group input-group-sm">
                             <input type="email" id="newsletter-email"
                                    class="form-control"
@@ -328,17 +414,25 @@
                             <button class="btn btn-danger btn-sm"
                                     onclick="subscribeNewsletter()">
                                 সাবস্ক্রাইব
+
                             </button>
+
                         </div>
+
                     </div>
+
                 </div>
+
             </div>
 
         </div>
 
     </div><!-- /pb-page-container -->
+
 </div><!-- /pb-home-wrapper -->
+
 @section Scripts {
+
     <script>
         async function subscribeNewsletter() {
             const email = document.getElementById('newsletter-email')
@@ -355,4 +449,5 @@
             } catch { toastr.error('নেটওয়ার্ক ত্রুটি'); }
         }
     </script>
+
 }
