@@ -58,8 +58,8 @@
                             else
                             {
                                 <div class="author-avatar-sm rounded-circle
-                                                bg-secondary d-flex align-items-center
-                                                justify-content-center text-white"
+                                    bg-secondary d-flex align-items-center
+                                    justify-content-center text-white"
                                      style="width:32px;height:32px;font-size:12px">
                                     <i class="bi bi-person"></i>
                                 </div>
@@ -147,7 +147,6 @@
             </div>
 
             @await Component.InvokeAsync("AdSlot", new { position = AdPosition.InArticle })
-
 
             <!-- Video -->
             @if (!string.IsNullOrEmpty(Model.VideoUrl))
@@ -247,8 +246,8 @@
                     else
                     {
                         <div class="author-box-avatar bg-secondary
-                                        d-flex align-items-center
-                                        justify-content-center text-white">
+                            d-flex align-items-center
+                            justify-content-center text-white">
                             <i class="bi bi-person fs-3"></i>
                         </div>
                     }
@@ -279,9 +278,9 @@
                     {
                         <div class="comment-form-wrap mb-4">
                             <textarea id="comment-text"
-                              class="form-control mb-2"
-                              rows="3"
-                              placeholder="আপনার মন্তব্য লিখুন..."></textarea>
+                                      class="form-control mb-2"
+                                      rows="3"
+                                      placeholder="আপনার মন্তব্য লিখুন..."></textarea>
                             <button class="btn btn-danger btn-sm px-4"
                                     onclick="submitComment(@Model.Id)">
                                 <i class="bi bi-send me-1"></i>মন্তব্য পাঠান
@@ -312,14 +311,14 @@
                                                 <img src="@comment.UserAvatar"
                                                      class="rounded-circle"
                                                      style="width:36px;height:36px;
-                                                                        object-fit:cover" />
+                                                object-fit:cover" />
                                             }
                                             else
                                             {
                                                 <div class="rounded-circle bg-secondary
-                                                                        d-flex align-items-center
-                                                                        justify-content-center
-                                                                        text-white"
+                                                    d-flex align-items-center
+                                                    justify-content-center
+                                                    text-white"
                                                      style="width:36px;height:36px">
                                                     <i class="bi bi-person"></i>
                                                 </div>
@@ -327,7 +326,7 @@
                                         </div>
                                         <div class="flex-grow-1">
                                             <div class="d-flex justify-content-between
-                                                                align-items-center mb-1">
+                                                align-items-center mb-1">
                                                 <strong class="small">
                                                     @comment.UserName
                                                 </strong>
@@ -342,9 +341,9 @@
                                             @if (User.Identity?.IsAuthenticated == true)
                                             {
                                                 <button class="btn btn-link btn-sm
-                                                                           p-0 text-muted"
+                                                    p-0 text-muted"
                                                         onclick="showReplyForm(
-                                                                        @comment.Id)">
+                                                    @comment.Id)">
                                                     <i class="bi bi-reply me-1"></i>
                                                     উত্তর দিন
                                                 </button>
@@ -354,14 +353,14 @@
                                             <div id="reply-form-@comment.Id"
                                                  class="d-none mt-2">
                                                 <textarea id="reply-text-@comment.Id"
-                                              class="form-control form-control-sm mb-1"
-                                              rows="2"
-                                              placeholder="উত্তর লিখুন...">
+                                                          class="form-control form-control-sm mb-1"
+                                                          rows="2"
+                                                          placeholder="উত্তর লিখুন...">
                                             </textarea>
                                                 <button class="btn btn-danger btn-sm"
                                                         onclick="submitReply(
-                                                                    @Model.Id,
-                                                                    @comment.Id)">
+                                                    @Model.Id,
+                                                    @comment.Id)">
                                                     পাঠান
                                                 </button>
                                             </div>
@@ -375,13 +374,13 @@
                                                     {
                                                         <div class="d-flex gap-2 mt-2">
                                                             <div class="rounded-circle
-                                                                                        bg-secondary
-                                                                                        d-flex align-items-center
-                                                                                        justify-content-center
-                                                                                        text-white flex-shrink-0"
+                                                                bg-secondary
+                                                                d-flex align-items-center
+                                                                justify-content-center
+                                                                text-white flex-shrink-0"
                                                                  style="width:28px;
-                                                                                        height:28px;
-                                                                                        font-size:11px">
+                                                                height:28px;
+                                                                font-size:11px">
                                                                 <i class="bi bi-person">
                                                                 </i>
                                                             </div>
@@ -430,24 +429,24 @@
                                 <a href="/news/@n.Slug"
                                    class="sidebar-news-thumb-link">
                                     <img src="@(n.FeaturedImage
-                                                                                     ?? "/images/placeholder.jpg")"
-                                 alt="@n.Title"
-                                 class="sidebar-news-thumb"
-                                 onerror="this.src='/images/placeholder.jpg'" />
-                        </a>
-                        <div class="sidebar-news-body">
-                            <a href="/news/@n.Slug"
-                               class="sidebar-news-title
-                                          text-dark text-decoration-none">
-                                @n.Title
-                            </a>
-                            <div class="pb-meta-sm mt-1">
-                                <i class="bi bi-clock me-1"></i>
-                                @n.PublishedAt?.ToString("dd MMM")
+                                                                                                                              ?? "/images/placeholder.jpg")"
+                                         alt="@n.Title"
+                                         class="sidebar-news-thumb"
+                                         onerror="this.src='/images/placeholder.jpg'" />
+                                </a>
+                                <div class="sidebar-news-body">
+                                    <a href="/news/@n.Slug"
+                                       class="sidebar-news-title
+                                        text-dark text-decoration-none">
+                                        @n.Title
+                                    </a>
+                                    <div class="pb-meta-sm mt-1">
+                                        <i class="bi bi-clock me-1"></i>
+                                        @n.PublishedAt?.ToString("dd MMM")
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                                        }
+                        }
                     </div>
                 }
 
@@ -486,7 +485,7 @@
                         <div class="pb-grid-card">
                             <a href="/news/@n.Slug" class="pb-grid-img-link">
                                 <img src="@(n.FeaturedImage
-                                                                             ?? "/images/placeholder.jpg")"
+                                                                                                                  ?? "/images/placeholder.jpg")"
                                      alt="@n.Title"
                                      class="pb-grid-img"
                                      loading="lazy"
@@ -517,7 +516,7 @@
                             <a href="/news/@n.Slug"
                                class="cat-list-thumb-link flex-shrink-0">
                                 <img src="@(n.FeaturedImage
-                                                                             ?? "/images/placeholder.jpg")"
+                                                                                                                  ?? "/images/placeholder.jpg")"
                                      alt="@n.Title"
                                      class="cat-list-thumb"
                                      loading="lazy"
@@ -630,7 +629,7 @@
             } catch(e) { }
         })();
 
-                // ── Load more from same category ───────────────────────
+        // ── Load more from same category ───────────────────────
         var _relatedPage = 2;
         var _catSlug     = '@Model.CategorySlug';
         var _newsId      = @Model.Id;
@@ -790,33 +789,33 @@
         (async function initReactions() {
             @if (User.Identity?.IsAuthenticated == true)
             {
-                    <text>
-                    try {
-                        var res = await fetch('/api/news/@Model.Id/my-reaction');
-                        if (res.ok) {
-                            var data = await res.json();
-                            if (data.reactionType) {
-                                userReaction = data.reactionType;
-                                var btn = document.querySelector(
-                                    '.btn-reaction[data-reaction="' +
-                                    userReaction + '"]');
-                                if (btn) btn.classList.add('reacted');
-                            }
-                        }
-                    } catch(e) { }
-                    </text>
+                        <text>
+                            try {
+                                var res = await fetch('/api/news/@Model.Id/my-reaction');
+                                if (res.ok) {
+                                    var data = await res.json();
+                                    if (data.reactionType) {
+                                        userReaction = data.reactionType;
+                                        var btn = document.querySelector(
+                                            '.btn-reaction[data-reaction="' +
+                                            userReaction + '"]');
+                                        if (btn) btn.classList.add('reacted');
+                                    }
+                                }
+                            } catch(e) { }
+                        </text>
             }
         })();
 
         async function reactToNews(newsId, type) {
             @if (User.Identity?.IsAuthenticated == false)
             {
-                    <text>
-                    toastr.info('প্রতিক্রিয়া জানাতে লগইন করুন');
-                    window.location.href = '/Account/Login?returnUrl=' +
-                        encodeURIComponent(window.location.pathname);
-                    return;
-                    </text>
+                        <text>
+                            toastr.info('প্রতিক্রিয়া জানাতে লগইন করুন');
+                            window.location.href = '/Account/Login?returnUrl=' +
+                                encodeURIComponent(window.location.pathname);
+                            return;
+                        </text>
             }
 
             try {
