@@ -155,6 +155,15 @@ namespace NewsPortalPro.Interfaces
     }
 
     // ─────────────────────────────────────────────────────
+    // VIDEO SERVICE
+    // ─────────────────────────────────────────────────────
+
+    public interface IVideoService
+    {
+        Task<List<VideoDto>> GetLatestAsync(int count = 8);
+    }
+
+    // ─────────────────────────────────────────────────────
     // FILE UPLOAD SERVICE
     // ─────────────────────────────────────────────────────
     public interface IFileUploadService

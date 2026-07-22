@@ -17,12 +17,14 @@ namespace NewsPortalPro.Controllers
             INewsService news,
             ICategoryService categories,
             IAdsService ads,
-            ISettingsService settings)
+            ISettingsService settings,
+            IVideoService videos)
         {
             _news = news;
             _categories = categories;
             _ads = ads;
             _settings = settings;
+            _videos = videos;
         }
 
         public async Task<IActionResult> Index()
@@ -36,6 +38,7 @@ namespace NewsPortalPro.Controllers
                 TrendingNews = await _news.GetTrendingAsync(8),
                 MostViewed = await _news.GetMostViewedAsync(8),
                 Categories = await _categories.GetAllActiveAsync(),
+                Videos = await _videos.GetLatestAsync(8),
                 HeaderAds = await _ads.GetByPositionAsync(Models.AdPosition.Header),
                 SidebarAds = await _ads.GetByPositionAsync(Models.AdPosition.Sidebar),
                 SiteName = await _settings.GetAsync("SiteName") ?? "NewsPortal Pro"
@@ -53,6 +56,7 @@ namespace NewsPortalPro.Controllers
 
             return View(vm);
         }
+        private readonly IVideoService _videos;
         public IActionResult Terms() => View();
         public IActionResult About() => View();
 

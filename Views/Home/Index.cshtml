@@ -9,7 +9,6 @@
     <div class="pb-page-container">
 
         <!-- ══ HERO / FEATURED ══════════════════════════════ -->
-
         @if (Model.FeaturedNews.Any())
         {
             <section class="pb-hero-section mt-3">
@@ -90,8 +89,6 @@
         }
 
         <!-- ══ LATEST NEWS ROW ══════════════════════════════ -->
-
-
         @if (Model.LatestNews.Any())
         {
             <section class="mt-4">
@@ -139,6 +136,68 @@
         }
 
 
+        <!-- ══ VIDEO SECTION ══════════════════════════════════ -->
+        @if (Model.Videos.Any())
+        {
+            <section class="pb-video-section mt-4">
+                <div class="pb-section-hdr">
+                    <h2 class="pb-sec-title">ভিডিও</h2>
+                    <a href="/videos" class="pb-sec-more">আরও ভিডিও →</a>
+                </div>
+
+                @{
+                    var topVideos = Model.Videos.Take(2).ToList();
+                    var restVideos = Model.Videos.Skip(2).ToList();
+                }
+
+                @if (topVideos.Any())
+                {
+                    <div class="pb-video-top-row mt-2">
+                        @foreach (var v in topVideos)
+                        {
+                            <a href="@v.VideoUrl" target="_blank" class="pb-video-card-lg">
+                                <img src="@(v.ThumbnailUrl ?? "/images/placeholder.jpg")"
+                                     alt="@v.Title"
+                                     onerror="this.src='/images/placeholder.jpg'" />
+                                <span class="pb-video-play-icon">
+                                    <i class="bi bi-play-fill"></i>
+                                </span>
+                                <span class="pb-video-title-band">@v.Title</span>
+                            </a>
+                        }
+                    </div>
+                }
+
+                @if (restVideos.Any())
+                {
+                    <div class="pb-video-scroll-wrap mt-2">
+                        <button class="pb-video-scroll-btn pb-video-scroll-prev" aria-label="আগের ভিডিও">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+
+                        <div class="pb-video-scroll-track">
+                            @foreach (var v in restVideos)
+                            {
+                                <a href="@v.VideoUrl" target="_blank" class="pb-video-card-sm">
+                                    <img src="@(v.ThumbnailUrl ?? "/images/placeholder.jpg")"
+                                         alt="@v.Title"
+                                         onerror="this.src='/images/placeholder.jpg'" />
+                                    <span class="pb-video-play-icon pb-video-play-icon-sm">
+                                        <i class="bi bi-play-fill"></i>
+                                    </span>
+                                    <span class="pb-video-title-band pb-video-title-band-sm">@v.Title</span>
+                                </a>
+                            }
+                        </div>
+
+                        <button class="pb-video-scroll-btn pb-video-scroll-next" aria-label="পরবর্তী ভিডিও">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                }
+            </section>
+        }
+
         <!-- ══ MAIN CONTENT + SIDEBAR ═══════════════════════ -->
 
 
@@ -150,12 +209,18 @@
 
             <div class="col-lg-9">
 
-                @foreach (var block in Model.CategoryNewsBlocks)
+                @{
+                    var blockList = Model.CategoryNewsBlocks.ToList();
+                    var insertAfter = 3; // insert quick-links after 3rd category block
+                    var blockIndex = 0;
+                }
+                @foreach (var block in blockList)
                 {
                     var cat = block.Value.Category;
                     var catNews = block.Value.News;
                     if (!catNews.Any()) continue;
                     var count = catNews.Count;
+                    blockIndex++;
 
                     <section class="pb-cat-block mb-4" id="cat-@cat.Slug">
                         <div class="pb-section-hdr">
@@ -330,6 +395,30 @@
                         <hr class="pb-divider" />
 
                     </section>
+
+                    @* ── Insert quick-links section after Nth block ── *@
+                    @if (blockIndex == insertAfter)
+                    {
+                        <section class="pb-quicklinks-section mb-4">
+                            <div class="pb-quicklinks-inner">
+                                <span class="pb-quicklinks-label">আরও দেখুন</span>
+                                <div class="pb-quicklinks-grid">
+                                    @foreach (var ql in blockList
+                                        .Skip(insertAfter)
+                                        .Select(b => b.Value.Category)
+                                        .Take(8))
+                                    {
+                                        <a href="/category/@ql.Slug"
+                                           class="pb-quicklink-item">
+                                            <i class="bi bi-grid-3x3-gap-fill me-1"
+                                               style="font-size:.7rem"></i>
+                                            @ql.Name
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </section>
+                    }
                 }
 
             </div>
@@ -430,7 +519,6 @@
     </div><!-- /pb-page-container -->
 
 </div><!-- /pb-home-wrapper -->
-
 @section Scripts {
 
     <script>

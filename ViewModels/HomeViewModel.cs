@@ -14,5 +14,7 @@ namespace NewsPortalPro.ViewModels
         public List<AdvertisementDto> SidebarAds { get; set; } = [];
         public string SiteName { get; set; } = string.Empty;
         public Dictionary<string, (CategoryDto Category, List<NewsListDto> News)> CategoryNewsBlocks { get; set; } = [];
-        }
+
+        public List<VideoDto> Videos { get; set; } = [];
+    }
 }

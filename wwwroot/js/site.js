@@ -300,4 +300,18 @@ document.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' &&
         document.activeElement?.id === 'live-search')
         submitSearch();
+
+    document.querySelectorAll('.pb-video-scroll-wrap').forEach(function (wrap) {
+        var track = wrap.querySelector('.pb-video-scroll-track');
+        var prev = wrap.querySelector('.pb-video-scroll-prev');
+        var next = wrap.querySelector('.pb-video-scroll-next');
+        if (!track) return;
+
+        prev?.addEventListener('click', function () {
+            track.scrollBy({ left: -600, behavior: 'smooth' });
+        });
+        next?.addEventListener('click', function () {
+            track.scrollBy({ left: 600, behavior: 'smooth' });
+        });
+    });
 });
