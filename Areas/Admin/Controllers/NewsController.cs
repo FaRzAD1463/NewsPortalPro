@@ -155,6 +155,8 @@ namespace NewsPortalPro.Areas.Admin.Controllers
                 MetaTitle = news.MetaTitle,
                 MetaDescription = news.MetaDescription,
                 MetaKeywords = news.MetaKeywords,
+                Division = news.Division,
+                District = news.District,
                 Tags = news.Tags ?? []
             };
 

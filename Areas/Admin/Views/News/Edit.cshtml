@@ -171,6 +171,38 @@
                             <span asp-validation-for="CategoryId"
                                   class="text-danger small"></span>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small">অঞ্চল বিভাগ (ঐচ্ছিক)</label>
+                            <select name="Division" id="news-division" class="form-select">
+                                <option value="">নির্বাচন করুন</option>
+                                @foreach (var div in NewsPortalPro.Data.BangladeshLocations.GetDivisions())
+                                {
+                                    @if (div == Model.Division)
+                                    {
+                                        <option value="@div" selected>@div</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@div">@div</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">জেলা (ঐচ্ছিক)</label>
+                            <select name="District" id="news-district" class="form-select">
+                                @if (!string.IsNullOrEmpty(Model.District))
+                                {
+                                    <option value="@Model.District" selected>@Model.District</option>
+                                }
+                                else
+                                {
+                                    <option value="">প্রথমে বিভাগ নির্বাচন করুন</option>
+                                }
+                            </select>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label small">ট্যাগ</label>
                             <input asp-for="TagsString"
@@ -432,5 +464,22 @@
             }
             document.getElementById('gallery-upload-input').value = '';
         }
+
+        document.getElementById('news-division')?.addEventListener('change', async function () {
+            var districtSelect = document.getElementById('news-district');
+            districtSelect.innerHTML = '<option value="">জেলা</option>';
+            if (!this.value) return;
+
+            try {
+                var res = await fetch('/api/locations/districts?division=' + encodeURIComponent(this.value));
+                var districts = await res.json();
+                districts.forEach(function (d) {
+                    var opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    districtSelect.appendChild(opt);
+                });
+            } catch (e) { }
+        });
     </script>
 }

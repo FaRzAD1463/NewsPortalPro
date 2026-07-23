@@ -5,6 +5,8 @@ namespace NewsPortalPro.DTOs
     public class NewsListDto
     {
         public int Id { get; set; }
+        public string? Division { get; set; }
+        public string? District { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? Summary { get; set; }
@@ -48,6 +50,8 @@ namespace NewsPortalPro.DTOs
     public class CreateNewsDto
     {
         public string Title { get; set; } = string.Empty;
+        public string? Division { get; set; }
+        public string? District { get; set; }
         public string? Subtitle { get; set; }
         public string Content { get; set; } = string.Empty;
         public string? Summary { get; set; }
@@ -96,6 +100,8 @@ namespace NewsPortalPro.DTOs
         public string? Search { get; set; }
         public string? Sort { get; set; } = "latest";
         public NewsType? Type { get; set; }
+        public string? Division { get; set; }
+        public string? District { get; set; }
     }
 
     public class AdminNewsFilterDto : NewsFilterDto

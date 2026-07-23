@@ -135,6 +135,29 @@
             </section>
         }
 
+        <!-- ══ REGIONAL NEWS FILTER ═══════════════════════════ -->
+        <section class="pb-region-filter mt-4">
+            <form action="/news" method="get" class="pb-region-filter-inner">
+                <span class="pb-region-label">সব বিভাগের খবর</span>
+
+                <select name="division" id="filter-division" class="form-select pb-region-select">
+                    <option value="">বিভাগ</option>
+                    @foreach (var div in NewsPortalPro.Data.BangladeshLocations.GetDivisions())
+                    {
+                        <option value="@div">@div</option>
+                    }
+                </select>
+
+                <select name="district" id="filter-district" class="form-select pb-region-select">
+                    <option value="">জেলা</option>
+                </select>
+
+                <button type="submit" class="pb-region-search-btn">
+                    অনুসন্ধান করুন <i class="bi bi-search ms-1"></i>
+                </button>
+            </form>
+        </section>
+
 
         <!-- ══ VIDEO SECTION ══════════════════════════════════ -->
         @if (Model.Videos.Any())
@@ -536,6 +559,23 @@
                 else        toastr.error('সাবস্ক্রাইব ব্যর্থ হয়েছে');
             } catch { toastr.error('নেটওয়ার্ক ত্রুটি'); }
         }
+
+            document.getElementById('filter-division')?.addEventListener('change', async function () {
+            var districtSelect = document.getElementById('filter-district');
+            districtSelect.innerHTML = '<option value="">জেলা</option>';
+            if (!this.value) return;
+
+            try {
+                var res = await fetch('/api/locations/districts?division=' + encodeURIComponent(this.value));
+                var districts = await res.json();
+                districts.forEach(function (d) {
+                    var opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    districtSelect.appendChild(opt);
+                });
+            } catch (e) { }
+        });
     </script>
 
 }

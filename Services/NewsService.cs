@@ -120,6 +120,14 @@ namespace NewsPortalPro.Services
                 query = query.Where(
                     n => n.AuthorId == filter.AuthorId);
 
+            if (!string.IsNullOrEmpty(filter.Division))
+                query = query.Where(
+                    n => n.Division == filter.Division);
+
+            if (!string.IsNullOrEmpty(filter.District))
+                query = query.Where(
+                    n => n.District == filter.District);
+
             if (!string.IsNullOrEmpty(filter.Search))
                 query = query.Where(n =>
                     n.Title.Contains(filter.Search) ||
@@ -394,6 +402,8 @@ namespace NewsPortalPro.Services
                 ScheduledAt = dto.ScheduledAt,
                 FeaturedImage = dto.FeaturedImageUrl,
                 VideoUrl = dto.VideoUrl,
+                Division = dto.Division,
+                District = dto.District,
                 ReadTimeMinutes = _seo.CalculateReadTime(
                                            dto.Content),
                 PublishedAt = dto.Status == NewsStatus.Published
@@ -452,6 +462,8 @@ namespace NewsPortalPro.Services
             news.FeaturedImage = dto.FeaturedImageUrl
                                        ?? news.FeaturedImage;
             news.VideoUrl = dto.VideoUrl;
+            news.Division = dto.Division;
+            news.District = dto.District;
             news.ReadTimeMinutes = _seo.CalculateReadTime(
                                            dto.Content);
             news.UpdatedAt = DateTime.UtcNow;
@@ -685,10 +697,12 @@ namespace NewsPortalPro.Services
             IsFeatured = n.IsFeatured,
             Type = n.Type,
             Status = n.Status,
+            Division = n.Division,
+            District = n.District,
             Tags = n.NewsTags?
-                                   .Select(nt => nt.Tag.Name)
-                                   .ToList()
-                               ?? []
+                           .Select(nt => nt.Tag.Name)
+                           .ToList()
+                       ?? []
         };
 
         private static NewsDetailDto MapToDetailDto(

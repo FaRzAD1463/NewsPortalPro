@@ -107,8 +107,8 @@
         <!-- ── Right: Settings ──────────────────────────── -->
         <div class="col-lg-4">
             <div style="position:sticky;top:80px;
-                        max-height:calc(100vh - 90px);
-                        overflow-y:auto;padding-right:4px">
+                max-height:calc(100vh - 90px);
+                overflow-y:auto;padding-right:4px">
 
                 <!-- Submit buttons — TOP of sidebar -->
                 <div class="d-grid gap-2 mb-3">
@@ -157,6 +157,24 @@
                             <span asp-validation-for="CategoryId"
                                   class="text-danger small"></span>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small">অঞ্চল বিভাগ (ঐচ্ছিক)</label>
+                            <select name="Division" id="news-division" class="form-select">
+                                <option value="">নির্বাচন করুন</option>
+                                @foreach (var div in NewsPortalPro.Data.BangladeshLocations.GetDivisions())
+                                {
+                                    <option value="@div">@div</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">জেলা (ঐচ্ছিক)</label>
+                            <select name="District" id="news-district" class="form-select">
+                                <option value="">প্রথমে বিভাগ নির্বাচন করুন</option>
+                            </select>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label small">ট্যাগ</label>
                             <input asp-for="TagsString"
@@ -217,12 +235,12 @@
                              src=""
                              class="img-fluid rounded d-none mb-2"
                              style="max-height:140px;
-                                    object-fit:cover;width:100%" />
+                        object-fit:cover;width:100%" />
                         <input type="file" name="featuredImage"
                                class="form-control form-control-sm mb-2"
                                accept="image/*"
                                onchange="previewImage(
-                                   this,'featured-preview')" />
+                        this,'featured-preview')" />
                         <input asp-for="FeaturedImageAlt"
                                class="form-control form-control-sm mb-2"
                                placeholder="ছবির Alt টেক্সট" />
@@ -246,7 +264,7 @@
                                accept="image/*" multiple
                                class="form-control form-control-sm mb-2"
                                onchange="uploadGalleryImages(
-                                   this.files)" />
+                        this.files)" />
                         <div id="gallery-preview"
                              class="d-flex flex-wrap gap-2 mt-1">
                         </div>
@@ -267,144 +285,161 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js"></script>
     <script>
         var _token = document.querySelector(
-            'input[name="__RequestVerificationToken"]')?.value ?? '';
+        'input[name="__RequestVerificationToken"]')?.value ?? '';
 
         tinymce.init({
-            selector:  '#news-content',
-            height:    500,
-            menubar:   true,
-            plugins: [
-                'advlist','autolink','lists','link','image',
-                'charmap','preview','anchor','searchreplace',
-                'visualblocks','code','fullscreen','insertdatetime',
-                'media','table','help','wordcount'
-            ],
-            toolbar:
-                'undo redo | blocks | ' +
-                'bold italic underline strikethrough | ' +
-                'alignleft aligncenter alignright alignjustify | ' +
-                'bullist numlist outdent indent | ' +
-                'link image media table | ' +
-                'forecolor backcolor | removeformat | ' +
-                'code fullscreen | help',
-            image_title:       true,
-            automatic_uploads: true,
-            file_picker_types: 'image',
-            images_upload_handler: async function(blobInfo) {
-                var fd = new FormData();
-                fd.append('file', blobInfo.blob(), blobInfo.filename());
-                fd.append('__RequestVerificationToken', _token);
-                var res  = await fetch('/Admin/News/UploadImage',
-                    { method:'POST', body:fd });
-                var data = await res.json();
-                if (!data.url) throw new Error('Upload failed');
-                return data.url;
-            },
-            content_style:
-                'body{font-family:Noto Sans Bengali,sans-serif;' +
-                'font-size:16px;line-height:1.8;color:#222;padding:12px}' +
-                'img{max-width:100%;height:auto}p{margin-bottom:14px}'
+        selector:  '#news-content',
+        height:    500,
+        menubar:   true,
+        plugins: [
+        'advlist','autolink','lists','link','image',
+        'charmap','preview','anchor','searchreplace',
+        'visualblocks','code','fullscreen','insertdatetime',
+        'media','table','help','wordcount'
+        ],
+        toolbar:
+        'undo redo | blocks | ' +
+        'bold italic underline strikethrough | ' +
+        'alignleft aligncenter alignright alignjustify | ' +
+        'bullist numlist outdent indent | ' +
+        'link image media table | ' +
+        'forecolor backcolor | removeformat | ' +
+        'code fullscreen | help',
+        image_title:       true,
+        automatic_uploads: true,
+        file_picker_types: 'image',
+        images_upload_handler: async function(blobInfo) {
+        var fd = new FormData();
+        fd.append('file', blobInfo.blob(), blobInfo.filename());
+        fd.append('__RequestVerificationToken', _token);
+        var res  = await fetch('/Admin/News/UploadImage',
+        { method:'POST', body:fd });
+        var data = await res.json();
+        if (!data.url) throw new Error('Upload failed');
+        return data.url;
+        },
+        content_style:
+        'body{font-family:Noto Sans Bengali,sans-serif;' +
+        'font-size:16px;line-height:1.8;color:#222;padding:12px}' +
+        'img{max-width:100%;height:auto}p{margin-bottom:14px}'
         });
 
         function previewImage(input, previewId) {
-            var p = document.getElementById(previewId);
-            if (!p || !input.files || !input.files[0]) return;
-            var r = new FileReader();
-            r.onload = function(e) {
-                p.src = e.target.result;
-                p.classList.remove('d-none');
-            };
-            r.readAsDataURL(input.files[0]);
+        var p = document.getElementById(previewId);
+        if (!p || !input.files || !input.files[0]) return;
+        var r = new FileReader();
+        r.onload = function(e) {
+        p.src = e.target.result;
+        p.classList.remove('d-none');
+        };
+        r.readAsDataURL(input.files[0]);
         }
 
         async function uploadGalleryImages(files) {
-            if (!files || !files.length) return;
-            var gallery = document.getElementById('gallery-preview');
+        if (!files || !files.length) return;
+        var gallery = document.getElementById('gallery-preview');
 
-            for (var i = 0; i < files.length; i++) {
-                var fd = new FormData();
-                fd.append('file', files[i]);
-                fd.append('__RequestVerificationToken', _token);
+        for (var i = 0; i < files.length; i++) {
+        var fd = new FormData();
+        fd.append('file', files[i]);
+        fd.append('__RequestVerificationToken', _token);
 
-                var wrap = document.createElement('div');
-                wrap.className =
-                    'position-relative d-flex align-items-center ' +
-                    'justify-content-center bg-light rounded';
-                wrap.style.cssText =
-                    'width:80px;height:60px;flex-shrink:0';
-                wrap.innerHTML =
-                    '<div class="spinner-border spinner-border-sm ' +
-                    'text-secondary"></div>';
-                gallery.appendChild(wrap);
+        var wrap = document.createElement('div');
+        wrap.className =
+        'position-relative d-flex align-items-center ' +
+        'justify-content-center bg-light rounded';
+        wrap.style.cssText =
+        'width:80px;height:60px;flex-shrink:0';
+        wrap.innerHTML =
+        '<div class="spinner-border spinner-border-sm ' +
+        'text-secondary"></div>';
+        gallery.appendChild(wrap);
 
-                try {
-                    var res  = await fetch('/Admin/News/UploadImage',
-                        { method:'POST', body:fd });
-                    var data = await res.json();
+        try {
+        var res  = await fetch('/Admin/News/UploadImage',
+        { method:'POST', body:fd });
+        var data = await res.json();
 
-                    if (data.url) {
-                        var url = data.url;
-                        wrap.innerHTML = '';
-                        wrap.className = 'position-relative';
-                        wrap.style.cssText =
-                            'width:80px;height:60px;flex-shrink:0';
+        if (data.url) {
+        var url = data.url;
+        wrap.innerHTML = '';
+        wrap.className = 'position-relative';
+        wrap.style.cssText =
+        'width:80px;height:60px;flex-shrink:0';
 
-                        var img = document.createElement('img');
-                        img.src = url;
-                        img.style.cssText =
-                            'width:80px;height:60px;object-fit:cover;' +
-                            'border-radius:4px;cursor:pointer;' +
-                            'border:2px solid #e0e0e0;' +
-                            'transition:border-color .2s';
-                        img.title = 'ক্লিক করলে এডিটরে যোগ হবে';
+        var img = document.createElement('img');
+        img.src = url;
+        img.style.cssText =
+        'width:80px;height:60px;object-fit:cover;' +
+        'border-radius:4px;cursor:pointer;' +
+        'border:2px solid #e0e0e0;' +
+        'transition:border-color .2s';
+        img.title = 'ক্লিক করলে এডিটরে যোগ হবে';
 
-                        img.addEventListener('click', function() {
-                            var u = this.src;
-                            if (typeof tinymce !== 'undefined' &&
-                                tinymce.activeEditor) {
-                                tinymce.activeEditor.insertContent(
-                                    '<figure style="text-align:center;' +
-                                    'margin:16px 0"><img src="' + u +
-                                    '" style="max-width:100%;height:auto"' +
-                                    ' alt="" /><figcaption style="' +
-                                    'font-size:.85rem;color:#777;' +
-                                    'margin-top:4px">ছবির ক্যাপশন' +
-                                    '</figcaption></figure>');
-                                this.style.borderColor = '#c0392b';
-                                toastr.success('ছবি এডিটরে যোগ হয়েছে');
-                            } else {
-                                navigator.clipboard.writeText(u)
-                                    .then(function() {
-                                        toastr.info('URL কপি হয়েছে');
-                                    });
-                            }
-                        });
-
-                        var rb = document.createElement('button');
-                        rb.type = 'button';
-                        rb.innerHTML = '×';
-                        rb.style.cssText =
-                            'position:absolute;top:-6px;right:-6px;' +
-                            'width:18px;height:18px;border-radius:50%;' +
-                            'background:#dc3545;color:#fff;border:none;' +
-                            'font-size:11px;cursor:pointer;display:flex;' +
-                            'align-items:center;justify-content:center;' +
-                            'line-height:1;z-index:1';
-                        rb.onclick = function() { wrap.remove(); };
-
-                        wrap.appendChild(img);
-                        wrap.appendChild(rb);
-                        toastr.success('ছবি আপলোড সফল');
-                    } else {
-                        wrap.innerHTML =
-                            '<small class="text-danger p-1">ব্যর্থ</small>';
-                    }
-                } catch {
-                    wrap.innerHTML =
-                        '<small class="text-danger p-1">ত্রুটি</small>';
-                }
-            }
-            document.getElementById('gallery-upload-input').value = '';
+        img.addEventListener('click', function() {
+        var u = this.src;
+        if (typeof tinymce !== 'undefined' &&
+        tinymce.activeEditor) {
+        tinymce.activeEditor.insertContent(
+        '<figure style="text-align:center;' +
+        'margin:16px 0"><img src="' + u +
+        '" style="max-width:100%;height:auto"' +
+        ' alt="" /><figcaption style="' +
+        'font-size:.85rem;color:#777;' +
+        'margin-top:4px">ছবির ক্যাপশন' +
+        '</figcaption></figure>');
+        this.style.borderColor = '#c0392b';
+        toastr.success('ছবি এডিটরে যোগ হয়েছে');
+        } else {
+        navigator.clipboard.writeText(u)
+        .then(function() {
+        toastr.info('URL কপি হয়েছে');
+        });
         }
+        });
+
+        var rb = document.createElement('button');
+        rb.type = 'button';
+        rb.innerHTML = '×';
+        rb.style.cssText =
+        'position:absolute;top:-6px;right:-6px;' +
+        'width:18px;height:18px;border-radius:50%;' +
+        'background:#dc3545;color:#fff;border:none;' +
+        'font-size:11px;cursor:pointer;display:flex;' +
+        'align-items:center;justify-content:center;' +
+        'line-height:1;z-index:1';
+        rb.onclick = function() { wrap.remove(); };
+
+        wrap.appendChild(img);
+        wrap.appendChild(rb);
+        toastr.success('ছবি আপলোড সফল');
+        } else {
+        wrap.innerHTML =
+        '<small class="text-danger p-1">ব্যর্থ</small>';
+        }
+        } catch {
+        wrap.innerHTML =
+        '<small class="text-danger p-1">ত্রুটি</small>';
+        }
+        }
+        document.getElementById('gallery-upload-input').value = '';
+        }
+
+        document.getElementById('news-division')?.addEventListener('change', async function () {
+        var districtSelect = document.getElementById('news-district');
+        districtSelect.innerHTML = '<option value="">জেলা</option>';
+        if (!this.value) return;
+
+        try {
+        var res = await fetch('/api/locations/districts?division=' + encodeURIComponent(this.value));
+        var districts = await res.json();
+        districts.forEach(function (d) {
+        var opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        districtSelect.appendChild(opt);
+        });
+        } catch (e) { }
+        });
     </script>
 }
