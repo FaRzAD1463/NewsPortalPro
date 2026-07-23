@@ -158,52 +158,7 @@
             </form>
         </section>
 
-        <!-- ══ ARCHIVE (তারিখ অনুসারে) ═══════════════════════ -->
-        <section class="pb-archive-section mt-3">
-            <form action="/news" method="get" class="pb-archive-inner">
-                <span class="pb-archive-label"><i class="bi bi-calendar3 me-1"></i>আর্কাইভ</span>
-
-                <select name="archiveYear" id="archive-year" class="form-select pb-archive-select">
-                    <option value="">বছর</option>
-                    @{
-                        var currentYear = DateTime.Now.Year;
-                    }
-                    @for (int y = currentYear; y >= currentYear - 10; y--)
-                    {
-                        <option value="@y">@y</option>
-                    }
-                </select>
-
-                <select name="archiveMonth" id="archive-month" class="form-select pb-archive-select">
-                    <option value="">মাস</option>
-                    <option value="1">জানুয়ারি</option>
-                    <option value="2">ফেব্রুয়ারি</option>
-                    <option value="3">মার্চ</option>
-                    <option value="4">এপ্রিল</option>
-                    <option value="5">মে</option>
-                    <option value="6">জুন</option>
-                    <option value="7">জুলাই</option>
-                    <option value="8">আগস্ট</option>
-                    <option value="9">সেপ্টেম্বর</option>
-                    <option value="10">অক্টোবর</option>
-                    <option value="11">নভেম্বর</option>
-                    <option value="12">ডিসেম্বর</option>
-                </select>
-
-                <select name="archiveDay" id="archive-day" class="form-select pb-archive-select">
-                    <option value="">দিন</option>
-                    @for (int d = 1; d <= 31; d++)
-                    {
-                        <option value="@d">@d</option>
-                    }
-                </select>
-
-                <button type="submit" class="pb-archive-search-btn">
-                    দেখুন <i class="bi bi-search ms-1"></i>
-                </button>
-            </form>
-        </section>
-
+       
 
         <!-- ══ VIDEO SECTION ══════════════════════════════════ -->
         @if (Model.Videos.Any())
@@ -266,6 +221,54 @@
                 }
             </section>
         }
+
+
+        <!-- ══ ARCHIVE (তারিখ অনুসারে) ═══════════════════════ -->
+        <section class="pb-archive-section mt-3">
+            <form action="/news" method="get" class="pb-archive-inner">
+                <span class="pb-archive-label"><i class="bi bi-calendar3 me-1"></i>আর্কাইভ</span>
+
+                <select name="archiveYear" id="archive-year" class="form-select pb-archive-select">
+                    <option value="">বছর</option>
+                    @{
+                        var currentYear = DateTime.Now.Year;
+                    }
+                    @for (int y = currentYear; y >= currentYear - 10; y--)
+                    {
+                        <option value="@y">@y</option>
+                    }
+                </select>
+
+                <select name="archiveMonth" id="archive-month" class="form-select pb-archive-select">
+                    <option value="">মাস</option>
+                    <option value="1">জানুয়ারি</option>
+                    <option value="2">ফেব্রুয়ারি</option>
+                    <option value="3">মার্চ</option>
+                    <option value="4">এপ্রিল</option>
+                    <option value="5">মে</option>
+                    <option value="6">জুন</option>
+                    <option value="7">জুলাই</option>
+                    <option value="8">আগস্ট</option>
+                    <option value="9">সেপ্টেম্বর</option>
+                    <option value="10">অক্টোবর</option>
+                    <option value="11">নভেম্বর</option>
+                    <option value="12">ডিসেম্বর</option>
+                </select>
+
+                <select name="archiveDay" id="archive-day" class="form-select pb-archive-select">
+                    <option value="">দিন</option>
+                    @for (int d = 1; d <= 31; d++)
+                    {
+                        <option value="@d">@d</option>
+                    }
+                </select>
+
+                <button type="submit" class="pb-archive-search-btn">
+                    দেখুন <i class="bi bi-search ms-1"></i>
+                </button>
+            </form>
+        </section>
+
 
         <!-- ══ MAIN CONTENT + SIDEBAR ═══════════════════════ -->
 
