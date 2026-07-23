@@ -161,6 +161,7 @@ namespace NewsPortalPro.Interfaces
     public interface IVideoService
     {
         Task<List<VideoDto>> GetLatestAsync(int count = 8);
+        Task<PagedResult<VideoDto>> GetPagedAsync(int page, int pageSize);
     }
 
     // ─────────────────────────────────────────────────────

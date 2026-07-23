@@ -31,5 +31,39 @@ namespace NewsPortalPro.Services
                 })
                 .ToListAsync();
         }
+
+        public async Task<PagedResult<VideoDto>> GetPagedAsync(int page, int pageSize)
+        {
+            var query = _db.Videos
+                .Where(v => v.IsActive && !v.IsDeleted)
+                .OrderByDescending(v => v.CreatedAt);
+
+            var total = await query.CountAsync();
+
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(v => new VideoDto
+                {
+                    Id = v.Id,
+                    Title = v.Title,
+                    Description = v.Description,
+                    VideoUrl = v.VideoUrl,
+                    ThumbnailUrl = v.ThumbnailUrl,
+                    Duration = v.Duration,
+                    NewsId = v.NewsId,
+                    ViewCount = v.ViewCount,
+                    CreatedAt = v.CreatedAt
+                })
+                .ToListAsync();
+
+            return new PagedResult<VideoDto>
+            {
+                Items = items,
+                TotalCount = total,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
     }
 }

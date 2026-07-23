@@ -1,0 +1,63 @@
+﻿@using NewsPortalPro.DTOs
+@model NewsPortalPro.DTOs.PagedResult<VideoDto>
+@{
+    ViewData["Title"] = "ভিডিও";
+}
+
+<div class="pb-page-container mt-4 mb-5">
+    <div class="pb-section-hdr mb-3">
+        <h1 class="pb-sec-title">ভিডিও</h1>
+    </div>
+
+    @if (!Model.Items.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-camera-video fs-1 text-muted"></i>
+            <p class="text-muted mt-3">কোনো ভিডিও পাওয়া যায়নি।</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var v in Model.Items)
+            {
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="@v.VideoUrl" target="_blank" class="pb-video-card-sm d-block">
+                        <img src="@(v.ThumbnailUrl ?? "/images/placeholder.jpg")"
+                             alt="@v.Title"
+                             onerror="this.src='/images/placeholder.jpg'" />
+                        <span class="pb-video-play-icon pb-video-play-icon-sm">
+                            <i class="bi bi-play-fill"></i>
+                        </span>
+                        <span class="pb-video-title-band pb-video-title-band-sm">@v.Title</span>
+                    </a>
+                    <div class="pb-meta-sm mt-1">
+                        <i class="bi bi-eye me-1"></i>@v.ViewCount
+                        @if (!string.IsNullOrEmpty(v.Duration))
+                        {
+                            <span class="ms-2"><i class="bi bi-clock me-1"></i>@v.Duration</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        {
+            int totalPages = (int)Math.Ceiling(Model.TotalCount / (double)Model.PageSize);
+
+            if (totalPages > 1)
+            {
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.Page ? "active" : "")">
+                                <a class="page-link" href="/videos?page=@i">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+    }
+</div>
