@@ -7,6 +7,9 @@ namespace NewsPortalPro.DTOs
         public int Id { get; set; }
         public string? Division { get; set; }
         public string? District { get; set; }
+        public int? ArchiveYear { get; set; }
+        public int? ArchiveMonth { get; set; }
+        public int? ArchiveDay { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? Summary { get; set; }

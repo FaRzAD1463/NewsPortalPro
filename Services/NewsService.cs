@@ -128,6 +128,18 @@ namespace NewsPortalPro.Services
                 query = query.Where(
                     n => n.District == filter.District);
 
+            if (filter.ArchiveYear.HasValue)
+                query = query.Where(
+                    n => n.PublishedAt != null && n.PublishedAt.Value.Year == filter.ArchiveYear.Value);
+
+            if (filter.ArchiveMonth.HasValue)
+                query = query.Where(
+                    n => n.PublishedAt != null && n.PublishedAt.Value.Month == filter.ArchiveMonth.Value);
+
+            if (filter.ArchiveDay.HasValue)
+                query = query.Where(
+                    n => n.PublishedAt != null && n.PublishedAt.Value.Day == filter.ArchiveDay.Value);
+
             if (!string.IsNullOrEmpty(filter.Search))
                 query = query.Where(n =>
                     n.Title.Contains(filter.Search) ||

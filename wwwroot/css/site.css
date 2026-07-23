@@ -2223,6 +2223,77 @@ body > *:last-child {
 }
 
 /* ══════════════════════════════════════════════════════
+   ARCHIVE SECTION
+   ══════════════════════════════════════════════════════ */
+.pb-archive-section {
+    background: #f7f7f7;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 14px 16px;
+}
+
+.pb-archive-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.pb-archive-label {
+    font-weight: 700;
+    font-size: .9rem;
+    white-space: nowrap;
+    color: #333;
+}
+
+.pb-archive-select {
+    max-width: 160px;
+    font-size: .85rem;
+}
+
+.pb-archive-search-btn {
+    background: #111;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 20px;
+    font-size: .85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-left: auto;
+    transition: background .2s;
+}
+
+    .pb-archive-search-btn:hover {
+        background: var(--primary);
+        color: #fff;
+    }
+
+[data-theme="dark"] .pb-archive-section {
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .pb-archive-label {
+    color: var(--text);
+}
+
+@media (max-width: 767px) {
+    .pb-archive-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pb-archive-select {
+        max-width: none;
+    }
+
+    .pb-archive-search-btn {
+        margin-left: 0;
+    }
+}
+
+/* ══════════════════════════════════════════════════════
    FIX IMAGE CUTTING — single canonical block for hero-lead,
    hero-sub, and mini heights. pb-lead2-img and pb-grid-img
    are fully owned by their own sections above — no duplicate
