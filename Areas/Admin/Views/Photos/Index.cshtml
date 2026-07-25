@@ -1,0 +1,65 @@
+﻿@using NewsPortalPro.DTOs
+@model List<PhotoDto>
+@{
+    ViewData["Title"] = "ছবি ব্যবস্থাপনা";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">ছবি ব্যবস্থাপনা (হোম পেজ)</h4>
+    <a href="/Admin/Photos/Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>নতুন ছবি
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5">
+        <i class="bi bi-images fs-1 text-muted"></i>
+        <p class="text-muted mt-3">কোনো ছবি নেই।</p>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var p in Model)
+        {
+            <div class="col-6 col-md-3 col-lg-2">
+                <div class="card border-0 shadow-sm">
+                    <img src="@p.ImageUrl" class="card-img-top" style="height:120px;object-fit:cover" />
+                    <div class="card-body p-2">
+                        <p class="small mb-1 text-truncate">@(p.Caption ?? "—")</p>
+                        <button class="btn btn-outline-danger btn-sm w-100 btn-delete-photo" data-id="@p.Id">
+                            <i class="bi bi-trash"></i> মুছুন
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<form id="delete-photo-form" method="post" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        var _token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+        document.addEventListener('click', async function (e) {
+            var btn = e.target.closest('.btn-delete-photo');
+            if (!btn) return;
+            if (!confirm('এই ছবিটি মুছে ফেলবেন?')) return;
+
+            var fd = new FormData();
+            fd.append('__RequestVerificationToken', _token);
+            var res = await fetch('/Admin/Photos/Delete/' + btn.dataset.id, { method: 'POST', body: fd });
+            if (res.ok) {
+                toastr.success('মুছে ফেলা হয়েছে');
+                btn.closest('.col-6').remove();
+            } else {
+                toastr.error('মুছতে ব্যর্থ হয়েছে');
+            }
+        });
+    </script>
+}

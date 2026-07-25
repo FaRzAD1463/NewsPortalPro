@@ -487,6 +487,7 @@ try
     builder.Services.AddScoped<ISettingsService, SettingsService>();
     builder.Services.AddScoped<IFileUploadService, FileUploadService>();
     builder.Services.AddScoped<IVideoService, VideoService>();
+    builder.Services.AddScoped<IPhotoService, PhotoService>();
 
     // ──────────────────────────────────────────────────────────
     // MVC + RAZOR VIEWS

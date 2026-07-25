@@ -284,6 +284,7 @@
                 @{
                     var blockList = Model.CategoryNewsBlocks.ToList();
                     var insertAfter = 3; // insert quick-links after 3rd category block
+                    var insertPhotoAt = Math.Max(1, (blockList.Count + 1) / 2); // photo section at the middle
                     var blockIndex = 0;
                 }
                 @foreach (var block in blockList)
@@ -467,6 +468,33 @@
                         <hr class="pb-divider" />
 
                     </section>
+
+                    @* ── Insert photo section at the middle of the list ── *@
+                    @if (blockIndex == insertPhotoAt && Model.Photos.Any())
+                    {
+                        <section class="pb-photo-section mb-4">
+                            <div class="pb-section-hdr">
+                                <h2 class="pb-sec-title">
+                                    <i class="bi bi-images me-1"></i>ছবি
+                                </h2>
+                            </div>
+
+                            <div class="pb-photo-grid mt-2">
+                                @foreach (var p in Model.Photos)
+                                {
+                                    <div class="pb-photo-card">
+                                        <img src="@p.ImageUrl"
+                                             alt="@(p.AltText ?? "")"
+                                             loading="lazy" />
+                                        @if (!string.IsNullOrEmpty(p.Caption))
+                                        {
+                                            <span class="pb-photo-caption">@p.Caption</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </section>
+                    }
 
                     @* ── Insert quick-links section after Nth block ── *@
                     @if (blockIndex == insertAfter)

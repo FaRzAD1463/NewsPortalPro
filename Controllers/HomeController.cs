@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
+using NewsPortalPro.Models;
 using NewsPortalPro.Services;
 using NewsPortalPro.ViewModels;
 
@@ -12,12 +13,14 @@ namespace NewsPortalPro.Controllers
         private readonly ICategoryService _categories;
         private readonly IAdsService _ads;
         private readonly ISettingsService _settings;
+        private readonly IPhotoService _photos;
 
         public HomeController(
             INewsService news,
             ICategoryService categories,
             IAdsService ads,
             ISettingsService settings,
+            IPhotoService photos,
             IVideoService videos)
         {
             _news = news;
@@ -25,6 +28,8 @@ namespace NewsPortalPro.Controllers
             _ads = ads;
             _settings = settings;
             _videos = videos;
+            _photos = photos;
+            
         }
 
         public async Task<IActionResult> Index()
@@ -38,6 +43,7 @@ namespace NewsPortalPro.Controllers
                 TrendingNews = await _news.GetTrendingAsync(8),
                 MostViewed = await _news.GetMostViewedAsync(8),
                 Categories = await _categories.GetAllActiveAsync(),
+                Photos = await _photos.GetLatestAsync(8),
                 Videos = await _videos.GetLatestAsync(8),
                 HeaderAds = await _ads.GetByPositionAsync(Models.AdPosition.Header),
                 SidebarAds = await _ads.GetByPositionAsync(Models.AdPosition.Sidebar),

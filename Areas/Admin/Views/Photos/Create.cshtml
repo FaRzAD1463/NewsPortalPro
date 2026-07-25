@@ -1,0 +1,59 @@
+﻿@{
+    ViewData["Title"] = "নতুন ছবি";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">নতুন ছবি যোগ করুন</h4>
+    <a href="/Admin/Photos" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>ফিরে যান
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <form method="post" enctype="multipart/form-data" asp-action="Create">
+            @Html.AntiForgeryToken()
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">ছবি <span class="text-danger">*</span></label>
+                        <input type="file" name="imageFile" class="form-control" accept="image/*"
+                               onchange="previewImage(this)" required />
+                        <span class="text-danger small">@Html.ValidationMessage("imageFile")</span>
+                    </div>
+                    <img id="photo-preview" src="" class="img-fluid rounded d-none mb-3" style="max-height:200px;object-fit:cover;width:100%" />
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">ক্যাপশন</label>
+                        <input type="text" name="caption" class="form-control" placeholder="ছবির ক্যাপশন" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Alt টেক্সট</label>
+                        <input type="text" name="altText" class="form-control" placeholder="ছবির বিবরণ (SEO)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">ডিসপ্লে অর্ডার</label>
+                        <input type="number" name="displayOrder" class="form-control" value="0" min="0" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>যোগ করুন
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function previewImage(input) {
+            var p = document.getElementById('photo-preview');
+            if (!p || !input.files || !input.files[0]) return;
+            var r = new FileReader();
+            r.onload = function (e) {
+                p.src = e.target.result;
+                p.classList.remove('d-none');
+            };
+            r.readAsDataURL(input.files[0]);
+        }
+    </script>
+}
