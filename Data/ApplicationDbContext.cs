@@ -217,10 +217,13 @@ namespace NewsPortalPro.Data
                 e.HasIndex(n => n.IsDeleted);
                 e.HasIndex(n => n.CategoryId);
                 e.HasIndex(n => n.AuthorId);
+                e.HasIndex(n => n.Division);
+                e.HasIndex(n => new { n.Division, n.District });
                 e.HasIndex(n => new { n.Status, n.PublishedAt });
                 e.HasIndex(n => new { n.Status, n.IsBreaking });
                 e.HasIndex(n => new { n.Status, n.IsFeatured });
                 e.HasIndex(n => new { n.CategoryId, n.Status, n.PublishedAt });
+                e.HasIndex(n => new { n.Division, n.District, n.Status, n.PublishedAt });
 
                 e.HasQueryFilter(n => !n.IsDeleted);
 
