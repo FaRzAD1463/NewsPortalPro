@@ -70,20 +70,21 @@ try
     // ──────────────────────────────────────────────────────────
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(
-            builder.Configuration.GetConnectionString("DefaultConnection"),
-            sql =>
-            {
-                sql.EnableRetryOnFailure(
-                    maxRetryCount: 3,
-                    maxRetryDelay: TimeSpan.FromSeconds(5),
-                    errorNumbersToAdd: null);
-                sql.CommandTimeout(30);
-                sql.MigrationsAssembly("NewsPortalPro");
-                sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-            })
-        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
-        .EnableDetailedErrors(builder.Environment.IsDevelopment()));
+       options.UseSqlServer(
+           builder.Configuration.GetConnectionString("DefaultConnection"),
+           sql =>
+           {
+               sql.EnableRetryOnFailure(
+                   maxRetryCount: 3,
+                   maxRetryDelay: TimeSpan.FromSeconds(5),
+                   errorNumbersToAdd: null);
+               sql.CommandTimeout(30);
+               sql.MigrationsAssembly("NewsPortalPro");
+               sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+           })
+       .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // ← ① added
+       .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+       .EnableDetailedErrors(builder.Environment.IsDevelopment()));
 
     // ──────────────────────────────────────────────────────────
     // IDENTITY
