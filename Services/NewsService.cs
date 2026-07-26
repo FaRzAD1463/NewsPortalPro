@@ -19,6 +19,7 @@ namespace NewsPortalPro.Services
         private readonly INotificationService _notifications;
 
         // ── HTML Sanitizer ─────────────────────────────────────────
+
         private static readonly HtmlSanitizer Sanitizer = CreateSanitizer();
 
         private static HtmlSanitizer CreateSanitizer()
@@ -798,6 +799,7 @@ namespace NewsPortalPro.Services
         //       "cleanup-old-views", svc => svc.CleanupOldViewsAsync(),
         //       "0 2 * * *", ...);
         // No change needed here — confirmed it actually runs.
+
         public async Task CleanupOldViewsAsync()
         {
             var cutoff = DateTime.UtcNow.AddDays(-90);
