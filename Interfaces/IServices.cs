@@ -182,10 +182,9 @@ namespace NewsPortalPro.Interfaces
     {
         Task<List<PhotoDto>> GetLatestAsync(int count = 8);
         Task<List<PhotoDto>> GetAllForAdminAsync();
-        Task<int> CreateAsync(string imageUrl, string? altText, string? caption, int displayOrder);
+        Task<int> CreateAsync(string imageUrl, string? altText, string? caption, int displayOrder, string? uploadedById);
         Task<bool> DeleteAsync(int id);
     }
-
 
     // ─────────────────────────────────────────────────────
     // REPOSITORIES
