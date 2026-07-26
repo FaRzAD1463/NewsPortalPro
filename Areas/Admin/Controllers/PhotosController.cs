@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NewsPortalPro.Interfaces;
+using System.Security.Claims;
 
 namespace NewsPortalPro.Areas.Admin.Controllers
 {
@@ -41,7 +42,8 @@ namespace NewsPortalPro.Areas.Admin.Controllers
             try
             {
                 var result = await _upload.UploadImageAsync(imageFile, "photos");
-                await _photos.CreateAsync(result.Url, altText, caption, displayOrder);
+                var uploaderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                await _photos.CreateAsync(result.Url, altText, caption, displayOrder, uploaderId);
                 TempData["Success"] = "ছবি সফলভাবে যোগ হয়েছে";
                 return RedirectToAction(nameof(Index));
             }

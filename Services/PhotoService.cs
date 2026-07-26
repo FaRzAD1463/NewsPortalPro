@@ -50,7 +50,7 @@ namespace NewsPortalPro.Services
                 .ToListAsync();
         }
 
-        public async Task<int> CreateAsync(string imageUrl, string? altText, string? caption, int displayOrder)
+        public async Task<int> CreateAsync(string imageUrl, string? altText, string? caption, int displayOrder, string? uploadedById)
         {
             var photo = new Photo
             {
@@ -58,6 +58,7 @@ namespace NewsPortalPro.Services
                 AltText = altText,
                 Caption = caption,
                 DisplayOrder = displayOrder,
+                UploadedById = uploadedById,
                 UploadedAt = DateTime.UtcNow
             };
             _db.Photos.Add(photo);
