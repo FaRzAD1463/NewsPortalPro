@@ -33,6 +33,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Index ──────────────────────────────────────────────────
+
         public async Task<IActionResult> Index(
             [FromQuery] AdminNewsFilterDto filter)
         {
@@ -43,6 +44,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Create GET ─────────────────────────────────────────────
+
         [HttpGet]
         public async Task<IActionResult> Create()
         {
@@ -51,6 +53,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Create POST ────────────────────────────────────────────
+
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
@@ -102,6 +105,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Edit GET ───────────────────────────────────────────────
+
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -164,6 +168,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Edit POST ──────────────────────────────────────────────
+
         [HttpPost, ValidateAntiForgeryToken]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
@@ -233,6 +238,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Delete ─────────────────────────────────────────────────
+
         [HttpPost]
         [Authorize(Roles = "Admin,Editor,Reporter")]
         public async Task<IActionResult> Delete(int id)
@@ -254,6 +260,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Publish ────────────────────────────────────────────────
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Publish(int id)
@@ -263,6 +270,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Toggle Breaking ────────────────────────────────────────
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleBreaking(
@@ -273,6 +281,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Toggle Featured ────────────────────────────────────────
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleFeatured(
@@ -283,6 +292,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Image Upload ───────────────────────────────────────────
+
         [HttpPost]
         [RequestSizeLimit(10_485_760)]
         [RequestFormLimits(MultipartBodyLengthLimit = 10_485_760)]
@@ -304,6 +314,7 @@ namespace NewsPortalPro.Areas.Admin.Controllers
         }
 
         // ── Populate Categories ────────────────────────────────────
+
         private async Task PopulateCategoryList()
         {
             var cats = await _db.Categories
