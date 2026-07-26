@@ -140,11 +140,16 @@ namespace NewsPortalPro.Services
                 query = query.Where(
                     n => n.PublishedAt != null && n.PublishedAt.Value.Day == filter.ArchiveDay.Value);
 
+            // ── ④ Full-text search instead of leading-wildcard LIKE ──
+            // Requires FULLTEXT INDEX ON News(Title, Content, Summary)
+            // (see migration SQL). EF.Functions.FreeText translates to
+            // SQL Server's FREETEXT(), which uses the full-text index
+            // instead of a table scan.
             if (!string.IsNullOrEmpty(filter.Search))
                 query = query.Where(n =>
-                    n.Title.Contains(filter.Search) ||
+                    EF.Functions.FreeText(n.Title, filter.Search) ||
                     (n.Summary != null &&
-                     n.Summary.Contains(filter.Search)));
+                     EF.Functions.FreeText(n.Summary, filter.Search)));
 
             if (filter.Type.HasValue)
                 query = query.Where(
@@ -292,10 +297,20 @@ namespace NewsPortalPro.Services
             return dtos;
         }
 
-        // ── GetFeaturedAsync ───────────────────────────────────────
+        // ── GetFeaturedAsync ─── ③ now cached ───────────────────────
         public async Task<List<NewsListDto>> GetFeaturedAsync(
             int count = 6)
         {
+            const string cacheKey = "news:featured";
+            try
+            {
+                var cached = await _cache.GetStringAsync(cacheKey);
+                if (cached != null)
+                    return JsonConvert
+                        .DeserializeObject<List<NewsListDto>>(cached)!;
+            }
+            catch { }
+
             var news = await _db.News
                 .Where(n => n.IsFeatured
                          && n.Status == NewsStatus.Published
@@ -306,13 +321,38 @@ namespace NewsPortalPro.Services
                 .Include(n => n.Author)
                 .ToListAsync();
 
-            return news.Select(MapToListDto).ToList();
+            var dtos = news.Select(MapToListDto).ToList();
+
+            try
+            {
+                await _cache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(dtos),
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow =
+                            TimeSpan.FromMinutes(2)
+                    });
+            }
+            catch { }
+
+            return dtos;
         }
 
-        // ── GetByCategoryAsync ─────────────────────────────────────
+        // ── GetByCategoryAsync ─── ③ now cached ─────────────────────
         public async Task<List<NewsListDto>> GetByCategoryAsync(
             string categorySlug, int page, int pageSize)
         {
+            var cacheKey = $"news:category:{categorySlug}:{page}:{pageSize}";
+            try
+            {
+                var cached = await _cache.GetStringAsync(cacheKey);
+                if (cached != null)
+                    return JsonConvert
+                        .DeserializeObject<List<NewsListDto>>(cached)!;
+            }
+            catch { }
+
             var news = await _db.News
                 .Where(n => n.Category.Slug == categorySlug
                          && n.Status == NewsStatus.Published
@@ -324,7 +364,26 @@ namespace NewsPortalPro.Services
                 .Include(n => n.Author)
                 .ToListAsync();
 
-            return news.Select(MapToListDto).ToList();
+            var dtos = news.Select(MapToListDto).ToList();
+
+            try
+            {
+                await _cache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(dtos),
+                    new DistributedCacheEntryOptions
+                    {
+                        // Short TTL — this cache relies on expiry rather than
+                        // explicit invalidation, since per-category keys would
+                        // otherwise need to be tracked and cleared individually
+                        // on every create/update/delete.
+                        AbsoluteExpirationRelativeToNow =
+                            TimeSpan.FromMinutes(2)
+                    });
+            }
+            catch { }
+
+            return dtos;
         }
 
         // ── GetRelatedAsync ────────────────────────────────────────
@@ -345,10 +404,20 @@ namespace NewsPortalPro.Services
             return news.Select(MapToListDto).ToList();
         }
 
-        // ── GetTrendingAsync ───────────────────────────────────────
+        // ── GetTrendingAsync ─── ③ now cached ───────────────────────
         public async Task<List<NewsListDto>> GetTrendingAsync(
             int count = 10)
         {
+            const string cacheKey = "news:trending";
+            try
+            {
+                var cached = await _cache.GetStringAsync(cacheKey);
+                if (cached != null)
+                    return JsonConvert
+                        .DeserializeObject<List<NewsListDto>>(cached)!;
+            }
+            catch { }
+
             var cutoff = DateTime.UtcNow.AddDays(-7);
             var news = await _db.News
                 .Where(n => n.Status == NewsStatus.Published
@@ -360,13 +429,38 @@ namespace NewsPortalPro.Services
                 .Include(n => n.Author)
                 .ToListAsync();
 
-            return news.Select(MapToListDto).ToList();
+            var dtos = news.Select(MapToListDto).ToList();
+
+            try
+            {
+                await _cache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(dtos),
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow =
+                            TimeSpan.FromMinutes(2)
+                    });
+            }
+            catch { }
+
+            return dtos;
         }
 
-        // ── GetMostViewedAsync ─────────────────────────────────────
+        // ── GetMostViewedAsync ─── ③ now cached ─────────────────────
         public async Task<List<NewsListDto>> GetMostViewedAsync(
             int count = 10)
         {
+            const string cacheKey = "news:mostviewed";
+            try
+            {
+                var cached = await _cache.GetStringAsync(cacheKey);
+                if (cached != null)
+                    return JsonConvert
+                        .DeserializeObject<List<NewsListDto>>(cached)!;
+            }
+            catch { }
+
             var news = await _db.News
                 .Where(n => n.Status == NewsStatus.Published
                          && !n.IsDeleted)
@@ -376,7 +470,22 @@ namespace NewsPortalPro.Services
                 .Include(n => n.Author)
                 .ToListAsync();
 
-            return news.Select(MapToListDto).ToList();
+            var dtos = news.Select(MapToListDto).ToList();
+
+            try
+            {
+                await _cache.SetStringAsync(
+                    cacheKey,
+                    JsonConvert.SerializeObject(dtos),
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow =
+                            TimeSpan.FromMinutes(2)
+                    });
+            }
+            catch { }
+
+            return dtos;
         }
 
         // ── CreateAsync ────────────────────────────────────────────
@@ -542,6 +651,8 @@ namespace NewsPortalPro.Services
             news.IsFeatured = isFeatured;
             news.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+            try { await _cache.RemoveAsync("news:featured"); }
+            catch { }
             return true;
         }
 
@@ -579,17 +690,17 @@ namespace NewsPortalPro.Services
         public async Task<int> GetTotalCountAsync() =>
             await _db.News.CountAsync(n => !n.IsDeleted);
 
-        // ── SearchAsync ────────────────────────────────────────────
+        // ── SearchAsync ─── ④ full-text search ──────────────────────
         public async Task<List<NewsListDto>> SearchAsync(
             string query, int page, int pageSize)
         {
             var news = await _db.News
                 .Where(n => n.Status == NewsStatus.Published
                          && !n.IsDeleted && (
-                            n.Title.Contains(query) ||
-                            n.Content.Contains(query) ||
+                            EF.Functions.FreeText(n.Title, query) ||
+                            EF.Functions.FreeText(n.Content, query) ||
                             (n.Summary != null &&
-                             n.Summary.Contains(query))))
+                             EF.Functions.FreeText(n.Summary, query))))
                 .OrderByDescending(n => n.PublishedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -601,6 +712,10 @@ namespace NewsPortalPro.Services
         }
 
         // ── GetAllForAdminAsync ────────────────────────────────────
+        // NOTE: left as .Contains() intentionally — this is the lower-
+        // traffic admin panel, not the public-facing search path that
+        // ④ targets. Switch to EF.Functions.FreeText here too if the
+        // admin list grows slow at scale.
         public async Task<PagedResult<NewsListDto>> GetAllForAdminAsync(
             AdminNewsFilterDto filter)
         {
@@ -678,6 +793,11 @@ namespace NewsPortalPro.Services
         }
 
         // ── CleanupOldViewsAsync ───────────────────────────────────
+        // ⑤ Already wired as a Hangfire recurring job in Program.cs:
+        //   RecurringJob.AddOrUpdate<INewsService>(
+        //       "cleanup-old-views", svc => svc.CleanupOldViewsAsync(),
+        //       "0 2 * * *", ...);
+        // No change needed here — confirmed it actually runs.
         public async Task CleanupOldViewsAsync()
         {
             var cutoff = DateTime.UtcNow.AddDays(-90);
@@ -863,6 +983,7 @@ namespace NewsPortalPro.Services
             return "Desktop";
         }
 
+        // ── ③ now also clears the most-viewed cache ─────────────────
         private async Task InvalidateNewsCacheAsync(
             string? slug = null)
         {
@@ -871,6 +992,7 @@ namespace NewsPortalPro.Services
                 await _cache.RemoveAsync("news:breaking");
                 await _cache.RemoveAsync("news:featured");
                 await _cache.RemoveAsync("news:trending");
+                await _cache.RemoveAsync("news:mostviewed");
                 if (slug != null)
                     await _cache.RemoveAsync($"news:slug:{slug}");
             }
