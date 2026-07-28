@@ -168,7 +168,7 @@ try
 
     if (string.IsNullOrWhiteSpace(jwtSecret))
     {
-        if (builder.Environment.IsProduction())
+        if (!builder.Environment.IsDevelopment())
             throw new InvalidOperationException(
                 "CRITICAL: JWT SecretKey is not configured. " +
                 "Set env var: NEWSPORTAL__JwtSettings__SecretKey");
@@ -317,12 +317,12 @@ try
     // (use Redis if a non-localhost connection string is present,
     // otherwise fall back to in-memory cache with a warning).
 
-    if (builder.Environment.IsProduction())
+    if (!builder.Environment.IsDevelopment())
     {
         if (string.IsNullOrWhiteSpace(redisConnection))
             throw new InvalidOperationException(
                 "CRITICAL: Redis connection string is not configured. " +
-                "Set ConnectionStrings:Redis for production.");
+                "Set ConnectionStrings:Redis for Staging/Production.");
 
         builder.Services.AddStackExchangeRedisCache(options =>
         {
@@ -1004,7 +1004,7 @@ static async Task SeedAdminUserAsync(
 
     if (string.IsNullOrWhiteSpace(adminPassword))
     {
-        if (environment.IsProduction())
+        if (!environment.IsDevelopment())
         {
             throw new InvalidOperationException(
                 "CRITICAL: Admin seed password is not configured. " +
