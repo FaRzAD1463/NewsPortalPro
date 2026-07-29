@@ -1288,16 +1288,16 @@ body > *:last-child {
     }
 
 .pb-main-nav {
-    background: #fff;
-    border-bottom: 2px solid #e5e5e5;
+    background: linear-gradient( 180deg, #1A0000 0%, #3F0505 25%, #6D0C0C 60%, #C71A13 100% );
+    border-bottom: 1px solid #2a0000;
     position: sticky;
     top: 0;
     z-index: 200;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .25);
 }
 
     .pb-main-nav .nav-link-custom {
-        color: #333 !important;
+        color: #fff !important;
     }
 
     .pb-main-nav .search-box-nav input {
@@ -1326,7 +1326,7 @@ body > *:last-child {
 .pb-nav-inner {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 16px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
