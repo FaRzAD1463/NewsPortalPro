@@ -1352,7 +1352,7 @@ body > *:last-child {
 }
 
 .pb-footer {
-    background: #3a3a3a;
+    background: #0D0D0D;
     color: #ccc;
     margin-top: 40px;
 }
@@ -1508,8 +1508,9 @@ body > *:last-child {
 }
 
 .pb-footer-bottom {
-    background: #2e2e2e;
+    background: #0D0D0D !important;
     padding: 12px 0;
+    text-align: center;
 }
 
 .pb-footer-bottom-link {
