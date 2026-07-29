@@ -520,7 +520,7 @@ img {
 .nav-link-custom {
     display: block;
     color: rgba(255,255,255,.9) !important;
-    padding: 12px 14px;
+    padding: 12px 10px;
     font-size: 14px;
     font-weight: 500;
     text-decoration: none;
@@ -1288,7 +1288,7 @@ body > *:last-child {
     }
 
 .pb-main-nav {
-    background: linear-gradient( 180deg, #1A0000 0%, #3F0505 25%, #6D0C0C 60%, #C71A13 100% );
+    background: linear-gradient( 180deg, #120000 0%, #2A0608 20%, #4B0F14 45%, #6B1820 70%, #8C1D24 85%, #B71C1C 100% );
     border-bottom: 1px solid #2a0000;
     position: sticky;
     top: 0;
@@ -1326,7 +1326,7 @@ body > *:last-child {
 .pb-nav-inner {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 12px;
+    padding: 0 55px;
     display: flex;
     align-items: center;
     justify-content: space-between;
