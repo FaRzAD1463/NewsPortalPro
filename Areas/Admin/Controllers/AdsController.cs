@@ -1,16 +1,18 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.EntityFrameworkCore;
 using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
 using NewsPortalPro.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace NewsPortalPro.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
+    [OutputCache(NoStore = true)]
     public class AdsController : Controller
     {
         private readonly IAdsService _ads;
