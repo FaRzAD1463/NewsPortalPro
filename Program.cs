@@ -794,13 +794,17 @@ try
 
     app.UseImageSharp();
     app.UseResponseCaching();
-    app.UseOutputCache();
 
     app.UseIpRateLimiting();
     app.UseRouting();
     app.UseCors("NewsPortalPolicy");
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.UseWhen(
+    context => !context.Request.Path.StartsWithSegments("/Admin"),
+    appBranch => appBranch.UseOutputCache()
+);
 
     app.UseMiddleware<MaintenanceModeMiddleware>();
     app.UseMiddleware<RateLimitingMiddleware>();
