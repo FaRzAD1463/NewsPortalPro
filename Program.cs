@@ -794,7 +794,10 @@ try
 
     app.UseImageSharp();
     app.UseResponseCaching();
-    app.UseOutputCache();
+    app.UseWhen(
+    context => !context.Request.Path.StartsWithSegments("/Admin"),
+    appBranch => appBranch.UseOutputCache()
+);
 
     app.UseIpRateLimiting();
     app.UseRouting();
