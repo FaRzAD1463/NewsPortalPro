@@ -46,12 +46,13 @@ namespace NewsPortalPro.Services
             public async Task MarkAsReadAsync(int id, string userId)
             {
             var notification = await _db.Notifications
-                .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+            .AsTracking()
+            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
             if (notification == null) return;
             notification.IsRead = true;
             notification.ReadAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
-            }
+        }
 
             public async Task MarkAllAsReadAsync(string userId) =>
             await _db.Notifications

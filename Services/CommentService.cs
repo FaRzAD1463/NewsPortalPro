@@ -101,7 +101,9 @@ namespace NewsPortalPro.Services
 
             public async Task<bool> ApproveAsync(int id)
             {
-            var comment = await _db.Comments.FindAsync(id);
+            var comment = await _db.Comments
+            .AsTracking()
+            .FirstOrDefaultAsync(c => c.Id == id);
             if (comment == null) return false;
 
             comment.Status = CommentStatus.Approved;
@@ -123,7 +125,9 @@ namespace NewsPortalPro.Services
 
             public async Task<bool> RejectAsync(int id)
             {
-            var comment = await _db.Comments.FindAsync(id);
+            var comment = await _db.Comments
+            .AsTracking()
+            .FirstOrDefaultAsync(c => c.Id == id);
             if (comment == null) return false;
 
             comment.Status = CommentStatus.Rejected;
@@ -137,7 +141,9 @@ namespace NewsPortalPro.Services
 
            public async Task<bool> DeleteAsync(int id)
            {
-            var comment = await _db.Comments.FindAsync(id);
+            var comment = await _db.Comments
+            .AsTracking()
+            .FirstOrDefaultAsync(c => c.Id == id);
             if (comment == null) return false;
 
             comment.IsDeleted = true;

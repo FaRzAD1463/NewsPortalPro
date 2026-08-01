@@ -44,7 +44,9 @@ namespace NewsPortalPro.Repositories
 
         public async Task DeleteAsync(int id)
         {
-            var news = await _db.News.FindAsync(id);
+            var news = await _db.News
+                .AsTracking()
+                .FirstOrDefaultAsync(n => n.Id == id);
             if (news != null)
             {
                 news.IsDeleted = true;

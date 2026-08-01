@@ -554,8 +554,9 @@ namespace NewsPortalPro.Services
             int id, UpdateNewsDto dto, string editorId)
         {
             var news = await _db.News
-                .Include(n => n.NewsTags)
-                .FirstOrDefaultAsync(n => n.Id == id && !n.IsDeleted);
+            .AsTracking()
+            .Include(n => n.NewsTags)
+            .FirstOrDefaultAsync(n => n.Id == id && !n.IsDeleted);
 
             if (news == null) return false;
 
@@ -606,7 +607,9 @@ namespace NewsPortalPro.Services
         // ── DeleteAsync ────────────────────────────────────────────
         public async Task<bool> DeleteAsync(int id)
         {
-            var news = await _db.News.FindAsync(id);
+            var news = await _db.News
+            .AsTracking()
+            .FirstOrDefaultAsync(n => n.Id == id);
             if (news == null) return false;
             news.IsDeleted = true;
             news.UpdatedAt = DateTime.UtcNow;
@@ -618,7 +621,9 @@ namespace NewsPortalPro.Services
         // ── PublishAsync ───────────────────────────────────────────
         public async Task<bool> PublishAsync(int id)
         {
-            var news = await _db.News.FindAsync(id);
+            var news = await _db.News
+            .AsTracking()
+            .FirstOrDefaultAsync(n => n.Id == id);
             if (news == null) return false;
             news.Status = NewsStatus.Published;
             news.PublishedAt = DateTime.UtcNow;
@@ -634,7 +639,9 @@ namespace NewsPortalPro.Services
         // ── SetBreakingAsync ───────────────────────────────────────
         public async Task<bool> SetBreakingAsync(int id, bool isBreaking)
         {
-            var news = await _db.News.FindAsync(id);
+            var news = await _db.News
+            .AsTracking()
+            .FirstOrDefaultAsync(n => n.Id == id);
             if (news == null) return false;
             news.IsBreaking = isBreaking;
             news.UpdatedAt = DateTime.UtcNow;
@@ -647,7 +654,9 @@ namespace NewsPortalPro.Services
         // ── SetFeaturedAsync ───────────────────────────────────────
         public async Task<bool> SetFeaturedAsync(int id, bool isFeatured)
         {
-            var news = await _db.News.FindAsync(id);
+            var news = await _db.News
+            .AsTracking()
+            .FirstOrDefaultAsync(n => n.Id == id);
             if (news == null) return false;
             news.IsFeatured = isFeatured;
             news.UpdatedAt = DateTime.UtcNow;
@@ -771,10 +780,11 @@ namespace NewsPortalPro.Services
         {
             var now = DateTime.UtcNow;
             var scheduled = await _db.News
-                .Where(n => n.Status == NewsStatus.Scheduled
-                         && n.ScheduledAt <= now
-                         && !n.IsDeleted)
-                .ToListAsync();
+            .AsTracking()
+            .Where(n => n.Status == NewsStatus.Scheduled
+             && n.ScheduledAt <= now
+             && !n.IsDeleted)
+            .ToListAsync();
 
             foreach (var news in scheduled)
             {

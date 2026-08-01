@@ -136,7 +136,9 @@ namespace NewsPortalPro.Services
 
            public async Task<bool> UpdateAsync(int id, UpdateCategoryDto dto)
            {
-            var cat = await _db.Categories.FindAsync(id);
+            var cat = await _db.Categories
+            .AsTracking()
+            .FirstOrDefaultAsync(c => c.Id == id);
             if (cat == null) return false;
 
             cat.Name = dto.Name;
@@ -158,7 +160,9 @@ namespace NewsPortalPro.Services
 
            public async Task<bool> DeleteAsync(int id)
            {
-            var cat = await _db.Categories.FindAsync(id);
+            var cat = await _db.Categories
+            .AsTracking()
+            .FirstOrDefaultAsync(c => c.Id == id);
             if (cat == null) return false;
             cat.IsDeleted = true;
             cat.UpdatedAt = DateTime.UtcNow;

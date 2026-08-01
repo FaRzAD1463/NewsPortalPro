@@ -50,7 +50,8 @@ namespace NewsPortalPro.Services
             string? updatedById = null)
             {
             var setting = await _db.SiteSettings
-                .FirstOrDefaultAsync(s => s.Key == key);
+            .AsTracking()
+            .FirstOrDefaultAsync(s => s.Key == key);
 
             if (setting == null)
             {

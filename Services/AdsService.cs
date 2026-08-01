@@ -126,7 +126,9 @@ namespace NewsPortalPro.Services
 
         public async Task<bool> UpdateAsync(int id, UpdateAdDto dto)
             {
-            var ad = await _db.Advertisements.FindAsync(id);
+            var ad = await _db.Advertisements
+            .AsTracking()
+            .FirstOrDefaultAsync(a => a.Id == id);
             if (ad == null) return false;
             ad.Title = dto.Title;
             ad.ImageUrl = dto.ImageUrl;
@@ -144,7 +146,9 @@ namespace NewsPortalPro.Services
 
            public async Task<bool> DeleteAsync(int id)
            {
-            var ad = await _db.Advertisements.FindAsync(id);
+            var ad = await _db.Advertisements
+            .AsTracking()
+            .FirstOrDefaultAsync(a => a.Id == id);
             if (ad == null) return false;
             ad.IsDeleted = true;
             await _db.SaveChangesAsync();

@@ -44,7 +44,9 @@ namespace NewsPortalPro.Repositories
 
         public async Task DeleteAsync(int id)
         {
-            var cat = await _db.Categories.FindAsync(id);
+            var cat = await _db.Categories
+                .AsTracking()
+                .FirstOrDefaultAsync(c => c.Id == id);
             if (cat != null)
             {
                 cat.IsDeleted = true;
@@ -52,5 +54,5 @@ namespace NewsPortalPro.Repositories
                 await _db.SaveChangesAsync();
             }
         }
-        }
+    }
 }
