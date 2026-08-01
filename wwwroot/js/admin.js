@@ -32,55 +32,107 @@
         });
     }
 
-    // ── News Quick Toggles ───────────────────────────────
+    // ── News Quick Toggles (guarded against rapid double-clicks) ──
     $(document).on('change', '.toggle-breaking', async function () {
-        const id = $(this).data('id');
-        const val = $(this).is(':checked');
-        await fetch(`/Admin/News/ToggleBreaking?id=${id}&value=${val}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': token }
-        });
-        toastr.success(val
-            ? 'ব্রেকিং চালু হয়েছে'
-            : 'ব্রেকিং বন্ধ হয়েছে');
+        const $el = $(this);
+        if ($el.data('busy')) return;
+        $el.data('busy', true).prop('disabled', true);
+
+        const id = $el.data('id');
+        const val = $el.is(':checked');
+        try {
+            const res = await fetch(`/Admin/News/ToggleBreaking?id=${id}&value=${val}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            });
+            if (res.ok) {
+                toastr.success(val ? 'ব্রেকিং চালু হয়েছে' : 'ব্রেকিং বন্ধ হয়েছে');
+            } else {
+                $el.prop('checked', !val);
+                toastr.error('আপডেট ব্যর্থ হয়েছে');
+            }
+        } catch {
+            $el.prop('checked', !val);
+            toastr.error('নেটওয়ার্ক ত্রুটি');
+        } finally {
+            $el.data('busy', false).prop('disabled', false);
+        }
     });
 
     $(document).on('change', '.toggle-featured', async function () {
-        const id = $(this).data('id');
-        const val = $(this).is(':checked');
-        await fetch(`/Admin/News/ToggleFeatured?id=${id}&value=${val}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': token }
-        });
-        toastr.success(val
-            ? 'ফিচার্ড চালু হয়েছে'
-            : 'ফিচার্ড বন্ধ হয়েছে');
+        const $el = $(this);
+        if ($el.data('busy')) return;
+        $el.data('busy', true).prop('disabled', true);
+
+        const id = $el.data('id');
+        const val = $el.is(':checked');
+        try {
+            const res = await fetch(`/Admin/News/ToggleFeatured?id=${id}&value=${val}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            });
+            if (res.ok) {
+                toastr.success(val ? 'ফিচার্ড চালু হয়েছে' : 'ফিচার্ড বন্ধ হয়েছে');
+            } else {
+                $el.prop('checked', !val);
+                toastr.error('আপডেট ব্যর্থ হয়েছে');
+            }
+        } catch {
+            $el.prop('checked', !val);
+            toastr.error('নেটওয়ার্ক ত্রুটি');
+        } finally {
+            $el.data('busy', false).prop('disabled', false);
+        }
     });
 
-    // ── Comment Actions ──────────────────────────────────
+    // ── Comment Actions (guarded against double-click double-submit) ──
     $(document).on('click', '.btn-approve-comment', async function () {
-        const id = $(this).data('id');
-        const res = await fetch(`/Admin/Comment/Approve/${id}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': token }
-        });
-        if (res.ok) {
-            $(this).closest('.comment-row')
-                .fadeOut(400, function () { $(this).remove(); });
-            toastr.success('মন্তব্য অনুমোদিত হয়েছে');
+        const $btn = $(this);
+        if ($btn.data('busy')) return;
+        $btn.data('busy', true).prop('disabled', true);
+
+        const id = $btn.data('id');
+        try {
+            const res = await fetch(`/Admin/Comment/Approve/${id}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            });
+            if (res.ok) {
+                $btn.closest('.comment-row')
+                    .fadeOut(400, function () { $(this).remove(); });
+                toastr.success('মন্তব্য অনুমোদিত হয়েছে');
+            } else {
+                toastr.error('ব্যর্থ হয়েছে');
+                $btn.data('busy', false).prop('disabled', false);
+            }
+        } catch {
+            toastr.error('নেটওয়ার্ক ত্রুটি');
+            $btn.data('busy', false).prop('disabled', false);
         }
     });
 
     $(document).on('click', '.btn-reject-comment', async function () {
-        const id = $(this).data('id');
-        const res = await fetch(`/Admin/Comment/Reject/${id}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': token }
-        });
-        if (res.ok) {
-            $(this).closest('.comment-row')
-                .fadeOut(400, function () { $(this).remove(); });
-            toastr.warning('মন্তব্য প্রত্যাখ্যান করা হয়েছে');
+        const $btn = $(this);
+        if ($btn.data('busy')) return;
+        $btn.data('busy', true).prop('disabled', true);
+
+        const id = $btn.data('id');
+        try {
+            const res = await fetch(`/Admin/Comment/Reject/${id}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            });
+            if (res.ok) {
+                $btn.closest('.comment-row')
+                    .fadeOut(400, function () { $(this).remove(); });
+                toastr.warning('মন্তব্য প্রত্যাখ্যান করা হয়েছে');
+            } else {
+                toastr.error('ব্যর্থ হয়েছে');
+                $btn.data('busy', false).prop('disabled', false);
+            }
+        } catch {
+            toastr.error('নেটওয়ার্ক ত্রুটি');
+            $btn.data('busy', false).prop('disabled', false);
         }
     });
 

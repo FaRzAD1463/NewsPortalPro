@@ -52,7 +52,7 @@ body {
 }
 
 a {
-    color: var(--primary);
+    color: #000;
     text-decoration: none;
 }
 

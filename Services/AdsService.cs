@@ -54,7 +54,26 @@ namespace NewsPortalPro.Services
                 "UPDATE Advertisements SET ClickCount = ClickCount + 1 WHERE Id = {0}",
                 adId);
 
-            public async Task<List<AdvertisementDto>> GetAllForAdminAsync() =>
+        public async Task TrackImpressionsAsync(IEnumerable<int> adIds)
+        {
+            var ids = adIds?.Distinct().ToList() ?? [];
+            if (ids.Count == 0) return;
+
+            var parameterNames = string.Join(
+                ",", ids.Select((_, i) => $"@p{i}"));
+
+            var parameters = ids
+                .Select((id, i) => new Microsoft.Data.SqlClient.SqlParameter(
+                    $"@p{i}", id))
+                .ToArray();
+
+            await _db.Database.ExecuteSqlRawAsync(
+                $"UPDATE Advertisements SET ImpressionCount = ImpressionCount + 1 " +
+                $"WHERE Id IN ({parameterNames})",
+                parameters);
+        }
+
+        public async Task<List<AdvertisementDto>> GetAllForAdminAsync() =>
             await _db.Advertisements
                 .Where(a => !a.IsDeleted)
                 .OrderByDescending(a => a.CreatedAt)

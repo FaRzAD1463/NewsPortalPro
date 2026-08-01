@@ -121,11 +121,12 @@ namespace NewsPortalPro.Interfaces
         Task<List<AdvertisementDto>> GetByPositionAsync(
            AdPosition position, int? categoryId = null);
         Task<List<AdvertisementDto>> GetAllForAdminAsync();
-        Task<List<AdvertisementDto>> GetAllActiveAsync(); // ← add this
+        Task<List<AdvertisementDto>> GetAllActiveAsync();
         Task<int> CreateAsync(CreateAdDto dto);
         Task<bool> UpdateAsync(int id, UpdateAdDto dto);
         Task<bool> DeleteAsync(int id);
         Task TrackImpressionAsync(int id);
+        Task TrackImpressionsAsync(IEnumerable<int> ids); // ← added
         Task TrackClickAsync(int id);
     }
 
