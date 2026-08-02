@@ -30,16 +30,11 @@ namespace NewsPortalPro.Filters
                 {
                     try
                     {
-                        // Try menu categories first
-                        var menuCats = await _categories
-                            .GetMenuCategoriesAsync();
+                        var menuCats = await _categories.GetMenuCategoriesAsync();
 
-                        // ── Fallback: if ShowInMenu=false for all,
-                        //    use all active categories instead ──────
                         if (!menuCats.Any())
                         {
-                            menuCats = await _categories
-                                .GetAllActiveAsync();
+                            menuCats = await _categories.GetAllActiveAsync();
                         }
 
                         controller.ViewBag.MenuCategories = menuCats;
@@ -53,11 +48,26 @@ namespace NewsPortalPro.Filters
                             await _settings.GetAsync("SiteTagline")
                             ?? "বাংলাদেশের নির্ভরযোগ্য সংবাদ মাধ্যম";
 
+                        controller.ViewBag.SiteDescription =
+                            await _settings.GetAsync("SiteDescription")
+                            ?? "বাংলাদেশের নির্ভরযোগ্য সংবাদ মাধ্যম";
+
                         controller.ViewBag.LogoUrl =
                             await _settings.GetAsync("LogoUrl")
                             ?? "/images/logo.png";
+
+                        controller.ViewBag.SiteEmail =
+                            await _settings.GetAsync("SiteEmail")
+                            ?? "info@newsportalpro.com";
+
+                        controller.ViewBag.SitePhone =
+                            await _settings.GetAsync("SitePhone")
+                            ?? "+880-1700-000000";
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[MenuCategoriesFilter] THREW: {ex}");
+                    }
                 }
             }
 

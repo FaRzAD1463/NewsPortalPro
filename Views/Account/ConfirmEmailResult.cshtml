@@ -1,0 +1,29 @@
+﻿@model bool
+@{
+    ViewData["Title"] = "ইমেইল যাচাইকরণ";
+}
+
+<div class="auth-page d-flex align-items-center justify-content-center min-vh-100 bg-light">
+    <div class="auth-card card shadow-sm border-0 text-center" style="width:460px;max-width:95vw">
+        <div class="card-body p-4 p-md-5">
+            @if (Model)
+            {
+                <i class="bi bi-check-circle display-4 text-success mb-3"></i>
+                <h2 class="fw-bold">ইমেইল যাচাই সফল হয়েছে</h2>
+                <p class="text-muted">
+                    আপনার অ্যাকাউন্ট সক্রিয় করা হয়েছে। এখন লগইন করতে পারেন।
+                </p>
+                <a href="/Account/Login" class="btn btn-primary mt-2">লগইন করুন</a>
+            }
+            else
+            {
+                <i class="bi bi-x-circle display-4 text-danger mb-3"></i>
+                <h2 class="fw-bold">যাচাইকরণ ব্যর্থ হয়েছে</h2>
+                <p class="text-muted">
+                    লিংকটি অবৈধ অথবা মেয়াদোত্তীর্ণ হতে পারে।
+                </p>
+                <a href="/Account/Login" class="btn btn-outline-secondary mt-2">লগইন পাতায় ফিরে যান</a>
+            }
+        </div>
+    </div>
+</div>

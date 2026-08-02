@@ -105,7 +105,7 @@ try
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
             "0123456789-._@+";
 
-        options.SignIn.RequireConfirmedEmail = false;
+        options.SignIn.RequireConfirmedEmail = true;
         options.SignIn.RequireConfirmedAccount = false;
 
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
@@ -489,6 +489,7 @@ try
     builder.Services.AddScoped<IFileUploadService, FileUploadService>();
     builder.Services.AddScoped<IVideoService, VideoService>();
     builder.Services.AddScoped<IPhotoService, PhotoService>();
+    builder.Services.AddScoped<MenuCategoriesFilter>();
 
     // ──────────────────────────────────────────────────────────
     // MVC + RAZOR VIEWS
@@ -497,6 +498,7 @@ try
     builder.Services.AddControllersWithViews(options =>
     {
         options.Filters.Add<AuditLogFilter>();
+        options.Filters.Add<MenuCategoriesFilter>();
     })
     .AddNewtonsoftJson(options =>
     {
@@ -794,16 +796,17 @@ try
 
     app.UseImageSharp();
     app.UseResponseCaching();
-    app.UseWhen(
-    context => !context.Request.Path.StartsWithSegments("/Admin"),
-    appBranch => appBranch.UseOutputCache()
-);
 
     app.UseIpRateLimiting();
     app.UseRouting();
     app.UseCors("NewsPortalPolicy");
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.UseWhen(
+    context => !context.Request.Path.StartsWithSegments("/Admin"),
+    appBranch => appBranch.UseOutputCache()
+);
 
     app.UseMiddleware<MaintenanceModeMiddleware>();
     app.UseMiddleware<RateLimitingMiddleware>();

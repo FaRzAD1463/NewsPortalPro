@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NewsPortalPro.Configurations;
@@ -70,6 +71,21 @@ namespace NewsPortalPro.Controllers
                 return LocalRedirect(returnUrl ?? "/");
             }
 
+            // ── Email not confirmed — SignInResult.NotAllowed is returned
+            // by PasswordSignInAsync when RequireConfirmedEmail=true and
+            // the user's EmailConfirmed flag is still false. Give a
+            // specific, actionable message instead of the generic
+            // invalid-login error, plus a way to resend the link.
+            if (result.IsNotAllowed)
+            {
+                ModelState.AddModelError("",
+                    "আপনার ইমেইল এখনো যাচাই করা হয়নি। " +
+                    "যাচাইকরণ ইমেইল আবার পাঠাতে নিচের বাটনে ক্লিক করুন।");
+                ViewBag.ShowResend = true;
+                ViewBag.UnconfirmedEmail = dto.Email;
+                return View(dto);
+            }
+
             if (result.IsLockedOut)
                 ModelState.AddModelError("",
                     "অ্যাকাউন্ট লক করা হয়েছে। ১৫ মিনিট পরে চেষ্টা করুন।");
@@ -103,14 +119,87 @@ namespace NewsPortalPro.Controllers
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(user, "User");
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                return RedirectToAction("Index", "Home");
+
+                // ── Send email confirmation instead of signing in
+                // immediately. The user can't log in until they click
+                // the link (enforced by RequireConfirmedEmail in
+                // Program.cs).
+                await SendConfirmationEmailAsync(user);
+
+                _logger.LogInformation(
+                    "User registered, confirmation email sent: {Email}",
+                    dto.Email);
+
+                return RedirectToAction(nameof(RegisterConfirmation),
+                    new { email = dto.Email });
             }
 
             foreach (var error in result.Errors)
                 ModelState.AddModelError("", error.Description);
 
             return View(dto);
+        }
+
+        // ── "Check your email" page shown right after registration ──
+        [HttpGet]
+        public IActionResult RegisterConfirmation(string? email)
+        {
+            ViewBag.Email = email;
+            return View();
+        }
+
+        // ── Handles the link the user clicks from their email ────────
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmail(
+            string? userId, string? token)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+                return View("ConfirmEmailResult", false);
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return View("ConfirmEmailResult", false);
+
+            if (await _userManager.IsEmailConfirmedAsync(user))
+            {
+                // Already confirmed (e.g. link clicked twice) — treat
+                // as success rather than showing a confusing failure.
+                return View("ConfirmEmailResult", true);
+            }
+
+            var decodedToken = Encoding.UTF8.GetString(
+                WebEncoders.Base64UrlDecode(token));
+
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+
+            if (result.Succeeded)
+                _logger.LogInformation(
+                    "Email confirmed: {Email}", user.Email);
+            else
+                _logger.LogWarning(
+                    "Email confirmation failed for {Email}: {Errors}",
+                    user.Email,
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            return View("ConfirmEmailResult", result.Succeeded);
+        }
+
+        // ── Resend confirmation email, e.g. from the Login page ──────
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendConfirmation(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            // Always show the same success message whether or not the
+            // account exists — don't leak which emails are registered.
+            if (user != null && !await _userManager.IsEmailConfirmedAsync(user))
+            {
+                await SendConfirmationEmailAsync(user);
+            }
+
+            TempData["Success"] =
+                "যদি এই ইমেইলে একটি অ্যাকাউন্ট থাকে, একটি যাচাইকরণ ইমেইল পাঠানো হয়েছে।";
+            return RedirectToAction(nameof(Login));
         }
 
         [HttpPost, ValidateAntiForgeryToken, Authorize]
@@ -158,8 +247,6 @@ namespace NewsPortalPro.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
-        // Add this to Controllers/AccountController.cs
-
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> Profile()
@@ -178,5 +265,21 @@ namespace NewsPortalPro.Controllers
 
         [HttpGet]
         public IActionResult AccessDenied() => View();
+
+        // ── Shared helper — generates a token and sends the email ────
+        private async Task SendConfirmationEmailAsync(ApplicationUser user)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(
+                Encoding.UTF8.GetBytes(token));
+
+            var confirmationLink = Url.Action(
+                nameof(ConfirmEmail), "Account",
+                new { userId = user.Id, token = encodedToken },
+                protocol: Request.Scheme);
+
+            await _email.SendEmailVerificationAsync(
+                user.Email!, user.FullName, confirmationLink!);
+        }
     }
 }

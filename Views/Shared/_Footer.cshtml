@@ -10,10 +10,10 @@
                 <!-- Logo + tagline + social -->
                 <div class="col-12 col-md-3">
                     <a href="/" class="text-decoration-none">
-                        <div class="pb-footer-logo">নিউজপোর্টাল প্রো</div>
+                        <div class="pb-footer-logo">@(ViewBag.SiteName ?? "নিউজপোর্টাল প্রো")</div>
                     </a>
                     <p class="pb-footer-tagline mt-2">
-                        বাংলাদেশের নির্ভরযোগ্য ও নিরপেক্ষ সংবাদ মাধ্যম।
+                        @(ViewBag.SiteTagline ?? "বাংলাদেশের নির্ভরযোগ্য ও নিরপেক্ষ সংবাদ মাধ্যম।")
                     </p>
                     <!-- comment out till i have real links for these
 
@@ -38,7 +38,7 @@
                            target="_blank">
                             <i class="bi bi-youtube"></i>
                         </a>
-                    </div> 
+                    </div>
                     -->
                 </div>
 
@@ -110,11 +110,11 @@
                     <ul class="pb-footer-contact">
                         <li>
                             <i class="bi bi-envelope me-2"></i>
-                            info@newsportalpro.com
+                            @(ViewBag.SiteEmail ?? "info@newsportalpro.com")
                         </li>
                         <li>
                             <i class="bi bi-telephone me-2"></i>
-                            +880-1700-000000
+                            @(ViewBag.SitePhone ?? "+880-1700-000000")
                         </li>
                     </ul>
                 </div>
@@ -132,15 +132,15 @@
             <div class="d-flex justify-content-between
                 align-items-center flex-wrap gap-2">
                 <p class="mb-0 small">
-                    &copy; @DateTime.Now.Year নিউজপোর্টাল প্রো।
+                    &copy; @DateTime.Now.Year @(ViewBag.SiteName ?? "নিউজপোর্টাল প্রো")।
                     সর্বস্বত্ব সংরক্ষিত।
                 </p>
-               
-                </div>
+
             </div>
         </div>
-    
+    </div>
 
+    
 </footer>
 
 <script>

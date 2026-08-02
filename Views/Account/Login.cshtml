@@ -26,6 +26,17 @@
                     </div>
                 }
 
+                @if (ViewBag.ShowResend == true)
+                {
+                    <form asp-action="ResendConfirmation" asp-controller="Account" method="post" class="mb-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="email" value="@ViewBag.UnconfirmedEmail" />
+                        <button type="submit" class="btn btn-outline-primary w-100 btn-sm">
+                            যাচাইকরণ ইমেইল আবার পাঠান
+                        </button>
+                    </form>
+                }
+
                 <div class="mb-3">
                     <label class="form-label fw-medium">ইমেইল ঠিকানা</label>
                     <div class="input-group">
