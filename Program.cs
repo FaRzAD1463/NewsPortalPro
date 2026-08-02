@@ -391,12 +391,7 @@ try
         options.MaximumReceiveMessageSize = 32 * 1024;
     });
 
-    // ──────────────────────────────────────────────────────────
-    // AUTOMAPPER
-    // ──────────────────────────────────────────────────────────
-
-    builder.Services.AddAutoMapper(
-        new[] { typeof(Program).Assembly });
+   
 
     // ──────────────────────────────────────────────────────────
     // FLUENT VALIDATION
