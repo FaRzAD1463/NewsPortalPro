@@ -2,15 +2,8 @@
 
 namespace NewsPortalPro.Middleware
 {
-    public class MaintenanceModeMiddleware
+    public class MaintenanceModeMiddleware(RequestDelegate next)
     {
-        private readonly RequestDelegate _next;
-
-        public MaintenanceModeMiddleware(RequestDelegate next)
-        {
-            _next = next;
-        }
-
         public async Task InvokeAsync(
             HttpContext context,
             IServiceScopeFactory scopeFactory)
@@ -20,7 +13,7 @@ namespace NewsPortalPro.Middleware
                 context.Request.Path.StartsWithSegments("/Account") ||
                 context.Request.Path.StartsWithSegments("/health"))
             {
-                await _next(context);
+                await next(context);
                 return;
             }
 
@@ -50,7 +43,7 @@ namespace NewsPortalPro.Middleware
                 // If settings can't be read, don't block the request
             }
 
-            await _next(context);
+            await next(context);
         }
     }
 }

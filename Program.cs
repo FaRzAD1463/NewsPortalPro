@@ -282,17 +282,11 @@ try
     // AUTHORIZATION POLICIES
     // ──────────────────────────────────────────────────────────
 
-    builder.Services.AddAuthorization(options =>
-    {
-        options.AddPolicy("AdminOnly",
-            p => p.RequireRole("Admin"));
-        options.AddPolicy("EditorOrAbove",
-            p => p.RequireRole("Admin", "Editor"));
-        options.AddPolicy("ReporterOrAbove",
-            p => p.RequireRole("Admin", "Editor", "Reporter"));
-        options.AddPolicy("AuthenticatedUser",
-            p => p.RequireAuthenticatedUser());
-    });
+    builder.Services.AddAuthorizationBuilder()
+        .AddPolicy("AdminOnly", p => p.RequireRole("Admin"))
+        .AddPolicy("EditorOrAbove", p => p.RequireRole("Admin", "Editor"))
+        .AddPolicy("ReporterOrAbove", p => p.RequireRole("Admin", "Editor", "Reporter"))
+        .AddPolicy("AuthenticatedUser", p => p.RequireAuthenticatedUser());
 
     // ──────────────────────────────────────────────────────────
     // REDIS / DISTRIBUTED CACHE
@@ -390,8 +384,6 @@ try
         options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
         options.MaximumReceiveMessageSize = 32 * 1024;
     });
-
-   
 
     // ──────────────────────────────────────────────────────────
     // FLUENT VALIDATION
@@ -720,9 +712,9 @@ try
     {
         var headers = context.Response.Headers;
 
-        headers["X-Content-Type-Options"] = "nosniff";
-        headers["X-Frame-Options"] = "SAMEORIGIN";
-        headers["X-XSS-Protection"] = "1; mode=block";
+        headers.XContentTypeOptions = "nosniff";
+        headers.XFrameOptions = "SAMEORIGIN";
+        headers.XXSSProtection = "1; mode=block";
         headers["Referrer-Policy"] =
             "strict-origin-when-cross-origin";
         headers["Permissions-Policy"] =
@@ -741,7 +733,7 @@ try
         // handlers. Flagging that as a good follow-up, not done here to
         // avoid changing runtime behavior.
 
-        headers["Content-Security-Policy"] =
+        headers.ContentSecurityPolicy =
             "default-src 'self'; " +
             "script-src 'self' 'unsafe-inline' " +
                 "https://cdnjs.cloudflare.com " +
@@ -762,7 +754,7 @@ try
             "upgrade-insecure-requests;";
 
         if (context.Request.IsHttps)
-            headers["Strict-Transport-Security"] =
+            headers.StrictTransportSecurity =
                 "max-age=31536000; includeSubDomains";
 
         context.Response.Headers.Remove("Server");
@@ -784,7 +776,7 @@ try
     {
         OnPrepareResponse = ctx =>
         {
-            ctx.Context.Response.Headers["Cache-Control"] =
+            ctx.Context.Response.Headers.CacheControl =
                 "public,max-age=31536000";
         }
     });
@@ -1022,7 +1014,7 @@ static async Task SeedAdminUserAsync(
 
     // Create roles if they don't exist
 
-    string[] roles = { "Admin", "Editor", "Reporter", "User" };
+    string[] roles = ["Admin", "Editor", "Reporter", "User"];
 
     foreach (var role in roles)
     {

@@ -6,12 +6,8 @@ using System.Security.Claims;
 
 namespace NewsPortalPro.Filters
 {
-    public class AuditLogFilter : IAsyncActionFilter
+    public class AuditLogFilter(ApplicationDbContext db) : IAsyncActionFilter
     {
-        private readonly ApplicationDbContext _db;
-
-        public AuditLogFilter(ApplicationDbContext db) => _db = db;
-
         public async Task OnActionExecutionAsync(
             ActionExecutingContext context,
             ActionExecutionDelegate next)
@@ -33,7 +29,7 @@ namespace NewsPortalPro.Filters
                 var ua = context.HttpContext.Request
                     .Headers.UserAgent.ToString();
 
-                _db.AuditLogs.Add(new AuditLog
+                db.AuditLogs.Add(new AuditLog
                 {
                     UserId = userId,
                     Action = actionName,
@@ -43,7 +39,7 @@ namespace NewsPortalPro.Filters
                     CreatedAt = DateTime.UtcNow
                 });
 
-                try { await _db.SaveChangesAsync(); }
+                try { await db.SaveChangesAsync(); }
                 catch { /* non-critical */ }
             }
         }

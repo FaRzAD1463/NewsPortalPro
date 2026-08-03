@@ -14,27 +14,14 @@ using System.Text;
 
 namespace NewsPortalPro.Controllers
 {
-    public class AccountController : Controller
+    public class AccountController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        IOptions<JwtSettings> jwt,
+        IEmailService email,
+        ILogger<AccountController> logger) : Controller
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly JwtSettings _jwt;
-        private readonly IEmailService _email;
-        private readonly ILogger<AccountController> _logger;
-
-        public AccountController(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            IOptions<JwtSettings> jwt,
-            IEmailService email,
-            ILogger<AccountController> logger)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _jwt = jwt.Value;
-            _email = email;
-            _logger = logger;
-        }
+        private readonly JwtSettings _jwt = jwt.Value;
 
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
@@ -52,7 +39,7 @@ namespace NewsPortalPro.Controllers
         {
             if (!ModelState.IsValid) return View(dto);
 
-            var user = await _userManager.FindByEmailAsync(dto.Email);
+            var user = await userManager.FindByEmailAsync(dto.Email);
             if (user == null || !user.IsActive)
             {
                 ModelState.AddModelError("",
@@ -60,14 +47,14 @@ namespace NewsPortalPro.Controllers
                 return View(dto);
             }
 
-            var result = await _signInManager.PasswordSignInAsync(
+            var result = await signInManager.PasswordSignInAsync(
                 user, dto.Password, dto.RememberMe, lockoutOnFailure: true);
 
             if (result.Succeeded)
             {
                 user.LastLoginAt = DateTime.UtcNow;
-                await _userManager.UpdateAsync(user);
-                _logger.LogInformation("User logged in: {Email}", dto.Email);
+                await userManager.UpdateAsync(user);
+                logger.LogInformation("User logged in: {Email}", dto.Email);
                 return LocalRedirect(returnUrl ?? "/");
             }
 
@@ -115,10 +102,10 @@ namespace NewsPortalPro.Controllers
                 IsActive = true
             };
 
-            var result = await _userManager.CreateAsync(user, dto.Password);
+            var result = await userManager.CreateAsync(user, dto.Password);
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, "User");
+                await userManager.AddToRoleAsync(user, "User");
 
                 // ── Send email confirmation instead of signing in
                 // immediately. The user can't log in until they click
@@ -126,7 +113,7 @@ namespace NewsPortalPro.Controllers
                 // Program.cs).
                 await SendConfirmationEmailAsync(user);
 
-                _logger.LogInformation(
+                logger.LogInformation(
                     "User registered, confirmation email sent: {Email}",
                     dto.Email);
 
@@ -156,11 +143,11 @@ namespace NewsPortalPro.Controllers
             if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
                 return View("ConfirmEmailResult", false);
 
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await userManager.FindByIdAsync(userId);
             if (user == null)
                 return View("ConfirmEmailResult", false);
 
-            if (await _userManager.IsEmailConfirmedAsync(user))
+            if (await userManager.IsEmailConfirmedAsync(user))
             {
                 // Already confirmed (e.g. link clicked twice) — treat
                 // as success rather than showing a confusing failure.
@@ -170,13 +157,13 @@ namespace NewsPortalPro.Controllers
             var decodedToken = Encoding.UTF8.GetString(
                 WebEncoders.Base64UrlDecode(token));
 
-            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+            var result = await userManager.ConfirmEmailAsync(user, decodedToken);
 
             if (result.Succeeded)
-                _logger.LogInformation(
+                logger.LogInformation(
                     "Email confirmed: {Email}", user.Email);
             else
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Email confirmation failed for {Email}: {Errors}",
                     user.Email,
                     string.Join(", ", result.Errors.Select(e => e.Description)));
@@ -188,11 +175,11 @@ namespace NewsPortalPro.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ResendConfirmation(string email)
         {
-            var user = await _userManager.FindByEmailAsync(email);
+            var user = await userManager.FindByEmailAsync(email);
 
             // Always show the same success message whether or not the
             // account exists — don't leak which emails are registered.
-            if (user != null && !await _userManager.IsEmailConfirmedAsync(user))
+            if (user != null && !await userManager.IsEmailConfirmedAsync(user))
             {
                 await SendConfirmationEmailAsync(user);
             }
@@ -207,7 +194,7 @@ namespace NewsPortalPro.Controllers
     string FullName, string? Designation,
     string? Bio, string? FacebookUrl, string? TwitterUrl)
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login");
 
             user.FullName = FullName;
@@ -217,7 +204,7 @@ namespace NewsPortalPro.Controllers
             user.TwitterUrl = TwitterUrl;
             user.UpdatedAt = DateTime.UtcNow;
 
-            await _userManager.UpdateAsync(user);
+            await userManager.UpdateAsync(user);
             TempData["Success"] = "প্রোফাইল আপডেট হয়েছে";
             return RedirectToAction(nameof(Profile));
         }
@@ -232,10 +219,10 @@ namespace NewsPortalPro.Controllers
                 return RedirectToAction(nameof(Profile));
             }
 
-            var user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login");
 
-            var result = await _userManager.ChangePasswordAsync(
+            var result = await userManager.ChangePasswordAsync(
                 user, CurrentPassword, NewPassword);
 
             if (result.Succeeded)
@@ -251,7 +238,7 @@ namespace NewsPortalPro.Controllers
         [Authorize]
         public async Task<IActionResult> Profile()
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login");
             return View(user);
         }
@@ -259,7 +246,7 @@ namespace NewsPortalPro.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            await _signInManager.SignOutAsync();
+            await signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
 
@@ -269,7 +256,7 @@ namespace NewsPortalPro.Controllers
         // ── Shared helper — generates a token and sends the email ────
         private async Task SendConfirmationEmailAsync(ApplicationUser user)
         {
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(
                 Encoding.UTF8.GetBytes(token));
 
@@ -278,7 +265,7 @@ namespace NewsPortalPro.Controllers
                 new { userId = user.Id, token = encodedToken },
                 protocol: Request.Scheme);
 
-            await _email.SendEmailVerificationAsync(
+            await email.SendEmailVerificationAsync(
                 user.Email!, user.FullName, confirmationLink!);
         }
     }

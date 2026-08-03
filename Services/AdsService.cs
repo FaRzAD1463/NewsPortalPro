@@ -6,51 +6,40 @@ using NewsPortalPro.Models;
 
 namespace NewsPortalPro.Services
 {
-        public class AdsService : IAdsService
-        {
-        private readonly ApplicationDbContext _db;
-
-        public AdsService(ApplicationDbContext db) => _db = db;
-
+    public class AdsService(ApplicationDbContext db) : IAdsService
+    {
         public async Task<List<AdvertisementDto>> GetByPositionAsync(
       AdPosition position, int? categoryId = null)
         {
             var now = DateTime.UtcNow;
 
-            var ads = await _db.Advertisements
+            var ads = await db.Advertisements
                 .Where(a =>
                     a.Position == position &&
                     a.Status == AdStatus.Active &&
                     !a.IsDeleted &&
                     (a.StartDate == null || a.StartDate <= now) &&
-                    // Compare only the date so ads remain active
-                    // throughout their EndDate.
-
                     (a.EndDate == null || a.EndDate.Value.Date >= now.Date))
                 .OrderBy(a => a.DisplayOrder)
                 .ToListAsync();
 
-            // Apply category filtering only when a category is specified.
-            // Global ads (CategoryId == null) are always included.
-
             if (categoryId.HasValue)
             {
-                ads = ads.Where(a =>
+                ads = [.. ads.Where(a =>
                         a.CategoryId == null ||
-                        a.CategoryId == categoryId.Value)
-                    .ToList();
+                        a.CategoryId == categoryId.Value)];
             }
 
-            return ads.Select(MapToDto).ToList();
+            return [.. ads.Select(MapToDto)];
         }
 
         public async Task TrackImpressionAsync(int adId) =>
-            await _db.Database.ExecuteSqlRawAsync(
+            await db.Database.ExecuteSqlRawAsync(
                 "UPDATE Advertisements SET ImpressionCount = ImpressionCount + 1 WHERE Id = {0}",
                 adId);
 
-            public async Task TrackClickAsync(int adId) =>
-            await _db.Database.ExecuteSqlRawAsync(
+        public async Task TrackClickAsync(int adId) =>
+            await db.Database.ExecuteSqlRawAsync(
                 "UPDATE Advertisements SET ClickCount = ClickCount + 1 WHERE Id = {0}",
                 adId);
 
@@ -67,14 +56,14 @@ namespace NewsPortalPro.Services
                     $"@p{i}", id))
                 .ToArray();
 
-            await _db.Database.ExecuteSqlRawAsync(
+            await db.Database.ExecuteSqlRawAsync(
                 $"UPDATE Advertisements SET ImpressionCount = ImpressionCount + 1 " +
                 $"WHERE Id IN ({parameterNames})",
                 parameters);
         }
 
         public async Task<List<AdvertisementDto>> GetAllForAdminAsync() =>
-            await _db.Advertisements
+            await db.Advertisements
                 .Where(a => !a.IsDeleted)
                 .OrderByDescending(a => a.CreatedAt)
                 .Select(a => new AdvertisementDto
@@ -94,8 +83,8 @@ namespace NewsPortalPro.Services
                 })
                 .ToListAsync();
 
-            public async Task<int> CreateAsync(CreateAdDto dto)
-            {
+        public async Task<int> CreateAsync(CreateAdDto dto)
+        {
             var ad = new Advertisement
             {
                 Title = dto.Title,
@@ -109,21 +98,22 @@ namespace NewsPortalPro.Services
                 EndDate = dto.EndDate,
                 Status = AdStatus.Active
             };
-            _db.Advertisements.Add(ad);
-            await _db.SaveChangesAsync();
+            db.Advertisements.Add(ad);
+            await db.SaveChangesAsync();
             return ad.Id;
         }
+
         public async Task<List<AdvertisementDto>> GetAllActiveAsync()
         {
             var now = DateTime.UtcNow;
-            var ads = await _db.Advertisements
+            var ads = await db.Advertisements
                 .Where(a => a.Status == AdStatus.Active
                          && (a.StartDate == null || a.StartDate <= now)
                          && (a.EndDate == null || a.EndDate >= now))
                 .OrderBy(a => a.DisplayOrder)
                 .ToListAsync();
 
-            return ads.Select(MapToDto).ToList();
+            return [.. ads.Select(MapToDto)];
         }
 
         private static AdvertisementDto MapToDto(Advertisement a) => new()
@@ -144,10 +134,10 @@ namespace NewsPortalPro.Services
         };
 
         public async Task<bool> UpdateAsync(int id, UpdateAdDto dto)
-            {
-            var ad = await _db.Advertisements
-            .AsTracking()
-            .FirstOrDefaultAsync(a => a.Id == id);
+        {
+            var ad = await db.Advertisements
+                .AsTracking()
+                .FirstOrDefaultAsync(a => a.Id == id);
             if (ad == null) return false;
             ad.Title = dto.Title;
             ad.ImageUrl = dto.ImageUrl;
@@ -159,19 +149,19 @@ namespace NewsPortalPro.Services
             ad.CategoryId = dto.CategoryId;
             ad.StartDate = dto.StartDate;
             ad.EndDate = dto.EndDate;
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             return true;
-            }
+        }
 
-           public async Task<bool> DeleteAsync(int id)
-           {
-            var ad = await _db.Advertisements
-            .AsTracking()
-            .FirstOrDefaultAsync(a => a.Id == id);
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var ad = await db.Advertisements
+                .AsTracking()
+                .FirstOrDefaultAsync(a => a.Id == id);
             if (ad == null) return false;
             ad.IsDeleted = true;
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             return true;
-           }
         }
+    }
 }

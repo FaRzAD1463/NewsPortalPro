@@ -3,21 +3,17 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace NewsPortalPro.Hubs
 {
-    public class NewsHub : Hub
+    public class NewsHub(ILogger<NewsHub> logger) : Hub
     {
-        private readonly ILogger<NewsHub> _logger;
-
-        public NewsHub(ILogger<NewsHub> logger) => _logger = logger;
-
         public override async Task OnConnectedAsync()
         {
-            _logger.LogDebug("Client connected: {ConnectionId}", Context.ConnectionId);
+            logger.LogDebug("Client connected: {ConnectionId}", Context.ConnectionId);
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            _logger.LogDebug("Client disconnected: {ConnectionId}", Context.ConnectionId);
+            logger.LogDebug("Client disconnected: {ConnectionId}", Context.ConnectionId);
             await base.OnDisconnectedAsync(exception);
         }
 

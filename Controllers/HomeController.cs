@@ -2,67 +2,49 @@
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
 using NewsPortalPro.Models;
-using NewsPortalPro.Services;
 using NewsPortalPro.ViewModels;
 
 namespace NewsPortalPro.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController(
+        INewsService news,
+        ICategoryService categories,
+        IAdsService ads,
+        ISettingsService settings,
+        IPhotoService photos,
+        IVideoService videos) : Controller
     {
-        private readonly INewsService _news;
-        private readonly ICategoryService _categories;
-        private readonly IAdsService _ads;
-        private readonly ISettingsService _settings;
-        private readonly IPhotoService _photos;
-
-        public HomeController(
-            INewsService news,
-            ICategoryService categories,
-            IAdsService ads,
-            ISettingsService settings,
-            IPhotoService photos,
-            IVideoService videos)
-        {
-            _news = news;
-            _categories = categories;
-            _ads = ads;
-            _settings = settings;
-            _videos = videos;
-            _photos = photos;
-            
-        }
-
         public async Task<IActionResult> Index()
         {
             var vm = new HomeViewModel
             {
-                BreakingNews = await _news.GetBreakingNewsAsync(8),
-                FeaturedNews = await _news.GetFeaturedAsync(6),
-                LatestNews = (await _news.GetPublishedAsync(
+                BreakingNews = await news.GetBreakingNewsAsync(8),
+                FeaturedNews = await news.GetFeaturedAsync(6),
+                LatestNews = (await news.GetPublishedAsync(
                     new NewsFilterDto { Page = 1, PageSize = 12 })).Items,
-                TrendingNews = await _news.GetTrendingAsync(8),
-                MostViewed = await _news.GetMostViewedAsync(8),
-                Categories = await _categories.GetAllActiveAsync(),
-                Photos = await _photos.GetLatestAsync(8),
-                Videos = await _videos.GetLatestAsync(8),
-                HeaderAds = await _ads.GetByPositionAsync(Models.AdPosition.Header),
-                SidebarAds = await _ads.GetByPositionAsync(Models.AdPosition.Sidebar),
-                SiteName = await _settings.GetAsync("SiteName") ?? "NewsPortal Pro"
+                TrendingNews = await news.GetTrendingAsync(8),
+                MostViewed = await news.GetMostViewedAsync(8),
+                Categories = await categories.GetAllActiveAsync(),
+                Photos = await photos.GetLatestAsync(8),
+                Videos = await videos.GetLatestAsync(8),
+                HeaderAds = await ads.GetByPositionAsync(Models.AdPosition.Header),
+                SidebarAds = await ads.GetByPositionAsync(Models.AdPosition.Sidebar),
+                SiteName = await settings.GetAsync("SiteName") ?? "NewsPortal Pro"
             };
 
             // Load ALL active categories — both menu and non-menu
-            var allCats = await _categories.GetAllActiveAsync();
+            var allCats = await categories.GetAllActiveAsync();
 
             foreach (var cat in allCats)
             {
-                var catNews = await _news.GetByCategoryAsync(cat.Slug, 1, 6);
-                if (catNews.Any())
+                var catNews = await news.GetByCategoryAsync(cat.Slug, 1, 6);
+                if (catNews.Count > 0)
                     vm.CategoryNewsBlocks[cat.Slug] = (cat, catNews);
             }
 
             return View(vm);
         }
-        private readonly IVideoService _videos;
+
         public IActionResult Terms() => View();
         public IActionResult About() => View();
 
