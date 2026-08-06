@@ -490,11 +490,16 @@ namespace NewsPortalPro.Services
         }
 
         // ── CreateAsync ────────────────────────────────────────────
+        // Retries on slug collision: two simultaneous creates can both
+        // pass EnsureUniqueSlugAsync's check before either inserts, so
+        // the unique index on News.Slug is the real guarantee — this
+        // retry loop turns that DB-level rejection into a clean retry
+        // instead of an unhandled 500 for the second reporter.
         public async Task<int> CreateAsync(
             CreateNewsDto dto, string authorId)
         {
-            var slug = _seo.GenerateSlug(dto.Title);
-            slug = await EnsureUniqueSlugAsync(slug);
+            var baseSlug = _seo.GenerateSlug(dto.Title);
+            var slug = await EnsureUniqueSlugAsync(baseSlug);
 
             var news = new News
             {
@@ -534,7 +539,24 @@ namespace NewsPortalPro.Services
             };
 
             _db.News.Add(news);
-            await _db.SaveChangesAsync();
+
+            const int maxAttempts = 3;
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    await _db.SaveChangesAsync();
+                    break;
+                }
+                catch (DbUpdateException ex) when (
+                    IsSlugCollision(ex) && attempt < maxAttempts)
+                {
+                    _logger.LogWarning(
+                        "Slug collision on '{Slug}', retrying (attempt {Attempt})",
+                        news.Slug, attempt);
+                    news.Slug = $"{baseSlug}-{Guid.NewGuid().ToString()[..6]}";
+                }
+            }
 
             await SaveTagsAsync(news.Id, dto.Tags);
 
@@ -550,6 +572,11 @@ namespace NewsPortalPro.Services
         }
 
         // ── UpdateAsync ────────────────────────────────────────────
+        // Throws DbUpdateConcurrencyException if the row's RowVersion
+        // changed since it was loaded (i.e. someone else saved this
+        // article in the meantime) — the controller catches this and
+        // shows the editor a "reload and retry" message instead of
+        // silently overwriting the other person's changes.
         public async Task<bool> UpdateAsync(
             int id, UpdateNewsDto dto, string editorId)
         {
@@ -596,7 +623,18 @@ namespace NewsPortalPro.Services
                 news.PublishedAt = DateTime.UtcNow;
 
             _db.NewsTags.RemoveRange(news.NewsTags);
-            await _db.SaveChangesAsync();
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                _logger.LogWarning(
+                    "Concurrency conflict updating news {Id} by editor {Editor}",
+                    id, editorId);
+                throw;
+            }
 
             await SaveTagsAsync(news.Id, dto.Tags);
             await InvalidateNewsCacheAsync(news.Slug);
@@ -619,16 +657,32 @@ namespace NewsPortalPro.Services
         }
 
         // ── PublishAsync ───────────────────────────────────────────
+        // Early-returns if already published (closes most double-click /
+        // scheduled-vs-manual publish races on its own), and treats a
+        // concurrency conflict as a harmless "someone else already
+        // published it" outcome rather than an error.
         public async Task<bool> PublishAsync(int id)
         {
             var news = await _db.News
             .AsTracking()
             .FirstOrDefaultAsync(n => n.Id == id);
             if (news == null) return false;
+
+            if (news.Status == NewsStatus.Published) return true;
+
             news.Status = NewsStatus.Published;
             news.PublishedAt = DateTime.UtcNow;
             news.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return true;
+            }
+
             if (news.IsBreaking)
                 await _notifications.SendBreakingNewsAlertAsync(
                     news.Id, news.Title, news.Slug);
@@ -919,6 +973,11 @@ namespace NewsPortalPro.Services
                 RelatedNews = related.Select(MapToListDto).ToList()
             };
 
+        // ── SaveTagsAsync ───────────────────────────────────────────
+        // Falls back to the tag another concurrent request just
+        // inserted, instead of letting the unique-index violation
+        // bubble up and fail the whole Create/Update call after the
+        // article itself was already saved successfully.
         private async Task SaveTagsAsync(
             int newsId, List<string> tagNames)
         {
@@ -937,7 +996,21 @@ namespace NewsPortalPro.Services
                 {
                     tag = new Tag { Name = name, Slug = slug };
                     _db.Tags.Add(tag);
-                    await _db.SaveChangesAsync();
+                    try
+                    {
+                        await _db.SaveChangesAsync();
+                    }
+                    catch (DbUpdateException)
+                    {
+                        _db.Entry(tag).State = EntityState.Detached;
+
+                        var existingTag = await _db.Tags
+                            .IgnoreQueryFilters()
+                            .FirstOrDefaultAsync(t => t.Slug == slug);
+
+                        if (existingTag == null) throw;
+                        tag = existingTag;
+                    }
                 }
 
                 var exists = await _db.NewsTags.AnyAsync(
@@ -973,6 +1046,16 @@ namespace NewsPortalPro.Services
 
             return newSlug;
         }
+
+        // ── IsSlugCollision ──────────────────────────────────────────
+        // Matches the unique-index name EF Core generates by default
+        // for HasIndex(n => n.Slug).IsUnique() on News. Confirm this
+        // against your actual migration if you've customized index
+        // naming — check the CreateIndex(name: "...") call in the
+        // Up() method of your latest migration.
+        private static bool IsSlugCollision(DbUpdateException ex) =>
+            ex.InnerException?.Message.Contains(
+                "IX_News_Slug", StringComparison.OrdinalIgnoreCase) == true;
 
         private static string GenerateSummary(string? content)
         {

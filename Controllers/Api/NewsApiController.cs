@@ -72,6 +72,14 @@ namespace NewsPortalPro.Controllers.Api
             return Ok(ApiResponse<NewsDetailDto>.Ok(result));
         }
 
+        // ── React ────────────────────────────────────────────────────
+        // Two rapid clicks on the same reaction button (double-click,
+        // or a retried request after a slow network response) can both
+        // read "no existing reaction" before either inserts — the
+        // unique index on (NewsId, UserId) then rejects the second
+        // SaveChangesAsync(). Instead of that surfacing as an unhandled
+        // 500, treat it as a harmless race: detach our conflicting
+        // tracked entity and return the current, correct counts.
         [HttpPost("react")]
         [Authorize]
         public async Task<IActionResult> React([FromBody] ReactRequestDto dto)
@@ -105,7 +113,17 @@ namespace NewsPortalPro.Controllers.Api
                 });
             }
 
-            await _db.SaveChangesAsync();
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                var conflictingEntry = _db.ChangeTracker.Entries<Reaction>()
+                    .FirstOrDefault(e => e.Entity.NewsId == dto.NewsId && e.Entity.UserId == userId);
+                if (conflictingEntry != null)
+                    conflictingEntry.State = EntityState.Detached;
+            }
 
             var counts = await _db.Reactions
                 .Where(r => r.NewsId == dto.NewsId)

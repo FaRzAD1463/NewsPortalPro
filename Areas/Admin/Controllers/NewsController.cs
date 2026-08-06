@@ -94,7 +94,21 @@ namespace NewsPortalPro.Areas.Admin.Controllers
 
             var authorId = User.FindFirstValue(
                 ClaimTypes.NameIdentifier)!;
-            await _news.CreateAsync(dto, authorId);
+
+            try
+            {
+                await _news.CreateAsync(dto, authorId);
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to save news after retries for author {Author}",
+                    authorId);
+                ModelState.AddModelError(string.Empty,
+                    "সংবাদ সংরক্ষণে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+                await PopulateCategoryList();
+                return View(dto);
+            }
 
             TempData["Success"] = dto.Status ==
                 Models.NewsStatus.Published
@@ -227,7 +241,18 @@ namespace NewsPortalPro.Areas.Admin.Controllers
 
             var editorId = User.FindFirstValue(
                 ClaimTypes.NameIdentifier)!;
-            await _news.UpdateAsync(id, dto, editorId);
+
+            try
+            {
+                await _news.UpdateAsync(id, dto, editorId);
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "এই সংবাদটি অন্য কেউ ইতিমধ্যে আপডেট করেছেন। পাতাটি রিলোড করে আবার চেষ্টা করুন।");
+                await PopulateCategoryList();
+                return View(dto);
+            }
 
             TempData["Success"] = dto.Status ==
                 Models.NewsStatus.Published
