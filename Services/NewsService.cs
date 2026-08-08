@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
+using NewsPortalPro.Helpers;
 using NewsPortalPro.Interfaces;
 using NewsPortalPro.Models;
 using Newtonsoft.Json;
@@ -236,7 +237,7 @@ namespace NewsPortalPro.Services
                     new DistributedCacheEntryOptions
                     {
                         AbsoluteExpirationRelativeToNow =
-                            TimeSpan.FromMinutes(5)
+                            CacheJitter.Apply(TimeSpan.FromMinutes(5))
                     });
             }
             catch { }
@@ -290,7 +291,7 @@ namespace NewsPortalPro.Services
                     new DistributedCacheEntryOptions
                     {
                         AbsoluteExpirationRelativeToNow =
-                            TimeSpan.FromMinutes(1)
+                            CacheJitter.Apply(TimeSpan.FromMinutes(1))
                     });
             }
             catch { }
@@ -332,7 +333,7 @@ namespace NewsPortalPro.Services
                     new DistributedCacheEntryOptions
                     {
                         AbsoluteExpirationRelativeToNow =
-                            TimeSpan.FromMinutes(2)
+                            CacheJitter.Apply(TimeSpan.FromMinutes(2))
                     });
             }
             catch { }
@@ -379,7 +380,7 @@ namespace NewsPortalPro.Services
                         // otherwise need to be tracked and cleared individually
                         // on every create/update/delete.
                         AbsoluteExpirationRelativeToNow =
-                            TimeSpan.FromMinutes(2)
+                            CacheJitter.Apply(TimeSpan.FromMinutes(2))
                     });
             }
             catch { }
@@ -440,7 +441,7 @@ namespace NewsPortalPro.Services
                     new DistributedCacheEntryOptions
                     {
                         AbsoluteExpirationRelativeToNow =
-                            TimeSpan.FromMinutes(2)
+                            CacheJitter.Apply(TimeSpan.FromMinutes(2))
                     });
             }
             catch { }
@@ -481,7 +482,7 @@ namespace NewsPortalPro.Services
                     new DistributedCacheEntryOptions
                     {
                         AbsoluteExpirationRelativeToNow =
-                            TimeSpan.FromMinutes(2)
+                            CacheJitter.Apply(TimeSpan.FromMinutes(2))
                     });
             }
             catch { }
