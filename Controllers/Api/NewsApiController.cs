@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using NewsPortalPro.Data;
 using NewsPortalPro.DTOs;
 using NewsPortalPro.Interfaces;
@@ -17,15 +18,18 @@ namespace NewsPortalPro.Controllers.Api
         private readonly INewsService _news;
         private readonly ICommentService _comments;
         private readonly ApplicationDbContext _db;
+        private readonly IDistributedCache _cache;
 
         public NewsApiController(
             INewsService news,
             ICommentService comments,
-            ApplicationDbContext db)
+            ApplicationDbContext db,
+            IDistributedCache cache)
         {
             _news = news;
             _comments = comments;
             _db = db;
+            _cache = cache;
         }
 
         [HttpGet]
@@ -131,11 +135,48 @@ namespace NewsPortalPro.Controllers.Api
                 .Select(g => new { Type = g.Key.ToString(), Count = g.Count() })
                 .ToListAsync();
 
+            // ── Invalidate the cached article so its Reactions dictionary
+            // (used by GetBySlugAsync) reflects this change immediately
+            // instead of showing stale counts for up to 5 minutes. The
+            // live counts already returned above are correct regardless —
+            // this only fixes the next full-article fetch (e.g. a reload).
+            var slug = await _db.News
+                .Where(n => n.Id == dto.NewsId)
+                .Select(n => n.Slug)
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrEmpty(slug))
+            {
+                try { await _cache.RemoveAsync($"news:slug:{slug}"); }
+                catch { }
+            }
+
             return Ok(new
             {
                 success = true,
                 counts = counts.ToDictionary(x => x.Type, x => x.Count)
             });
+        }
+
+        // ── My Reaction ──────────────────────────────────────────────
+        // Returns the current user's existing reaction (if any) on this
+        // article, so the article page can correctly restore which
+        // button should show as "reacted" on load. Without this, the
+        // frontend has no way to know about a reaction made in a
+        // previous session, and the toggle logic in reactToNews() on
+        // the client gets out of sync with the DB.
+        [HttpGet("{id:int}/my-reaction")]
+        [Authorize]
+        public async Task<IActionResult> GetMyReaction(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var reaction = await _db.Reactions
+                .Where(r => r.NewsId == id && r.UserId == userId)
+                .Select(r => r.Type.ToString())
+                .FirstOrDefaultAsync();
+
+            return Ok(new { reactionType = reaction });
         }
 
         [HttpGet("{id:int}/related")]
