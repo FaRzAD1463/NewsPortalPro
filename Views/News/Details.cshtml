@@ -22,6 +22,7 @@
         </div>
 
         <!-- ══ MAIN ARTICLE ════════════════════════════════════ -->
+
         <div class="col-lg-7 col-md-8 px-0 px-md-3">
 
             <!-- Breadcrumb -->
@@ -85,6 +86,7 @@
             </div>
 
             <!-- Share bar — top -->
+
             <div class="article-share-bar my-3">
                 <span class="share-label">শেয়ার করুন:</span>
                 <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")"
@@ -120,6 +122,7 @@
             </div>
 
             <!-- Featured image -->
+
             @if (!string.IsNullOrEmpty(Model.FeaturedImage))
             {
                 <div class="article-featured-img-wrap mb-3">
@@ -137,6 +140,7 @@
             }
 
             <!-- Reading progress bar -->
+
             <div class="reading-progress-wrap">
                 <div class="reading-progress-bar" id="reading-progress"></div>
             </div>
@@ -149,6 +153,7 @@
             @await Component.InvokeAsync("AdSlot", new { position = AdPosition.InArticle })
 
             <!-- Video -->
+
             @if (!string.IsNullOrEmpty(Model.VideoUrl))
             {
                 <div class="article-video-wrap my-4">
@@ -161,6 +166,7 @@
             }
 
             <!-- Tags -->
+
             @if (Model.Tags.Any())
             {
                 <div class="article-tags my-4">
@@ -174,6 +180,7 @@
             }
 
             <!-- Share bar — bottom -->
+
             <div class="article-share-bar border-top border-bottom py-3 my-3">
                 <span class="share-label">শেয়ার করুন:</span>
                 <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString($"{Context.Request.Scheme}://{Context.Request.Host}/news/{Model.Slug}")"

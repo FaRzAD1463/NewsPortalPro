@@ -36,17 +36,20 @@ connection.on('ReceiveNotification', function (data) {
     // Keep the dropdown list itself in sync too, not just the badge
     // count — otherwise opening the bell right after a push shows a
     // stale list until the 5-minute fallback poll in site.js catches up.
+
     if (typeof window.loadNotifications === 'function') {
         window.loadNotifications();
     }
 });
 
 // ── Admin Broadcast ───────────────────────────────────────
+
 connection.on('ReceiveBroadcast', function (data) {
     toastr.success(escapeHtml(data.message), 'সিস্টেম বিজ্ঞপ্তি', { timeOut: 6000 });
 });
 
 // ── Connect (with capped, jittered backoff for reconnect storms) ──
+
 let startAttempts = 0;
 
 async function startSignalR() {
@@ -56,6 +59,7 @@ async function startSignalR() {
         startAttempts = 0;
 
         // Join current category if on category page
+
         const categorySlug = document.body.dataset.category;
         if (categorySlug) {
             await connection.invoke('JoinCategory', categorySlug);
@@ -66,6 +70,7 @@ async function startSignalR() {
         // Exponential backoff capped at 60s, with jitter so a large
         // number of clients reconnecting after a server restart don't
         // all retry in the same instant and hammer it at once.
+
         const base = Math.min(60000, 5000 * Math.pow(2, startAttempts - 1));
         const jitter = Math.random() * 1000;
         setTimeout(startSignalR, base + jitter);
@@ -78,16 +83,19 @@ connection.onreconnecting(() => {
 
 connection.onreconnected(() => {
     console.log('SignalR reconnected');
+
     // Re-join the category group — group membership doesn't survive
     // a reconnect with a new connection ID, so this was silently lost
     // before: users would stop receiving category-scoped pushes after
     // any network blip until a full page reload.
+
     const categorySlug = document.body.dataset.category;
     if (categorySlug) {
         connection.invoke('JoinCategory', categorySlug).catch(function () { });
     }
     // Also refresh notifications in case anything was missed while
     // disconnected — SignalR pushes during a gap are simply lost.
+
     if (typeof window.loadNotifications === 'function') {
         window.loadNotifications();
     }
