@@ -2,7 +2,7 @@
 @using NewsPortalPro.Models
 @model NewsDetailDto
 @{
-    ViewData["Title"] = Model.Title;
+    ViewData["Title"] = !string.IsNullOrEmpty(Model.MetaTitle) ? Model.MetaTitle : Model.Title;
     ViewData["Description"] = Model.MetaDescription ?? Model.Summary;
     ViewData["Keywords"] = Model.MetaKeywords;
     ViewData["OgImage"] = Model.FeaturedImage;
