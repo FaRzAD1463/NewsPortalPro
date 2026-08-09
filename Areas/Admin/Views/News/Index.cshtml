@@ -1,5 +1,6 @@
 ﻿@using NewsPortalPro.DTOs
 @using NewsPortalPro.Models
+@using NewsPortalPro.Helpers
 @model NewsPortalPro.DTOs.PagedResult<NewsPortalPro.DTOs.NewsListDto>
 @{
     ViewData["Title"] = "সংবাদ ব্যবস্থাপনা";
@@ -209,11 +210,11 @@
                                 @news.ViewCount
                             </td>
 
-                            <!-- Date -->
-                            <td class="text-muted small">
-                                @(news.PublishedAt
-                                                            ?.ToString("dd MMM yy") ?? "—")
-                        </td>
+                                <!-- Date -->
+                                <td class="text-muted small">
+                                    @(news.PublishedAt?.ToLocal()
+                                                                .ToString("dd MMM yy") ?? "—")
+                                </td>
 
                                 <!-- Actions -->
                                 <td class="text-center">

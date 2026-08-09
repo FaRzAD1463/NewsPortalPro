@@ -31,7 +31,7 @@
                 }
                 <span>
                     <i class="bi bi-clock me-1"></i>
-                    @n.PublishedAt?.ToString("dd MMM yyyy")
+                    @n.PublishedAt?.ToLocal().ToString("dd MMM yyyy")
                 </span>
                 @if (n.ViewCount > 0)
                 {

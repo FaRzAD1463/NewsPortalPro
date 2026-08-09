@@ -1,5 +1,6 @@
 ﻿@using NewsPortalPro.DTOs
 @using NewsPortalPro.Models
+@using NewsPortalPro.Helpers
 @model NewsPortalPro.DTOs.PagedResult<NewsPortalPro.DTOs.NewsListDto>
 @{
     var cat = ViewBag.Category as CategoryDto;
@@ -83,7 +84,7 @@
                                 }
                                 <div class="pb-meta-sm">
                                     <i class="bi bi-clock me-1"></i>
-                                    @n.PublishedAt?.ToString("dd MMM yyyy")
+                                    @n.PublishedAt?.ToLocal().ToString("dd MMM yyyy")
                                 </div>
                             </div>
                         </div>
@@ -127,7 +128,7 @@
                                     }
                                     <span>
                                         <i class="bi bi-clock me-1"></i>
-                                        @n.PublishedAt?.ToString("dd MMM yyyy")
+                                        @n.PublishedAt?.ToLocal().ToString("dd MMM yyyy")
                                     </span>
                                     @if (n.ViewCount > 0)
                                     {
@@ -188,7 +189,7 @@
                                     </a>
                                     <div class="pb-meta-sm mt-1">
                                         <i class="bi bi-clock me-1"></i>
-                                        @n.PublishedAt?.ToString("dd MMM")
+                                        @n.PublishedAt?.ToLocal().ToString("dd MMM")
                                     </div>
                                 </div>
                             </div>

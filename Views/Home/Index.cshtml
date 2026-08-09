@@ -1,5 +1,6 @@
 ﻿@using NewsPortalPro.DTOs
 @using NewsPortalPro.Models
+@using NewsPortalPro.Helpers
 @model NewsPortalPro.ViewModels.HomeViewModel
 @{
     ViewData["Title"] = "হোম";
@@ -123,7 +124,7 @@
 
                                 <div class="pb-mini-meta">
                                     <i class="bi bi-clock me-1"></i>
-                                    @n.PublishedAt?.ToString("dd MMM")
+                                    @n.PublishedAt?.ToLocal().ToString("dd MMM")
                                 </div>
 
                             </div>
@@ -346,7 +347,7 @@
 
                                         <div class="pb-meta-sm">
                                             <i class="bi bi-clock me-1"></i>
-                                            @catNews[0].PublishedAt?.ToString("dd MMM yyyy")
+                                            @catNews[0].PublishedAt?.ToLocal().ToString("dd MMM yyyy")
                                         </div>
 
                                     </div>
@@ -377,7 +378,7 @@
                                                     </h6>
 
                                                     <div class="pb-meta-sm">
-                                                        @n.PublishedAt?.ToString("dd MMM")
+                                                        @n.PublishedAt?.ToLocal().ToString("dd MMM")
                                                     </div>
 
                                                 </div>
@@ -419,7 +420,7 @@
                                             <p class="pb-grid-summary">@n.Summary</p>
                                             <div class="pb-meta-sm">
                                                 <i class="bi bi-clock me-1"></i>
-                                                @n.PublishedAt?.ToString("dd MMM")
+                                                @n.PublishedAt?.ToLocal().ToString("dd MMM")
                                             </div>
 
                                         </div>
@@ -455,7 +456,7 @@
 
                                             <div class="pb-meta-sm">
                                                 <i class="bi bi-clock me-1"></i>
-                                                @n.PublishedAt?.ToString("dd MMM")
+                                                @n.PublishedAt?.ToLocal().ToString("dd MMM")
                                             </div>
 
                                         </div>
@@ -557,7 +558,7 @@
 
                                     <div class="pb-meta-sm mt-1">
                                         <i class="bi bi-clock me-1"></i>
-                                        @n.PublishedAt?.ToString("dd MMM")
+                                        @n.PublishedAt?.ToLocal().ToString("dd MMM")
                                     </div>
 
                                 </div>
