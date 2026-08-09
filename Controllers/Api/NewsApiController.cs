@@ -84,6 +84,7 @@ namespace NewsPortalPro.Controllers.Api
         // SaveChangesAsync(). Instead of that surfacing as an unhandled
         // 500, treat it as a harmless race: detach our conflicting
         // tracked entity and return the current, correct counts.
+
         [HttpPost("react")]
         [Authorize]
         public async Task<IActionResult> React([FromBody] ReactRequestDto dto)
@@ -91,6 +92,7 @@ namespace NewsPortalPro.Controllers.Api
             // FIX: Enum.Parse threw an unhandled exception (→ 500) if the
             // client sent an invalid ReactionType string. Using TryParse
             // and returning a clean 400 instead.
+
             if (!Enum.TryParse<ReactionType>(dto.ReactionType, true, out var reactionType))
                 return BadRequest(new { success = false, message = "অবৈধ রিঅ্যাকশন টাইপ" });
 
@@ -140,6 +142,7 @@ namespace NewsPortalPro.Controllers.Api
             // instead of showing stale counts for up to 5 minutes. The
             // live counts already returned above are correct regardless —
             // this only fixes the next full-article fetch (e.g. a reload).
+
             var slug = await _db.News
                 .Where(n => n.Id == dto.NewsId)
                 .Select(n => n.Slug)
@@ -165,6 +168,7 @@ namespace NewsPortalPro.Controllers.Api
         // frontend has no way to know about a reaction made in a
         // previous session, and the toggle logic in reactToNews() on
         // the client gets out of sync with the DB.
+
         [HttpGet("{id:int}/my-reaction")]
         [Authorize]
         public async Task<IActionResult> GetMyReaction(int id)
