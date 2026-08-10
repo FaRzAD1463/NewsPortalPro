@@ -1,0 +1,82 @@
+﻿@using NewsPortalPro.DTOs
+@model PagedResult<VideoDto>
+@{
+    ViewData["Title"] = "ভিডিও ব্যবস্থাপনা";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0">ভিডিও ব্যবস্থাপনা</h1>
+    <a asp-action="Create" class="btn btn-danger">
+        <i class="bi bi-plus-lg me-1"></i>নতুন ভিডিও
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (!Model.Items.Any())
+{
+    <p class="text-muted">কোনো ভিডিও নেই।</p>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>থাম্বনেইল</th>
+                <th>শিরোনাম</th>
+                <th>দৈর্ঘ্য</th>
+                <th>ভিউ</th>
+                <th>স্ট্যাটাস</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var v in Model.Items)
+            {
+                <tr>
+                    <td style="width:90px">
+                        <img src="@(v.ThumbnailUrl ?? "/images/placeholder.jpg")"
+                             style="width:80px;height:50px;object-fit:cover;border-radius:3px" />
+                    </td>
+                    <td>@v.Title</td>
+                    <td>@v.Duration</td>
+                    <td>@v.ViewCount</td>
+                    <td>
+                        @if (v.IsActive)
+                        {
+                            <span class="badge bg-success">সক্রিয়</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">নিষ্ক্রিয়</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@v.Id" class="btn btn-sm btn-outline-primary">সম্পাদনা</a>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="deleteVideo(@v.Id)">
+                            মুছুন
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@section Scripts {
+    <script>
+        async function deleteVideo(id) {
+            if (!confirm('আপনি কি নিশ্চিত?')) return;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            const res = await fetch(`/Admin/Videos/Delete/${id}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token }
+            });
+            if (res.ok) location.reload();
+        }
+    </script>
+}

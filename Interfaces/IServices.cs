@@ -163,8 +163,12 @@ namespace NewsPortalPro.Interfaces
     {
         Task<List<VideoDto>> GetLatestAsync(int count = 8);
         Task<PagedResult<VideoDto>> GetPagedAsync(int page, int pageSize);
+        Task<VideoDto?> GetByIdAsync(int id);
+        Task<PagedResult<VideoDto>> GetAllForAdminAsync(int page, int pageSize);
+        Task<int> CreateAsync(CreateVideoDto dto);
+        Task<bool> UpdateAsync(int id, UpdateVideoDto dto);
+        Task<bool> DeleteAsync(int id);
     }
-
     // ─────────────────────────────────────────────────────
     // FILE UPLOAD SERVICE
     // ─────────────────────────────────────────────────────

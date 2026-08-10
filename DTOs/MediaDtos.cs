@@ -25,8 +25,25 @@
         public string? ThumbnailUrl { get; set; }
         public string? Duration { get; set; }
         public int? NewsId { get; set; }
+        public bool IsActive { get; set; }
         public int ViewCount { get; set; }
         public DateTime CreatedAt { get; set; }
+    }
+
+    public class CreateVideoDto
+    {
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string VideoUrl { get; set; } = string.Empty;
+        public string? ThumbnailUrl { get; set; }
+        public string? Duration { get; set; }
+        public int? NewsId { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+
+    public class UpdateVideoDto : CreateVideoDto
+    {
+        public int Id { get; set; }
     }
 
     public class GalleryDto
