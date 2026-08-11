@@ -16,6 +16,7 @@ using NewsPortalPro.Extensions;
 using NewsPortalPro.Filters;
 using NewsPortalPro.Hubs;
 using NewsPortalPro.Interfaces;
+using Microsoft.AspNetCore.HttpOverrides;
 using NewsPortalPro.Middleware;
 using NewsPortalPro.Models;
 using NewsPortalPro.Repositories;
@@ -768,6 +769,10 @@ try
     // ──────────────────────────────────────────────────────────
     // MIDDLEWARE PIPELINE — ORDER IS CRITICAL
     // ──────────────────────────────────────────────────────────
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    });
 
     app.UseHttpsRedirection();
     app.UseResponseCompression();
