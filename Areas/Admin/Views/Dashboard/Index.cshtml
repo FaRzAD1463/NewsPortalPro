@@ -171,20 +171,46 @@
     </div>
 </div>
 
+<!-- ── Chart data islands ────────────────────────────────────────
+     Emitted as plain JSON in hidden script tags rather than inlined
+     directly into the JS block below. type="application/json" means
+     the browser never executes this as script, and it keeps the
+     Razor calls out of the actual JS — which is what
+     was causing the editor's TS/JS language service to misparse the
+     inline script as broken JavaScript (TS1109). Purely an
+     IntelliSense-time false positive either way, but this avoids it
+     and keeps the script block below as valid, lintable JS. -->
+
+<script id="views-chart-data" type="application/json">
+    @Html.Raw(
+            Newtonsoft.Json.JsonConvert.SerializeObject(
+                    dailyViews ?? new List<DailyViewsDto>(),
+                    new Newtonsoft.Json.JsonSerializerSettings
+                    {
+                            ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+                    }
+            )
+    )
+</script>
+
+<script id="category-chart-data" type="application/json">
+    @Html.Raw(
+            Newtonsoft.Json.JsonConvert.SerializeObject(
+                    catStats ?? new List<CategoryStatsDto>(),
+                    new Newtonsoft.Json.JsonSerializerSettings
+                    {
+                            ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+                    }
+            )
+    )
+</script>
+
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script>
         // Views Chart
         const viewsCtx = document.getElementById('viewsChart');
-        const viewsData = @Html.Raw(
-                            Newtonsoft.Json.JsonConvert.SerializeObject(
-                                    dailyViews ?? new List<DailyViewsDto>(),
-                                    new Newtonsoft.Json.JsonSerializerSettings
-                                    {
-                                        ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
-                                    }
-                            )
-                    );
+        const viewsData = JSON.parse(document.getElementById('views-chart-data').textContent);
 
         new Chart(viewsCtx, {
         type: 'line',
@@ -214,15 +240,7 @@
 
         // Category Doughnut
         const catCtx = document.getElementById('categoryChart');
-        const catData = @Html.Raw(
-                        Newtonsoft.Json.JsonConvert.SerializeObject(
-                                catStats ?? new List<CategoryStatsDto>(),
-                                new Newtonsoft.Json.JsonSerializerSettings
-                                {
-                                    ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
-                                }
-                        )
-                );
+        const catData = JSON.parse(document.getElementById('category-chart-data').textContent);
 
         new Chart(catCtx, {
         type: 'doughnut',
