@@ -23,6 +23,7 @@ using NewsPortalPro.Repositories;
 using NewsPortalPro.Services;
 using Serilog;
 using SixLabors.ImageSharp.Web.DependencyInjection;
+using StackExchange.Redis;
 using System.Text;
 
 // ════════════════════════════════════════════════════════════
@@ -326,6 +327,16 @@ try
                 builder.Configuration["RedisSettings:InstanceName"]
                 ?? "NewsPortalPro_";
         });
+
+        // FIX: RateLimitingMiddleware previously used a process-local
+        // static Dictionary for request counts, which silently breaks
+        // once more than one instance is running (see middleware file).
+        // Registering the same Redis connection as an
+        // IConnectionMultiplexer singleton lets it use a shared, atomic
+        // counter instead.
+
+        builder.Services.AddSingleton<IConnectionMultiplexer>(
+            _ => ConnectionMultiplexer.Connect(redisConnection));
     }
     else if (!string.IsNullOrEmpty(redisConnection) &&
              !redisConnection.Contains("localhost"))
@@ -337,12 +348,16 @@ try
                 builder.Configuration["RedisSettings:InstanceName"]
                 ?? "NewsPortalPro_";
         });
+
+        builder.Services.AddSingleton<IConnectionMultiplexer>(
+            _ => ConnectionMultiplexer.Connect(redisConnection));
     }
     else
     {
         builder.Services.AddDistributedMemoryCache();
         Log.Warning(
-            "Redis not configured — using in-memory distributed cache");
+            "Redis not configured — using in-memory distributed cache. " +
+            "RateLimitingMiddleware will use its in-process fallback.");
     }
 
     builder.Services.AddMemoryCache();
@@ -404,9 +419,9 @@ try
     builder.Services.AddOptions();
     builder.Services.AddMemoryCache();
     builder.Services.Configure<IpRateLimitOptions>(
-        builder.Configuration.GetSection("IpRateLimiting"));
+    builder.Configuration.GetSection("IpRateLimiting"));
     builder.Services.Configure<IpRateLimitPolicies>(
-        builder.Configuration.GetSection("IpRateLimitPolicies"));
+    builder.Configuration.GetSection("IpRateLimitPolicies"));
     builder.Services.AddInMemoryRateLimiting();
     builder.Services.AddSingleton<IRateLimitConfiguration,
         RateLimitConfiguration>();
@@ -420,7 +435,7 @@ try
         .Get<CloudinarySettings>();
 
     builder.Services.Configure<CloudinarySettings>(
-        builder.Configuration.GetSection("CloudinarySettings"));
+    builder.Configuration.GetSection("CloudinarySettings"));
 
     if (cloudinarySettings != null &&
         !string.IsNullOrEmpty(cloudinarySettings.CloudName) &&
@@ -448,9 +463,9 @@ try
     // ──────────────────────────────────────────────────────────
 
     builder.Services.Configure<EmailSettings>(
-        builder.Configuration.GetSection("EmailSettings"));
+    builder.Configuration.GetSection("EmailSettings"));
     builder.Services.Configure<RedisSettings>(
-        builder.Configuration.GetSection("RedisSettings"));
+    builder.Configuration.GetSection("RedisSettings"));
 
     // ──────────────────────────────────────────────────────────
     // REPOSITORIES
@@ -664,12 +679,12 @@ try
 
     builder.Services.AddHealthChecks()
         .AddSqlServer(
-            builder.Configuration
+    builder.Configuration
                 .GetConnectionString("DefaultConnection")!,
             name: "database",
             tags: ["db", "sql"])
         .AddRedis(
-            builder.Configuration.GetConnectionString("Redis")
+    builder.Configuration.GetConnectionString("Redis")
                 ?? "localhost:6379",
             name: "redis",
             tags: ["cache", "redis"]);
@@ -800,8 +815,15 @@ try
     appBranch => appBranch.UseOutputCache()
 );
 
-    app.UseMiddleware<MaintenanceModeMiddleware>();
+    // FIX: RateLimitingMiddleware now runs BEFORE MaintenanceModeMiddleware
+    // (previously it was the other way around). With the old order, when
+    // maintenance mode was on, MaintenanceModeMiddleware wrote its 503
+    // and returned before RateLimitingMiddleware ever executed — so
+    // non-admin traffic was completely unthrottled during a maintenance
+    // window. Rate limiting now applies regardless of maintenance state.
+
     app.UseMiddleware<RateLimitingMiddleware>();
+    app.UseMiddleware<MaintenanceModeMiddleware>();
     app.UseMiddleware<AnalyticsMiddleware>();
 
     // ──────────────────────────────────────────────────────────
