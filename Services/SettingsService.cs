@@ -86,6 +86,7 @@ namespace NewsPortalPro.Services
         // async path right after calling this, so the interface method
         // stays usable for any external caller that isn't in an async
         // context without changing its signature.
+
         public void InvalidateCache() => _ = InvalidateCacheAsync();
 
         private async Task InvalidateCacheAsync() =>
