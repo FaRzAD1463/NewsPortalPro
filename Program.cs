@@ -200,7 +200,7 @@ try
             "JWT SecretKey must be at least 32 characters long.");
 
     builder.Services.Configure<JwtSettings>(
-        builder.Configuration.GetSection("JwtSettings"));
+    builder.Configuration.GetSection("JwtSettings"));
 
     // FIX: DefaultScheme/DefaultChallengeScheme were both set to
     // "Identity.Application" (the cookie scheme), and every [Authorize]
@@ -285,10 +285,10 @@ try
     // ──────────────────────────────────────────────────────────
 
     builder.Services.AddAuthorizationBuilder()
-        .AddPolicy("AdminOnly", p => p.RequireRole("Admin"))
-        .AddPolicy("EditorOrAbove", p => p.RequireRole("Admin", "Editor"))
-        .AddPolicy("ReporterOrAbove", p => p.RequireRole("Admin", "Editor", "Reporter"))
-        .AddPolicy("AuthenticatedUser", p => p.RequireAuthenticatedUser());
+    .AddPolicy("AdminOnly", p => p.RequireRole("Admin"))
+    .AddPolicy("EditorOrAbove", p => p.RequireRole("Admin", "Editor"))
+    .AddPolicy("ReporterOrAbove", p => p.RequireRole("Admin", "Editor", "Reporter"))
+    .AddPolicy("AuthenticatedUser", p => p.RequireAuthenticatedUser());
 
     // ──────────────────────────────────────────────────────────
     // REDIS / DISTRIBUTED CACHE
@@ -317,14 +317,14 @@ try
     {
         if (string.IsNullOrWhiteSpace(redisConnection))
             throw new InvalidOperationException(
-                "CRITICAL: Redis connection string is not configured. " +
-                "Set ConnectionStrings:Redis for Staging/Production.");
+            "CRITICAL: Redis connection string is not configured. " +
+            "Set ConnectionStrings:Redis for Staging/Production.");
 
         builder.Services.AddStackExchangeRedisCache(options =>
         {
             options.Configuration = redisConnection;
             options.InstanceName =
-                builder.Configuration["RedisSettings:InstanceName"]
+            builder.Configuration["RedisSettings:InstanceName"]
                 ?? "NewsPortalPro_";
         });
 
@@ -345,7 +345,7 @@ try
         {
             options.Configuration = redisConnection;
             options.InstanceName =
-                builder.Configuration["RedisSettings:InstanceName"]
+            builder.Configuration["RedisSettings:InstanceName"]
                 ?? "NewsPortalPro_";
         });
 
@@ -374,19 +374,19 @@ try
             builder.Configuration.GetConnectionString("HangfireConnection"),
             new SqlServerStorageOptions
             {
-                CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-                SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-                QueuePollInterval = TimeSpan.Zero,
-                UseRecommendedIsolationLevel = true,
-                DisableGlobalLocks = true,
-                PrepareSchemaIfNecessary = true
+             CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+             SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+             QueuePollInterval = TimeSpan.Zero,
+             UseRecommendedIsolationLevel = true,
+             DisableGlobalLocks = true,
+             PrepareSchemaIfNecessary = true
             }));
 
     builder.Services.AddHangfireServer(options =>
     {
-        options.WorkerCount =
-            builder.Configuration.GetValue<int>("Hangfire:WorkerCount", 5);
-        options.Queues = ["default", "critical", "emails"];
+     options.WorkerCount =
+     builder.Configuration.GetValue<int>("Hangfire:WorkerCount", 5);
+     options.Queues = ["default", "critical", "emails"];
     });
 
     // ──────────────────────────────────────────────────────────
@@ -395,10 +395,10 @@ try
 
     builder.Services.AddSignalR(options =>
     {
-        options.EnableDetailedErrors = builder.Environment.IsDevelopment();
-        options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-        options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-        options.MaximumReceiveMessageSize = 32 * 1024;
+     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+     options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+     options.MaximumReceiveMessageSize = 32 * 1024;
     });
 
     // ──────────────────────────────────────────────────────────
@@ -407,7 +407,7 @@ try
 
     builder.Services.AddFluentValidationAutoValidation(config =>
     {
-        config.DisableDataAnnotationsValidation = false;
+     config.DisableDataAnnotationsValidation = false;
     });
     builder.Services.AddFluentValidationClientsideAdapters();
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -442,9 +442,9 @@ try
         cloudinarySettings.CloudName != "REPLACE_VIA_ENVIRONMENT_VARIABLE")
     {
         var cloudinary = new Cloudinary(new Account(
-            cloudinarySettings.CloudName,
-            cloudinarySettings.ApiKey,
-            cloudinarySettings.ApiSecret));
+        cloudinarySettings.CloudName,
+        cloudinarySettings.ApiKey,
+        cloudinarySettings.ApiSecret));
         cloudinary.Api.Secure = true;
         builder.Services.AddSingleton(cloudinary);
         Log.Information("Cloudinary configured successfully");
@@ -678,9 +678,9 @@ try
     // ──────────────────────────────────────────────────────────
 
     builder.Services.AddHealthChecks()
-        .AddSqlServer(
+    .AddSqlServer(
     builder.Configuration
-                .GetConnectionString("DefaultConnection")!,
+    .GetConnectionString("DefaultConnection")!,
             name: "database",
             tags: ["db", "sql"])
         .AddRedis(
@@ -831,7 +831,7 @@ try
     // ──────────────────────────────────────────────────────────
 
     app.UseHangfireDashboard(
-        app.Configuration["Hangfire:DashboardPath"] ?? "/hangfire-admin",
+    app.Configuration["Hangfire:DashboardPath"] ?? "/hangfire-admin",
         new DashboardOptions
         {
             Authorization = [new HangfireAuthorizationFilter()],
@@ -872,47 +872,47 @@ try
     // ──────────────────────────────────────────────────────────
 
     app.MapControllerRoute(
-        name: "areas",
-        pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+      name: "areas",
+      pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
     app.MapControllerRoute(
-        name: "terms",
-        pattern: "Terms",
-        defaults: new { controller = "Home", action = "Terms" });
+      name: "terms",
+      pattern: "Terms",
+      defaults: new { controller = "Home", action = "Terms" });
 
     app.MapControllerRoute(
-        name: "about",
-        pattern: "About",
-        defaults: new { controller = "Home", action = "About" });
+      name: "about",
+      pattern: "About",
+      defaults: new { controller = "Home", action = "About" });
 
     app.MapControllerRoute(
-        name: "privacy",
-        pattern: "Privacy",
-        defaults: new { controller = "Home", action = "Privacy" });
+      name: "privacy",
+      pattern: "Privacy",
+      defaults: new { controller = "Home", action = "Privacy" });
 
     app.MapControllerRoute(
-        name: "news-detail",
-        pattern: "news/{slug}",
-        defaults: new { controller = "News", action = "Details" });
+      name: "news-detail",
+      pattern: "news/{slug}",
+      defaults: new { controller = "News", action = "Details" });
 
     app.MapControllerRoute(
-        name: "category",
-        pattern: "category/{slug}/{page?}",
-        defaults: new { controller = "Category", action = "Index" });
+      name: "category",
+      pattern: "category/{slug}/{page?}",
+      defaults: new { controller = "Category", action = "Index" });
 
     app.MapControllerRoute(
-        name: "tag",
-        pattern: "tag/{slug}/{page?}",
-        defaults: new { controller = "News", action = "ByTag" });
+      name: "tag",
+      pattern: "tag/{slug}/{page?}",
+      defaults: new { controller = "News", action = "ByTag" });
 
     app.MapControllerRoute(
-        name: "epaper",
-        pattern: "Epaper/{action=Index}/{id?}",
-        defaults: new { controller = "Epaper" });
+      name: "epaper",
+      pattern: "Epaper/{action=Index}/{id?}",
+      defaults: new { controller = "Epaper" });
 
     app.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}");
+      name: "default",
+      pattern: "{controller=Home}/{action=Index}/{id?}");
 
     app.MapRazorPages();
     app.MapHub<NewsHub>("/hubs/news");
@@ -923,31 +923,31 @@ try
     // ──────────────────────────────────────────────────────────
 
     RecurringJob.AddOrUpdate<INewsService>(
-        recurringJobId: "publish-scheduled-news",
-        methodCall: svc => svc.PublishScheduledAsync(),
-        cronExpression: "*/5 * * * *",
-        options: new RecurringJobOptions
+     recurringJobId: "publish-scheduled-news",
+     methodCall: svc => svc.PublishScheduledAsync(),
+     cronExpression: "*/5 * * * *",
+     options: new RecurringJobOptions
         {
             TimeZone = TimeZoneInfo.Utc
         });
 
     RecurringJob.AddOrUpdate<IAnalyticsService>(
-        recurringJobId: "aggregate-analytics",
-        methodCall: svc => svc.AggregateAsync(),
-        cronExpression: Cron.Hourly,
-        options: new RecurringJobOptions
+     recurringJobId: "aggregate-analytics",
+     methodCall: svc => svc.AggregateAsync(),
+     cronExpression: Cron.Hourly,
+     options: new RecurringJobOptions
         {
             TimeZone = TimeZoneInfo.Utc
         });
 
     RecurringJob.AddOrUpdate<INewsService>(
-        recurringJobId: "cleanup-old-views",
-        methodCall: svc => svc.CleanupOldViewsAsync(),
-        cronExpression: "0 2 * * *",
-        options: new RecurringJobOptions
-        {
-            TimeZone = TimeZoneInfo.Utc
-        });
+     recurringJobId: "cleanup-old-views",
+     methodCall: svc => svc.CleanupOldViewsAsync(),
+     cronExpression: "0 2 * * *",
+     options: new RecurringJobOptions
+       {
+       TimeZone = TimeZoneInfo.Utc
+       });
 
     // ──────────────────────────────────────────────────────────
     // DATABASE MIGRATION + SEED
@@ -955,17 +955,17 @@ try
 
     using (var scope = app.Services.CreateScope())
     {
-        var db = scope.ServiceProvider
+       var db = scope.ServiceProvider
                               .GetRequiredService<ApplicationDbContext>();
-        var userManager = scope.ServiceProvider
+       var userManager = scope.ServiceProvider
                               .GetRequiredService<UserManager<ApplicationUser>>();
-        var roleManager = scope.ServiceProvider
+       var roleManager = scope.ServiceProvider
                               .GetRequiredService<RoleManager<ApplicationRole>>();
-        var logger = scope.ServiceProvider
+       var logger = scope.ServiceProvider
                               .GetRequiredService<ILogger<Program>>();
 
-        try
-        {
+       try
+       {
             var pending = await db.Database.GetPendingMigrationsAsync();
             if (pending.Any())
             {
@@ -978,7 +978,7 @@ try
 
             await SeedAdminUserAsync(
                 userManager, roleManager, logger, app.Environment);
-        }
+       }
         catch (Exception ex)
         {
             logger.LogError(ex,
@@ -991,12 +991,12 @@ try
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "NewsPortalPro failed to start");
-    throw;
+ Log.Fatal(ex, "NewsPortalPro failed to start");
+ throw;
 }
 finally
 {
-    Log.CloseAndFlush();
+ Log.CloseAndFlush();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1008,10 +1008,10 @@ finally
 // were both changed — see comments inline below.
 
 static async Task SeedAdminUserAsync(
-    UserManager<ApplicationUser> userManager,
-    RoleManager<ApplicationRole> roleManager,
-    Microsoft.Extensions.Logging.ILogger<Program> logger,
-    IHostEnvironment environment)
+ UserManager<ApplicationUser> userManager,
+ RoleManager<ApplicationRole> roleManager,
+ Microsoft.Extensions.Logging.ILogger<Program> logger,
+ IHostEnvironment environment)
 {
     const string adminEmail = "admin@newsportalpro.com";
 
@@ -1083,13 +1083,13 @@ static async Task SeedAdminUserAsync(
     {
         var admin = new ApplicationUser
         {
-            UserName = adminEmail,
-            Email = adminEmail,
-            FullName = "System Administrator",
-            Designation = "System Administrator",
-            EmailConfirmed = true,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
+           UserName = adminEmail,
+           Email = adminEmail,
+           FullName = "System Administrator",
+           Designation = "System Administrator",
+           EmailConfirmed = true,
+           IsActive = true,
+           CreatedAt = DateTime.UtcNow
         };
 
         var result = await userManager.CreateAsync(admin, adminPassword);
@@ -1099,13 +1099,13 @@ static async Task SeedAdminUserAsync(
             await userManager.AddToRoleAsync(admin, "Admin");
 
             logger.LogInformation(
-                "Admin user seeded successfully: {Email}",
+              "Admin user seeded successfully: {Email}",
                 adminEmail);
 
             if (environment.IsProduction())
             {
                 logger.LogCritical(
-                    "Admin user was seeded in production. Verify that the seeded password is unique and change it immediately after first login.");
+                 "Admin user was seeded in production. Verify that the seeded password is unique and change it immediately after first login.");
             }
         }
         else
