@@ -68,6 +68,20 @@ try
                 retainedFileCountLimit: 30));
 
     // ──────────────────────────────────────────────────────────
+    // DIAGNOSTIC ONLY — uncomment temporarily if the host exits
+    // silently again (exit code -1, no exception logged). This
+    // stops a failing IHostedService/BackgroundService from
+    // tearing down the whole host, so the real exception actually
+    // gets logged instead of being swallowed. Revert once you've
+    // found the cause — do not ship this enabled.
+    // ──────────────────────────────────────────────────────────
+    // builder.Services.Configure<HostOptions>(options =>
+    // {
+    //     options.BackgroundServiceExceptionBehavior =
+    //         Microsoft.Extensions.Hosting.BackgroundServiceExceptionBehavior.Ignore;
+    // });
+
+    // ──────────────────────────────────────────────────────────
     // DATABASE
     // ──────────────────────────────────────────────────────────
 
@@ -84,7 +98,7 @@ try
                sql.MigrationsAssembly("NewsPortalPro");
                sql.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
            })
-       .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) // ← ① added
+       .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
        .EnableDetailedErrors(builder.Environment.IsDevelopment()));
 
@@ -307,11 +321,11 @@ try
     // first cache access — a hard crash from a missing config value that
     // should have been a clear, actionable error instead.
     //
-    // Fix: require Redis explicitly in Production with a clear startup
-    // exception (matching the same pattern already used for the JWT
-    // secret above), and keep the original non-production behavior
-    // (use Redis if a non-localhost connection string is present,
-    // otherwise fall back to in-memory cache with a warning).
+    // Fix: require Redis explicitly outside Development with a clear
+    // startup exception (matching the same pattern already used for the
+    // JWT secret above), and keep the original dev behavior (use Redis
+    // if a non-localhost connection string is present, otherwise fall
+    // back to in-memory cache with a warning).
 
     if (!builder.Environment.IsDevelopment())
     {
@@ -374,19 +388,19 @@ try
             builder.Configuration.GetConnectionString("HangfireConnection"),
             new SqlServerStorageOptions
             {
-             CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-             SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-             QueuePollInterval = TimeSpan.Zero,
-             UseRecommendedIsolationLevel = true,
-             DisableGlobalLocks = true,
-             PrepareSchemaIfNecessary = true
+                CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+                SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+                QueuePollInterval = TimeSpan.Zero,
+                UseRecommendedIsolationLevel = true,
+                DisableGlobalLocks = true,
+                PrepareSchemaIfNecessary = true
             }));
 
     builder.Services.AddHangfireServer(options =>
     {
-     options.WorkerCount =
-     builder.Configuration.GetValue<int>("Hangfire:WorkerCount", 5);
-     options.Queues = ["default", "critical", "emails"];
+        options.WorkerCount =
+        builder.Configuration.GetValue<int>("Hangfire:WorkerCount", 5);
+        options.Queues = ["default", "critical", "emails"];
     });
 
     // ──────────────────────────────────────────────────────────
@@ -395,10 +409,10 @@ try
 
     builder.Services.AddSignalR(options =>
     {
-     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
-     options.KeepAliveInterval = TimeSpan.FromSeconds(15);
-     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
-     options.MaximumReceiveMessageSize = 32 * 1024;
+        options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+        options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+        options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+        options.MaximumReceiveMessageSize = 32 * 1024;
     });
 
     // ──────────────────────────────────────────────────────────
@@ -407,7 +421,7 @@ try
 
     builder.Services.AddFluentValidationAutoValidation(config =>
     {
-     config.DisableDataAnnotationsValidation = false;
+        config.DisableDataAnnotationsValidation = false;
     });
     builder.Services.AddFluentValidationClientsideAdapters();
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -676,18 +690,33 @@ try
     // ──────────────────────────────────────────────────────────
     // HEALTH CHECKS
     // ──────────────────────────────────────────────────────────
+    // FIX: .AddRedis(...) was previously registered unconditionally,
+    // falling back to "localhost:6379" when ConnectionStrings:Redis
+    // was empty. In this dev environment nothing listens on that port
+    // (confirmed by the "Redis not configured — using in-memory
+    // distributed cache" log line), so the health check package's
+    // eager connection attempt could throw during startup/first probe
+    // and bring the whole host down — consistent with the app exiting
+    // with code -1 shortly after "all the dispatchers started" and
+    // Firefox intermittently getting "Unable to connect" as the host
+    // stops and the port drops. Redis is now only added to health
+    // checks when it's actually configured, mirroring the same
+    // conditional pattern used for the distributed cache above.
 
-    builder.Services.AddHealthChecks()
-    .AddSqlServer(
-    builder.Configuration
-    .GetConnectionString("DefaultConnection")!,
+    var healthChecksBuilder = builder.Services.AddHealthChecks()
+        .AddSqlServer(
+            builder.Configuration
+                .GetConnectionString("DefaultConnection")!,
             name: "database",
-            tags: ["db", "sql"])
-        .AddRedis(
-    builder.Configuration.GetConnectionString("Redis")
-                ?? "localhost:6379",
+            tags: ["db", "sql"]);
+
+    if (!string.IsNullOrWhiteSpace(redisConnection))
+    {
+        healthChecksBuilder.AddRedis(
+            redisConnection,
             name: "redis",
             tags: ["cache", "redis"]);
+    }
 
     // ════════════════════════════════════════════════════════════
     // BUILD APPLICATION
@@ -927,27 +956,27 @@ try
      methodCall: svc => svc.PublishScheduledAsync(),
      cronExpression: "*/5 * * * *",
      options: new RecurringJobOptions
-        {
-            TimeZone = TimeZoneInfo.Utc
-        });
+     {
+         TimeZone = TimeZoneInfo.Utc
+     });
 
     RecurringJob.AddOrUpdate<IAnalyticsService>(
      recurringJobId: "aggregate-analytics",
      methodCall: svc => svc.AggregateAsync(),
      cronExpression: Cron.Hourly,
      options: new RecurringJobOptions
-        {
-            TimeZone = TimeZoneInfo.Utc
-        });
+     {
+         TimeZone = TimeZoneInfo.Utc
+     });
 
     RecurringJob.AddOrUpdate<INewsService>(
      recurringJobId: "cleanup-old-views",
      methodCall: svc => svc.CleanupOldViewsAsync(),
      cronExpression: "0 2 * * *",
      options: new RecurringJobOptions
-       {
-       TimeZone = TimeZoneInfo.Utc
-       });
+     {
+         TimeZone = TimeZoneInfo.Utc
+     });
 
     // ──────────────────────────────────────────────────────────
     // DATABASE MIGRATION + SEED
@@ -955,17 +984,17 @@ try
 
     using (var scope = app.Services.CreateScope())
     {
-       var db = scope.ServiceProvider
-                              .GetRequiredService<ApplicationDbContext>();
-       var userManager = scope.ServiceProvider
-                              .GetRequiredService<UserManager<ApplicationUser>>();
-       var roleManager = scope.ServiceProvider
-                              .GetRequiredService<RoleManager<ApplicationRole>>();
-       var logger = scope.ServiceProvider
-                              .GetRequiredService<ILogger<Program>>();
+        var db = scope.ServiceProvider
+                               .GetRequiredService<ApplicationDbContext>();
+        var userManager = scope.ServiceProvider
+                               .GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = scope.ServiceProvider
+                               .GetRequiredService<RoleManager<ApplicationRole>>();
+        var logger = scope.ServiceProvider
+                               .GetRequiredService<ILogger<Program>>();
 
-       try
-       {
+        try
+        {
             var pending = await db.Database.GetPendingMigrationsAsync();
             if (pending.Any())
             {
@@ -978,7 +1007,7 @@ try
 
             await SeedAdminUserAsync(
                 userManager, roleManager, logger, app.Environment);
-       }
+        }
         catch (Exception ex)
         {
             logger.LogError(ex,
@@ -991,12 +1020,12 @@ try
 }
 catch (Exception ex)
 {
- Log.Fatal(ex, "NewsPortalPro failed to start");
- throw;
+    Log.Fatal(ex, "NewsPortalPro failed to start");
+    throw;
 }
 finally
 {
- Log.CloseAndFlush();
+    Log.CloseAndFlush();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1083,13 +1112,13 @@ static async Task SeedAdminUserAsync(
     {
         var admin = new ApplicationUser
         {
-           UserName = adminEmail,
-           Email = adminEmail,
-           FullName = "System Administrator",
-           Designation = "System Administrator",
-           EmailConfirmed = true,
-           IsActive = true,
-           CreatedAt = DateTime.UtcNow
+            UserName = adminEmail,
+            Email = adminEmail,
+            FullName = "System Administrator",
+            Designation = "System Administrator",
+            EmailConfirmed = true,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
         };
 
         var result = await userManager.CreateAsync(admin, adminPassword);
